@@ -1,0 +1,214 @@
+/* catalog.css - barra de filtros, rejilla infinita y ficha de producto. */
+
+.catalog {
+  max-width: 96rem;
+  margin: 0 auto;
+  padding: 0 var(--pad-x) 5rem;
+}
+
+.catalog__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  padding: 3.5rem 0 1.4rem;
+}
+.catalog__head h2 {
+  font: 800 var(--step-h2)/0.9 var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+}
+.catalog__note {
+  max-width: 42ch;
+  font: 400 var(--step-mono)/1.65 var(--font-mono);
+  color: var(--steel-600);
+}
+
+/* --- filtros ---------------------------------------------------------- */
+
+.filters {
+  position: sticky;
+  top: var(--nav-h-tight);
+  z-index: 20;
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.85rem 0;
+  margin-bottom: 1.6rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: linear-gradient(var(--ink-900) 72%, rgba(20, 24, 31, 0));
+  border-bottom: 1px solid var(--hairline);
+}
+.filters::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex: 0 0 auto;
+  padding: 0.55rem 1rem;
+  background: var(--ink-800);
+  border: 1px solid var(--ink-600);
+  border-radius: var(--radius);
+  font: 500 var(--step-mono)/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--steel-200);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease),
+    background var(--t-fast) var(--ease);
+}
+.chip:hover { color: var(--bone); border-color: var(--steel-600); }
+.chip[aria-pressed="true"] {
+  background: var(--brass);
+  border-color: var(--brass);
+  color: var(--ink-900);
+}
+.chip__n { margin-left: 0.4rem; color: var(--steel-600); }
+.chip[aria-pressed="true"] .chip__n { color: inherit; }
+
+/* --- rejilla ---------------------------------------------------------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: var(--gap);
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-800);
+  border: 1px solid var(--ink-600);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color var(--t-mid) var(--ease), background var(--t-mid) var(--ease);
+  /* La ficha entra al insertarse, no al cruzar el borde de la pantalla: asi no
+     depende de ningun observador para llegar a verse. */
+  animation: card-in var(--t-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(1.4rem); }
+  to { opacity: 1; transform: none; }
+}
+.card:hover {
+  border-color: var(--hairline-strong);
+  background: var(--ink-700);
+}
+.card:hover .card__rule { transform: scaleX(1); }
+
+.card__art {
+  position: relative;
+  aspect-ratio: 8 / 5;
+  background-color: var(--ink-850);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 1.5rem 1.5rem;
+  border-bottom: 1px solid var(--ink-600);
+  overflow: hidden;
+}
+.card__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.card__tags {
+  position: absolute;
+  top: 0.6rem; left: 0.6rem; right: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.tag {
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+  background: rgba(20, 24, 31, 0.82);
+  border: 1px solid var(--ink-600);
+  font: 500 var(--step-micro)/1.25 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--steel-400);
+}
+.tag--licence { border-color: var(--brass-dim); color: var(--brass); }
+.tag--last { border-color: var(--blaze); color: var(--blaze-text); }
+.tag--order { color: var(--steel-600); }
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.95rem 1rem 1.05rem;
+  flex: 1;
+}
+.card__cat {
+  font: 500 var(--step-micro)/1 var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--steel-600);
+}
+.card__name {
+  font: 600 1.32rem/1.12 var(--font-display);
+  letter-spacing: 0.005em;
+}
+.card__spec {
+  font: 400 var(--step-mono)/1.5 var(--font-mono);
+  color: var(--steel-400);
+}
+.card__rule {
+  height: 1px;
+  background: var(--brass);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--t-mid) var(--ease-out);
+}
+.card__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.35rem;
+}
+.card__price {
+  font: 600 1.35rem/1 var(--font-display);
+  letter-spacing: 0.01em;
+}
+.card__price span { font-size: 0.85rem; color: var(--steel-400); margin-left: 0.15rem; }
+
+.card__add {
+  padding: 0.5rem 0.85rem;
+  background: transparent;
+  border: 1px solid var(--ink-500);
+  border-radius: var(--radius);
+  font: 500 var(--step-mono)/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--steel-200);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease);
+}
+.card__add:hover { background: var(--brass); border-color: var(--brass); color: var(--ink-900); }
+.card__add.is-added { border-color: var(--brass-dim); color: var(--brass); }
+
+/* --- pie de la rejilla ------------------------------------------------ */
+
+.grid__status {
+  margin-top: 2.2rem;
+  text-align: center;
+  font: 400 var(--step-mono)/1.6 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--steel-600);
+}
+
+.sentinel { height: 1px; }
+
+@media (max-width: 40rem) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
+  .catalog__head { padding-top: 2.5rem; }
+}
