@@ -140,15 +140,6 @@ def chamfer(bm, offset, segments=1):
     return bm
 
 
-def tidy(bm, angle=math.radians(1.0)):
-    """Funde caras que ya eran coplanares. Limpia los cortes que dejan los
-    biseles sin tocar la silueta."""
-    bmesh.ops.dissolve_limit(bm, angle_limit=angle, verts=bm.verts[:],
-                             edges=bm.edges[:], delimit=set())
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-    return bm
-
-
 # ------------------------------------------------------------------ #
 # Volcado y comprobaciones                                            #
 # ------------------------------------------------------------------ #
