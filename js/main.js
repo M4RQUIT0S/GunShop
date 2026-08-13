@@ -19,14 +19,18 @@
     return node;
   }
 
+  function lineOf(id) {
+    return shop.catalog.LINES.filter(function (l) { return l.id === id; })[0];
+  }
+
   function labelOf(id) {
     if (id === 'todo') return 'todo el catálogo';
-    var line = shop.catalog.LINES.filter(function (l) { return l.id === id; })[0];
+    var line = lineOf(id);
     return line ? line.label.toLowerCase() : id;
   }
 
   function modelOf(id) {
-    var line = shop.catalog.LINES.filter(function (l) { return l.id === id; })[0];
+    var line = lineOf(id);
     return line ? line.model : 'rifle';
   }
 
@@ -84,6 +88,7 @@
 
       var add = el('button', 'card__add', 'Añadir');
       add.type = 'button';
+      add.dataset.name = product.name;
       add.setAttribute('aria-label', 'Añadir ' + product.name + ' a la cesta');
       foot.appendChild(add);
 
@@ -158,17 +163,25 @@
 
     grid.addEventListener('click', function (event) {
       var button = event.target.closest('.card__add');
-      if (!button) return;
+      // Ya añadido: el boton se queda enfocable pero deja de contar.
+      if (!button || button.getAttribute('aria-disabled') === 'true') return;
+
       cart += 1;
       cartCount.textContent = cart;
       // El contador es decorativo: el estado de la cesta viaja en la etiqueta del boton.
       cartCount.parentNode.setAttribute('aria-label',
         'Cesta, ' + cart + (cart === 1 ? ' artículo' : ' artículos'));
       cartCount.classList.add('is-on');
+      // Quitar y volver a poner la clase en el mismo frame no reinicia nada:
+      // hay que forzar un recalculo entre medias para que la animacion repita.
       cartCount.classList.remove('is-bump');
-      global.requestAnimationFrame(function () { cartCount.classList.add('is-bump'); });
+      void cartCount.offsetWidth;
+      cartCount.classList.add('is-bump');
+
       button.textContent = 'En la cesta';
       button.classList.add('is-added');
+      button.setAttribute('aria-disabled', 'true');
+      button.setAttribute('aria-label', button.dataset.name + ', ya en la cesta');
     });
 
     // El fondo muestra la pieza que se esta mirando.
@@ -199,7 +212,12 @@
     global.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 
+    // El titular cuenta lo mismo que la rejilla, no un numero escrito a mano.
+    var total = doc.getElementById('statTotal');
+    if (total) total.textContent = shop.catalog.price(counts.todo);
+
     pump();
+    shop.art.warm();
   }
 
   if (doc.readyState === 'loading') {

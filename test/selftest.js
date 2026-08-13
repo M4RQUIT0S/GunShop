@@ -12,24 +12,34 @@ var a = catalog.build();
 var b = catalog.build();
 assert.strictEqual(a.length, b.length, 'el catalogo cambia de tamaño entre cargas');
 assert.deepStrictEqual(
-  a.map(function (p) { return p.id + p.price; }),
-  b.map(function (p) { return p.id + p.price; }),
+  a.map(function (p) { return p.id + '|' + p.price; }),
+  b.map(function (p) { return p.id + '|' + p.price; }),
   'el catalogo no es determinista'
 );
 
-// Nombre, ficha tecnica, tipo y modelo 3D se recorren con el mismo indice: si una
-// lista es mas corta se descuadran y sale un punto rojo con ficha de visor 3-12x56.
+// Cada referencia tiene que poder dibujarse: si un producto pide una pieza 3D
+// que no existe, la ficha saldria con la imagen en blanco.
 catalog.LINES.forEach(function (line) {
-  ['specs', 'kinds', 'models'].forEach(function (key) {
-    if (!line[key]) return;
-    assert.strictEqual(line[key].length, line.names.length,
-      line.id + ': ' + key + ' no cuadra con names');
+  assert.ok(scene.models[line.model], line.id + ': modelo 3D inexistente ' + line.model);
+  line.items.forEach(function (item) {
+    if (item.model) {
+      assert.ok(scene.models[item.model],
+        line.id + '/' + item.ref + ': modelo 3D inexistente ' + item.model);
+    }
+    assert.ok(item.brand && item.ref && item.kind, line.id + ': ficha incompleta');
+    assert.ok(item.spec && item.spec.length, line.id + '/' + item.ref + ': sin ficha tecnica');
+    assert.ok(item.price > 0, line.id + '/' + item.ref + ': precio invalido');
   });
-  line.models && line.models.forEach(function (name) {
-    assert.ok(scene.models[name], line.id + ': modelo 3D inexistente ' + name);
-  });
-  assert.ok(line.models || scene.models[line.model], line.id + ': modelo 3D inexistente');
 });
+
+a.forEach(function (p) {
+  assert.ok(p.name && p.spec && p.kind, p.id + ': referencia incompleta');
+  assert.ok(scene.models[p.model], p.id + ': modelo 3D inexistente ' + p.model);
+});
+
+// Los ids se usan como clave: repetirlos rompe la deteccion de duplicados.
+assert.strictEqual(new Set(a.map(function (p) { return p.id; })).size, a.length,
+  'hay ids de referencia repetidos');
 
 var totals = catalog.counts(a);
 var sum = catalog.LINES.reduce(function (n, line) { return n + totals[line.id]; }, 0);
@@ -52,6 +62,11 @@ assert.strictEqual(sum, a.length, 'los recuentos por familia no suman el total')
     'faltan o sobran fichas en ' + filter);
   assert.strictEqual(new Set(seen).size, seen.length, 'fichas repetidas en ' + filter);
 });
+
+// Pedir cero fichas es cero fichas, no el tamaño por defecto.
+var none = catalog.page(a, 'todo', 0, 0);
+assert.deepStrictEqual(none.items, [], 'size 0 deberia devolver un tramo vacio');
+assert.strictEqual(none.total, a.length, 'size 0 no deberia cambiar el total');
 
 // Pedir mas alla del final devuelve vacio y final, no un error.
 var over = catalog.page(a, 'todo', a.length + 50, catalog.PAGE);

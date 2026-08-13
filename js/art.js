@@ -4,7 +4,8 @@
   'use strict';
 
   var ANGLES = [-1.15, -0.55, 0.2, 0.7];
-  var W = 440, H = 275, DPR = 2;
+  var W = 440, H = 275;
+  var DPR = Math.min(global.devicePixelRatio || 1, 2);
   var PLACE = { x: 0.5, y: 0.5, span: 5.2 };
   var cache = {};
 
@@ -23,6 +24,22 @@
     return cache[key];
   }
 
+  // Codificar el PNG bloquea el hilo principal. Son 8 piezas x 4 angulos: se
+  // generan en tiempo muerto para que el scroll no pague nunca ese coste.
+  function warm() {
+    var jobs = [];
+    Object.keys(global.GunShop.scene.models).forEach(function (name) {
+      ANGLES.forEach(function (_, variant) { jobs.push([name, variant]); });
+    });
+    var idle = global.requestIdleCallback || function (fn) { return global.setTimeout(fn, 60); };
+    (function next() {
+      var job = jobs.shift();
+      if (!job) return;
+      sprite(job[0], job[1]);
+      idle(next);
+    })();
+  }
+
   global.GunShop = global.GunShop || {};
-  global.GunShop.art = { sprite: sprite, ANGLES: ANGLES, width: W, height: H };
+  global.GunShop.art = { sprite: sprite, warm: warm, ANGLES: ANGLES, width: W, height: H };
 })(window);

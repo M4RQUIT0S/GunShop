@@ -19,19 +19,22 @@
     return s / 2;
   }
 
+  // Las dos primitivas cierran igual: anillo delantero en orden y trasero al
+  // reves, para que ambas normales apunten hacia fuera.
+  function caps(n) {
+    var front = [], back = [], i;
+    for (i = 0; i < n; i++) front.push(i);
+    for (i = n - 1; i >= 0; i--) back.push(i + n);
+    return [front, back];
+  }
+
   // Perfil 2D (plano XY) extruido en Z -> solido cerrado.
   function extrude(profile, depth) {
     var p = area2(profile) < 0 ? profile.slice().reverse() : profile;
-    var n = p.length, h = depth / 2, verts = [], faces = [], cap = [], i;
+    var n = p.length, h = depth / 2, verts = [], faces = caps(n), i;
 
     for (i = 0; i < n; i++) verts.push([p[i][0], p[i][1], h]);
     for (i = 0; i < n; i++) verts.push([p[i][0], p[i][1], -h]);
-
-    for (i = 0; i < n; i++) cap.push(i);
-    faces.push(cap);
-    cap = [];
-    for (i = n - 1; i >= 0; i--) cap.push(i + n);
-    faces.push(cap);
 
     for (i = 0; i < n; i++) {
       var j = (i + 1) % n;
@@ -42,7 +45,7 @@
 
   // Tubo (o cono truncado) a lo largo del eje X.
   function tube(x0, x1, r0, r1, seg, cy, cz) {
-    var verts = [], faces = [], front = [], back = [], i, a;
+    var verts = [], faces = caps(seg), i, a;
     cy = cy || 0;
     cz = cz || 0;
 
@@ -54,10 +57,6 @@
       a = (i / seg) * TAU;
       verts.push([x1, cy + Math.sin(a) * r1, cz + Math.cos(a) * r1]);
     }
-    for (i = 0; i < seg; i++) front.push(i);
-    for (i = seg - 1; i >= 0; i--) back.push(i + seg);
-    faces.push(front, back);
-
     for (i = 0; i < seg; i++) {
       var j = (i + 1) % seg;
       faces.push([i, i + seg, j + seg, j]);
@@ -258,12 +257,16 @@
     return [nx / len, ny / len, nz / len];
   }
 
+  function rgb(hex) {
+    var v = parseInt(hex.slice(1), 16);
+    return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+  }
+
+  // a y b ya vienen descompuestos: la paleta no cambia dentro de un render.
   function mix(a, b, t) {
-    var pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
-    var r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t);
-    var g = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t);
-    var l = Math.round((pa & 255) * (1 - t) + (pb & 255) * t);
-    return 'rgb(' + r + ',' + g + ',' + l + ')';
+    return 'rgb(' + Math.round(a[0] * (1 - t) + b[0] * t) +
+      ',' + Math.round(a[1] * (1 - t) + b[1] * t) +
+      ',' + Math.round(a[2] * (1 - t) + b[2] * t) + ')';
   }
 
   var LIGHT = [-0.42, 0.66, 0.62];
@@ -280,6 +283,7 @@
     var cp = Math.cos(pitch), sp = Math.sin(pitch);
     var unit = Math.min(w / at.span, h / (at.span * 0.57)) * entry.def.scale * grow;
     var ox = w * at.x, oy = h * at.y;
+    var base = rgb(pal.base), hi = rgb(pal.hi);
 
     var view = mesh.verts.map(function (v) { return rotate(v, cy, sy, cp, sp); });
     var quads = [];
@@ -299,7 +303,7 @@
       quads.push({
         depth: depth / pts.length,
         screen: screen,
-        fill: mix(pal.base, pal.hi, Math.pow(lit, 0.9) * 0.85)
+        fill: mix(base, hi, Math.pow(lit, 0.9) * 0.85)
       });
     });
 
@@ -390,23 +394,38 @@
       schedule();
     }
 
+    // En modo quieto nadie interpola: el angulo tiene que nacer ya en su sitio.
+    function refresh() {
+      if (quiet) draw(); else schedule();
+    }
+
     resize();
+    target = angleFromScroll();
     if (quiet) {
+      yaw = target;
+      grow = 1;
       draw();
     } else {
-      target = angleFromScroll();
       schedule();
       global.addEventListener('scroll', onScroll, { passive: true });
     }
+
+    // Arrastrar el borde de la ventana dispara decenas de eventos seguidos:
+    // basta con un redibujado por frame.
+    var resizeFrame = 0;
     global.addEventListener('resize', function () {
-      resize();
-      if (quiet) draw(); else schedule();
+      if (resizeFrame) return;
+      resizeFrame = global.requestAnimationFrame(function () {
+        resizeFrame = 0;
+        resize();
+        refresh();
+      });
     });
 
     if (global.IntersectionObserver) {
       new global.IntersectionObserver(function (entries) {
         visible = entries[0].isIntersecting;
-        if (visible && pending) { if (quiet) draw(); else schedule(); }
+        if (visible && pending) refresh();
       }).observe(canvas);
     }
 

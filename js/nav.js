@@ -9,7 +9,9 @@
     var toggle = doc.getElementById('navToggle');
     var menu = doc.getElementById('navMenu');
     var backdrop = doc.getElementById('navBackdrop');
-    var wide = global.matchMedia('(min-width: 60.0625rem)');
+    // Exactamente la misma consulta que el CSS: cualquier otro valor deja una
+    // franja de anchos donde el CSS es de escritorio y el JS cree que es movil.
+    var narrow = global.matchMedia('(max-width: 60rem)');
 
     function setOpen(open) {
       toggle.setAttribute('aria-expanded', String(open));
@@ -37,7 +39,7 @@
     backdrop.addEventListener('click', close);
 
     menu.addEventListener('click', function (event) {
-      if (event.target.closest('a') && !wide.matches) setOpen(false);
+      if (event.target.closest('a') && narrow.matches) setOpen(false);
     });
 
     doc.addEventListener('keydown', function (event) {
@@ -45,9 +47,11 @@
     });
 
     // Al pasar a escritorio el panel deja de existir: hay que soltar el scroll.
-    wide.addEventListener('change', function (event) {
-      if (event.matches) setOpen(false);
-    });
+    function onBreakpoint(event) {
+      if (!event.matches) setOpen(false);
+    }
+    if (narrow.addEventListener) narrow.addEventListener('change', onBreakpoint);
+    else if (narrow.addListener) narrow.addListener(onBreakpoint);
 
     var stuck = false;
     function onScroll() {
