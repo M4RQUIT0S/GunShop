@@ -97,24 +97,15 @@
     };
   }
 
-  function optic() {
-    var turret = [[-0.18, 0.16], [0.18, 0.16], [0.16, 0.52], [-0.16, 0.52]];
-    return merge([
-      tube(-2.00, -1.20, 0.34, 0.30, 18, 0, 0),
-      tube(-1.20, -0.90, 0.30, 0.19, 18, 0, 0),
-      tube(-0.90, 0.90, 0.19, 0.19, 18, 0, 0),
-      tube(-0.34, -0.26, 0.24, 0.24, 18, 0, 0),
-      tube(0.42, 0.50, 0.24, 0.24, 18, 0, 0),
-      tube(0.90, 1.20, 0.19, 0.26, 18, 0, 0),
-      tube(1.20, 1.90, 0.26, 0.28, 18, 0, 0),
-      extrude(turret, 0.30)
-    ]);
-  }
-
+  // Vaina de gollete: piston, culote, ranura de extraccion, cuerpo, hombro,
+  // gollete y punta. La ranura y el piston son dos tubos mas; hornear esto en
+  // Blender no anadiria nada que no sea de revolucion.
   function cartridge() {
     return merge([
-      tube(-1.60, -1.48, 0.40, 0.40, 18, 0, 0),
-      tube(-1.48, 0.10, 0.34, 0.34, 18, 0, 0),
+      tube(-1.66, -1.60, 0.17, 0.17, 18, 0, 0),
+      tube(-1.60, -1.50, 0.40, 0.40, 18, 0, 0),
+      tube(-1.50, -1.38, 0.29, 0.29, 18, 0, 0),
+      tube(-1.38, 0.10, 0.34, 0.34, 18, 0, 0),
       tube(0.10, 0.46, 0.34, 0.22, 18, 0, 0),
       tube(0.46, 0.76, 0.22, 0.22, 18, 0, 0),
       tube(0.76, 1.20, 0.22, 0.20, 18, 0, 0),
@@ -128,7 +119,7 @@
     rifle: { build: baked('rifle'), palette: STEEL, scale: 0.88 },
     shotgun: { build: baked('shotgun'), palette: STEEL, scale: 0.84 },
     pistol: { build: baked('pistol'), palette: STEEL, scale: 1.15 },
-    optic: { build: optic, palette: STEEL, scale: 1.05 },
+    optic: { build: baked('optic'), palette: STEEL, scale: 1.05 },
     reddot: { build: baked('reddot'), palette: STEEL, scale: 1.35 },
     binocular: { build: baked('binocular'), palette: STEEL, scale: 1.25 },
     cartridge: { build: cartridge, palette: BRASS, scale: 1.15 },

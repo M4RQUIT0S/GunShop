@@ -58,9 +58,9 @@ de cada una, con cotas reales:
       boton del cargador, estrias, cola de castor. Mide el techo real de la
       regla nueva. Commit.
 - [x] **F2 · Rifle y escopeta.** Commit.
-- [ ] **F3 · Visor y punto rojo.** El visor pasa a Blender: las torretas no son
+- [x] **F3 · Visor y punto rojo.** El visor pasa a Blender: las torretas no son
       de revolucion. Commit.
-- [ ] **F4 · Prismaticos, maletin y cartucho.** El cartucho se queda escrito a
+- [x] **F4 · Prismaticos, maletin y cartucho.** El cartucho se queda escrito a
       mano: ranura y piston son dos tubos mas. Commit.
 - [ ] **F5 · CLAUDE.md con el presupuesto nuevo y el porque.** Commit.
 

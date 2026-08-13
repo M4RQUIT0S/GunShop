@@ -452,6 +452,33 @@ def shotgun():
     ])
 
 
+def optic():
+    # Visor 3-9x40 suelto. Un tubo de 25,4 mm con 340 de largo da una
+    # relacion de 13 a 1: mas gordo que eso parece un catalejo.
+    # Se hornea a 16 gajos, no a los 12 de por defecto, porque sustituye a un
+    # modelo escrito a mano que iba a 18 y no puede salir mas facetado.
+    SEG = 16
+
+    def torreta(eje, grados, base):
+        # Cuerpo y tapa se cortan sobre el mismo eje X y se giran juntos, asi
+        # la tapa cae siempre pegada al final del cuerpo. Calcularle una
+        # posicion aparte es como se queda flotando.
+        return [move(turn(tube(a, b, r, r, 10), math.radians(grados), eje), *base)
+                for a, b, r in ((0, 0.20, 0.15), (0.20, 0.27, 0.17))]
+
+    return build([
+        tube(-2.00, -1.55, 0.26, 0.26, SEG),        # campana del ocular
+        tube(-1.55, -1.38, 0.26, 0.155, SEG),
+        tube(-1.38, -0.20, 0.155, 0.155, SEG),      # tubo
+        tube(-1.12, -0.86, 0.19, 0.19, SEG),        # anillo de aumentos
+        chamfer(box(-0.22, 0.26, -0.30, 0.30, 0.46), 0.03),   # bloque de torretas
+    ] + torreta('Y', -90, (0.02, 0, 0.22)) + torreta('Z', -90, (0.02, -0.18, 0)) + [
+        tube(0.26, 1.05, 0.155, 0.155, SEG),
+        tube(1.05, 1.32, 0.155, 0.30, SEG),         # garganta
+        tube(1.32, 1.90, 0.30, 0.30, SEG),          # campana del objetivo
+    ])
+
+
 def reddot():
     # Visor reflex abierto: dos paredes y un cristal inclinado entre ellas.
     # Lo que lo distingue de un tubo es justo eso, que se ve a traves.
@@ -472,13 +499,27 @@ def reddot():
         turn(bm, math.radians(-90), axis)
         return move(bm, x, y, z)
 
+    # Marco del cristal: dos listones en el canto de arriba y el de abajo.
+    # Un reflex real lleva el vidrio montado en un bisel, no al aire.
+    def bisel(z0, z1, dx):
+        return box(0.44 + dx, 0.60 + dx, z0, z1, 0.38)
+
     return build([
         chamfer(box(-1.00, 1.00, -0.64, -0.36, 0.62), 0.03),   # base de carril
         tube(-0.40, 0.40, 0.075, 0.075, 8, 0, -0.50),          # tornillo de apriete
+        # Tornillos de fijacion al carril, que es por donde se sujeta.
+        move(turn(tube(0, 0.12, 0.075, 0.075, 8), math.radians(-90), 'Y'),
+             -0.62, 0, -0.68),
+        move(turn(tube(0, 0.12, 0.075, 0.075, 8), math.radians(-90), 'Y'),
+             0.62, 0, -0.68),
         chamfer(box(-0.92, 0.92, -0.38, -0.04, 0.54), 0.03),   # cuerpo
+        # Bandeja de la pila, a un costado y sobresaliendo 0,05.
+        chamfer(box(-0.72, -0.10, -0.32, -0.10, 0.10, y=0.30), 0.02),
         chamfer(move(slab(montante, 0.11), 0, 0.215, 0), 0.02),
         chamfer(move(slab(montante, 0.11), 0, -0.215, 0), 0.02),
         slab(cristal, 0.34),
+        bisel(0.74, 0.84, 0.0),
+        bisel(-0.06, 0.04, 0.22),
         tornillo(-0.34, 0, -0.10, 'Y'),                        # alza
         tornillo(-0.34, 0.20, -0.20, 'Z'),                     # deriva
     ])
@@ -510,12 +551,28 @@ def gunCase():
         # enrasado no se veria.
         return chamfer(box(x - 0.20, x + 0.20, -0.18, 0.20, 0.96), 0.03)
 
+    def rueda(y):
+        # Las de una maleta de tirador van en un extremo, no debajo: se lleva
+        # inclinada, como una maleta de viaje.
+        return move(turn(tube(0, 0.10, 0.19, 0.19, 10), math.radians(90), 'Z'),
+                    -2.22, y, -0.40)
+
     return build([
         chamfer(slab(base, 0.88), 0.04),
         chamfer(slab(tapa, 0.88), 0.04),
         ring(asa_ext, asa_int, 0.26),
         cierre(-1.45),
+        cierre(-0.55),
+        cierre(0.55),
         cierre(1.45),
+        rueda(0.34), rueda(-0.44),
+        # Valvula de compensacion de presion: el boton redondo del frente, que
+        # es lo que distingue una maleta estanca de una caja de herramientas.
+        move(turn(tube(0, 0.05, 0.12, 0.12, 10), math.radians(-90), 'Z'),
+             2.10, 0.44, -0.16),
+        # Nervios de apilado en la tapa.
+        box(-1.90, 1.90, 0.46, 0.50, 0.16, y=0.24),
+        box(-1.90, 1.90, 0.46, 0.50, 0.16, y=-0.24),
         box(-1.92, -1.48, -0.58, -0.44, 0.80),                 # pies
         box(1.48, 1.92, -0.58, -0.44, 0.80),
     ])
@@ -527,9 +584,13 @@ def binocular():
     # se separan y entre medias asoma la rueda de enfoque.
     def cuerpo(y):
         return [
+            tube(1.19, 1.28, 0.335, 0.335, 12, y, 0),  # bisel del objetivo
             tube(0.58, 1.25, 0.24, 0.32, 12, y, 0),    # campana del objetivo
             tube(-0.80, 0.58, 0.22, 0.22, 12, y, 0),
-            tube(-1.18, -0.80, 0.17, 0.20, 12, y, 0),  # ocular
+            tube(-1.10, -0.80, 0.17, 0.20, 12, y, 0),
+            # Copa del ocular: se ensancha en el borde, que es donde apoya la
+            # cuenca del ojo. Sin ese reborde el ocular es un tubo cortado.
+            tube(-1.30, -1.10, 0.21, 0.21, 12, y, 0),
         ]
 
     # Solo ocupa el hueco entre los dos cuerpos (0,34 de los 0,36 que quedan
@@ -544,10 +605,17 @@ def binocular():
     return build(cuerpo(0.40) + cuerpo(-0.40) + [
         chamfer(slab(espinazo, 0.34), 0.03),
         move(rueda, -0.12, -0.16, 0.16),
+        # Anillo de dioptrias, solo en un ocular: en un prismatico real la
+        # correccion va en uno de los dos, no en los dos.
+        tube(-0.86, -0.74, 0.245, 0.245, 12, -0.40, 0),
+        # Tapa de la rosca de tripode, en el frente del espinazo.
+        move(turn(tube(0, 0.06, 0.09, 0.09, 8), math.radians(-90), 'Z'),
+             0.30, 0.17, -0.04),
     ])
 
 
 MODELS = {
+    'optic': optic,
     'pistol': pistol,
     'rifle': rifle,
     'shotgun': shotgun,
