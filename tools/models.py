@@ -361,10 +361,81 @@ def shotgun():
     ])
 
 
+def reddot():
+    # Visor reflex abierto: dos paredes y un cristal inclinado entre ellas.
+    # Lo que lo distingue de un tubo es justo eso, que se ve a traves.
+    # Solo dos montantes cortos delante, no dos paredes de punta a punta: por
+    # encima del cuerpo tiene que quedar aire, que es lo que se ve al apuntar.
+    montante = [
+        (0.20, -0.06), (0.90, -0.06), (0.92, 0.34), (0.72, 0.82),
+        (0.44, 0.82), (0.28, 0.40),
+    ]
+    # El cristal cae hacia delante: el canto de arriba queda mas cerca del
+    # tirador que el de abajo, que es como refleja el punto.
+    cristal = [(0.44, 0.80), (0.58, 0.80), (0.80, -0.02), (0.66, -0.02)]
+
+    def tornillo(x, y, z, axis):
+        # 'Y' lo pone de pie (alza), 'Z' lo saca de costado (deriva). Girar
+        # sobre X no haria nada: el tubo ya nace sobre ese eje.
+        bm = tube(0, 0.13, 0.10, 0.10, 8)
+        turn(bm, math.radians(-90), axis)
+        return move(bm, x, y, z)
+
+    return build([
+        chamfer(box(-1.00, 1.00, -0.64, -0.36, 0.62), 0.03),   # base de carril
+        tube(-0.40, 0.40, 0.075, 0.075, 8, 0, -0.50),          # tornillo de apriete
+        chamfer(box(-0.92, 0.92, -0.38, -0.04, 0.54), 0.03),   # cuerpo
+        chamfer(move(slab(montante, 0.11), 0, 0.215, 0), 0.02),
+        chamfer(move(slab(montante, 0.11), 0, -0.215, 0), 0.02),
+        slab(cristal, 0.34),
+        tornillo(-0.34, 0, -0.10, 'Y'),                        # alza
+        tornillo(-0.34, 0.20, -0.20, 'Z'),                     # deriva
+    ])
+
+
+def gunCase():
+    # La tapa va separada de la base por una ranura: ese hueco es lo que hace
+    # que se lea como maletin y no como ladrillo. El asa es un aro de verdad,
+    # con su agujero, no un bulto pegado encima.
+    base = [
+        (-2.42, -0.46), (2.42, -0.46), (2.48, -0.34), (2.48, -0.02),
+        (-2.48, -0.02), (-2.48, -0.34),
+    ]
+    tapa = [
+        (-2.48, 0.04), (2.48, 0.04), (2.48, 0.34), (2.40, 0.46),
+        (-2.40, 0.46), (-2.48, 0.34),
+    ]
+    asa_ext = [
+        (-0.50, 0.44), (0.50, 0.44), (0.54, 0.60), (0.46, 0.78),
+        (-0.46, 0.78), (-0.54, 0.60),
+    ]
+    asa_int = [
+        (-0.36, 0.44), (0.36, 0.44), (0.38, 0.58), (0.33, 0.67),
+        (-0.33, 0.67), (-0.38, 0.58),
+    ]
+
+    def cierre(x):
+        # Monta a caballo de la ranura y sobresale del cuerpo: si quedara
+        # enrasado no se veria.
+        return chamfer(box(x - 0.20, x + 0.20, -0.18, 0.20, 0.96), 0.03)
+
+    return build([
+        chamfer(slab(base, 0.88), 0.04),
+        chamfer(slab(tapa, 0.88), 0.04),
+        ring(asa_ext, asa_int, 0.26),
+        cierre(-1.45),
+        cierre(1.45),
+        box(-1.92, -1.48, -0.58, -0.44, 0.80),                 # pies
+        box(1.48, 1.92, -0.58, -0.44, 0.80),
+    ])
+
+
 MODELS = {
     'pistol': pistol,
     'rifle': rifle,
     'shotgun': shotgun,
+    'reddot': reddot,
+    'gcase': gunCase,
 }
 
 

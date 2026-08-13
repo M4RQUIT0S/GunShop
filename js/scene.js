@@ -129,19 +129,6 @@
     ]);
   }
 
-  function reddot() {
-    var body = [
-      [-0.90, -0.30], [0.90, -0.30], [0.90, 0.80], [0.52, 0.80],
-      [0.52, 0.10], [-0.46, 0.10], [-0.46, 0.80], [-0.90, 0.80]
-    ];
-    var base = [[-1.10, -0.62], [1.10, -0.62], [1.10, -0.30], [-1.10, -0.30]];
-    return merge([
-      extrude(body, 0.70),
-      extrude(base, 0.44),
-      tube(-0.30, -0.18, 0.16, 0.16, 12, 0.52, 0)
-    ]);
-  }
-
   function binocular() {
     function barrel(z) {
       return merge([
@@ -158,31 +145,15 @@
     ]);
   }
 
-  function gunCase() {
-    var shell = [
-      [-2.30, 0.44], [2.30, 0.44], [2.46, 0.26], [2.46, -0.26],
-      [2.30, -0.44], [-2.30, -0.44], [-2.46, -0.26], [-2.46, 0.26]
-    ];
-    var handle = [[-0.42, 0.44], [0.42, 0.44], [0.42, 0.78], [0.28, 0.78],
-      [0.28, 0.58], [-0.28, 0.58], [-0.28, 0.78], [-0.42, 0.78]];
-    var latch = [[-0.10, -0.50], [0.10, -0.50], [0.10, 0.50], [-0.10, 0.50]];
-    return merge([
-      extrude(shell, 0.86),
-      extrude(handle, 0.24),
-      shift(extrude(latch, 0.92), -1.45, 0, 0),
-      shift(extrude(latch, 0.92), 1.45, 0, 0)
-    ]);
-  }
-
   var MODELS = {
     rifle: { build: baked('rifle'), palette: STEEL, scale: 1 },
     shotgun: { build: baked('shotgun'), palette: STEEL, scale: 1 },
     pistol: { build: baked('pistol'), palette: STEEL, scale: 1.15 },
     optic: { build: optic, palette: STEEL, scale: 1.05 },
-    reddot: { build: reddot, palette: STEEL, scale: 1.35 },
+    reddot: { build: baked('reddot'), palette: STEEL, scale: 1.35 },
     binocular: { build: binocular, palette: STEEL, scale: 1.25 },
     cartridge: { build: cartridge, palette: BRASS, scale: 1.15 },
-    gcase: { build: gunCase, palette: STEEL, scale: 1 }
+    gcase: { build: baked('gcase'), palette: STEEL, scale: 1 }
   };
 
   var cache = {};
