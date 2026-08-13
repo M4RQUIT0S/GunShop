@@ -31,7 +31,7 @@ rehacen en Blender.
 
 - [x] **F1 · Tuberia completa con la pistola.** Es el peor modelo (37 caras).
       Exportador, `js/meshes.js`, orden de scripts, selftest. Commit.
-- [ ] **F2 · Rifle y escopeta.** Culata con conicidad, guardamonte real. Commit.
+- [x] **F2 · Rifle y escopeta.** Culata con conicidad, guardamonte real. Commit.
 - [ ] **F3 · Punto rojo y maletin.** Commit.
 - [ ] **F4 · Prismaticos** (opcional, tiene costuras feas en el puente).
 - [ ] **F5 · Documentacion:** CLAUDE.md con la tuberia y como regenerar. Commit.

@@ -14,6 +14,8 @@ import math
 import os
 import sys
 
+from mathutils import Matrix, Vector
+
 TAU = math.pi * 2
 
 # ------------------------------------------------------------------ #
@@ -49,8 +51,9 @@ def slab(profile, width):
     contorno proyectado, que a estas diferencias no se distingue.
     """
     n = len(profile)
-    w = [width * 0.5] * n if isinstance(width, (int, float)) else list(width)
+    w = [width] * n if isinstance(width, (int, float)) else list(width)
     assert len(w) == n, 'un ancho por punto del perfil'
+    w = [x * 0.5 for x in w]  # siempre ancho total, venga suelto o en lista
 
     near = [(profile[i][0], w[i], profile[i][1]) for i in range(n)]
     far = [(profile[i][0], -w[i], profile[i][1]) for i in range(n)]
@@ -110,6 +113,19 @@ def box(x0, x1, z0, z1, width, y=0.0):
         [(x0, y - h, z0), (x0, y + h, z0), (x0, y + h, z1), (x0, y - h, z1)],
         [(x1, y + h, z0), (x1, y - h, z0), (x1, y - h, z1), (x1, y + h, z1)],
     ])
+
+
+def turn(bm, angle, axis, pivot=(0, 0, 0)):
+    """Gira una pieza ya construida. Los tubos nacen sobre el eje X: esto es
+    lo que tumba el manillar del cerrojo, que sale de lado."""
+    bmesh.ops.rotate(bm, cent=Vector(pivot), verts=bm.verts[:],
+                     matrix=Matrix.Rotation(angle, 3, axis))
+    return bm
+
+
+def move(bm, dx, dy, dz):
+    bmesh.ops.translate(bm, vec=Vector((dx, dy, dz)), verts=bm.verts[:])
+    return bm
 
 
 def chamfer(bm, offset, segments=1):
@@ -251,8 +267,104 @@ def pistol():
     ])
 
 
+def rifle():
+    # Culata de una pieza: cantonera, carrillera, muneca, empunadura y
+    # guardamano salen del mismo perfil, que es como esta hecha de verdad.
+    # El escalon de los puntos 11-13 es el rebaje donde se aloja el
+    # guardamonte; sin el, el aro quedaria enterrado en la madera.
+    culata = [
+        (-2.10, 0.34), (-1.78, 0.40), (-1.40, 0.34), (-1.16, 0.22),
+        (-0.88, 0.14), (-0.34, 0.10), (0.62, 0.06), (0.80, 0.00),
+        (1.52, -0.02), (1.56, -0.24), (0.70, -0.32), (0.16, -0.30),
+        (0.12, -0.08), (-0.48, -0.12), (-0.58, -0.46), (-0.72, -0.86),
+        (-1.04, -0.90), (-1.20, -0.52), (-1.34, -0.16), (-1.62, -0.26),
+        (-2.10, -0.34),
+    ]
+    # Un ancho por punto. Aqui esta la diferencia con la chapa: la muneca
+    # estrangula a 0,28 y la cantonera abre a 0,44.
+    anchos = [
+        0.44, 0.38, 0.32, 0.28, 0.30, 0.34, 0.36, 0.36, 0.34, 0.34,
+        0.36, 0.36, 0.34, 0.32, 0.30, 0.30, 0.30, 0.28, 0.28, 0.38,
+        0.44,
+    ]
+    guarda_ext = [
+        (0.14, -0.06), (0.16, -0.22), (0.04, -0.34), (-0.24, -0.38),
+        (-0.44, -0.32), (-0.50, -0.14), (-0.48, -0.06),
+    ]
+    guarda_int = [
+        (0.06, -0.06), (0.08, -0.21), (0.00, -0.28), (-0.22, -0.31),
+        (-0.37, -0.26), (-0.42, -0.13), (-0.40, -0.06),
+    ]
+    # El manillar nace sobre X y se tumba: 90 grados lo saca de costado y
+    # otros 35 lo dejan caido, que es como se agarra.
+    def cerrojo(x0, x1, r):
+        bm = tube(x0, x1, r, r, 8)
+        turn(bm, math.radians(90), 'Z')
+        turn(bm, math.radians(-35), 'X')
+        return move(bm, -0.06, 0, 0.26)
+
+    return build([
+        chamfer(slab(culata, anchos), 0.022),
+        chamfer(box(-0.34, 0.66, 0.06, 0.42, 0.32), 0.03),
+        tube(0.62, 2.32, 0.105, 0.075, 12, 0, 0.24),
+        ring(guarda_ext, guarda_int, 0.16),
+        box(-0.30, -0.20, -0.30, -0.08, 0.10),          # disparador
+        cerrojo(0.0, 0.30, 0.045),
+        cerrojo(0.28, 0.42, 0.075),                     # perilla
+        box(-0.20, 0.30, -0.32, -0.10, 0.26),           # cargador
+        # Visor: cuerpo, garganta y campana del objetivo, mas las dos anillas
+        # que lo amarran al cajon. La campana va delante, no detras.
+        tube(-0.90, 0.20, 0.135, 0.135, 12, 0, 0.66),
+        tube(0.20, 0.42, 0.135, 0.20, 12, 0, 0.66),
+        tube(0.42, 0.95, 0.20, 0.20, 12, 0, 0.66),
+        box(-0.56, -0.44, 0.40, 0.62, 0.20),
+        box(0.04, 0.16, 0.40, 0.62, 0.20),
+    ])
+
+
+def shotgun():
+    # Una superpuesta no es un rifle con dos canos: el guardamano es una
+    # pieza suelta, el cajon se parte y encima lleva la llave de apertura.
+    # Sin eso el modelo se lee como otro rifle.
+    culata = [
+        (-2.20, 0.34), (-1.85, 0.40), (-1.35, 0.36), (-0.95, 0.30),
+        (-0.34, 0.26), (-0.34, -0.12), (-0.52, -0.14), (-0.62, -0.46),
+        (-0.92, -0.54), (-1.06, -0.32), (-1.45, -0.30), (-1.85, -0.32),
+        (-2.20, -0.34),
+    ]
+    anchos = [
+        0.44, 0.38, 0.32, 0.28, 0.34, 0.34, 0.30, 0.28, 0.28, 0.28,
+        0.32, 0.40, 0.44,
+    ]
+    guardamano = [
+        (1.52, 0.00), (1.46, -0.20), (1.10, -0.32), (0.66, -0.32),
+        (0.50, -0.20), (0.50, 0.00),
+    ]
+    guarda_ext = [
+        (0.10, -0.12), (0.12, -0.28), (0.00, -0.40), (-0.24, -0.44),
+        (-0.42, -0.36), (-0.46, -0.14),
+    ]
+    guarda_int = [
+        (0.02, -0.12), (0.04, -0.27), (-0.04, -0.34), (-0.22, -0.37),
+        (-0.35, -0.30), (-0.38, -0.13),
+    ]
+    return build([
+        chamfer(slab(culata, anchos), 0.022),
+        chamfer(box(-0.36, 0.48, -0.14, 0.30, 0.38), 0.035),   # cajon
+        tube(0.44, 2.30, 0.09, 0.085, 12, 0, 0.22),            # cano superior
+        tube(0.44, 2.30, 0.09, 0.085, 12, 0, 0.02),            # cano inferior
+        box(0.50, 2.30, 0.30, 0.335, 0.10),                    # banda de mira
+        chamfer(slab(guardamano, 0.34), 0.03),
+        ring(guarda_ext, guarda_int, 0.16),
+        box(-0.26, -0.16, -0.36, -0.14, 0.10),                 # disparador
+        box(-0.12, 0.16, 0.30, 0.36, 0.11),                    # llave de apertura
+    ])
+
+
 MODELS = {
     'pistol': pistol,
+    'rifle': rifle,
+    'shotgun': shotgun,
 }
 
 
