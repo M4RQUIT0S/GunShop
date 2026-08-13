@@ -193,17 +193,53 @@ def check(name, verts, faces):
     assert vol > 1e-4, '%s: volumen %.5f, la pieza esta del reves' % (name, vol)
 
 
+def caja(verts):
+    return ([min(v[i] for v in verts) for i in range(3)],
+            [max(v[i] for v in verts) for i in range(3)])
+
+
+def sepultada(chica, grande, holgura=1e-4):
+    """La caja de una cabe entera dentro de la de la otra."""
+    (alo, ahi), (blo, bhi) = chica, grande
+    return all(alo[i] >= blo[i] - holgura and ahi[i] <= bhi[i] + holgura
+               for i in range(3))
+
+
+def compacidad(verts, faces):
+    """Que fraccion de su caja llena el solido.
+
+    Hace falta porque un aro llena muy poco la suya: el disparador cae dentro
+    de la caja del guardamonte pero por su agujero, no por su material, y ahi
+    se ve perfectamente. Solo los solidos que llenan su caja pueden enterrar
+    a otra pieza.
+    """
+    lo, hi = caja(verts)
+    v = (hi[0] - lo[0]) * (hi[1] - lo[1]) * (hi[2] - lo[2])
+    return abs(volume(verts, faces)) / v if v > 1e-9 else 0.0
+
+
 def build(parts):
     """Une los solidos de un modelo. Cada uno se comprueba por separado:
-    juntos dejarian de ser cerrados donde se cruzan."""
-    verts, faces = [], []
+    juntos dejarian de ser cerrados donde se cruzan.
+
+    Y ademas ninguno puede quedar encerrado en otro. Girar un tubo hacia el
+    lado que no es lo mete dentro de la pieza que deberia decorar: no falla
+    nada, simplemente no se ve, y eso solo se descubre mirando pixeles. Aqui
+    salta al exportar.
+    """
+    piezas, verts, faces = [], [], []
     for i, bm in enumerate(parts):
         pv, pf = dump(bm)
         check('pieza %d' % i, pv, pf)
+        piezas.append((caja(pv), compacidad(pv, pf)))
         base = len(verts)
         verts.extend(pv)
         faces.extend([[k + base for k in f] for f in pf])
         bm.free()
+
+    for i, (a, _) in enumerate(piezas):
+        for j, (b, lleno) in enumerate(piezas):
+            assert i == j or lleno < 0.55 or not sepultada(a, b),                 'la pieza %d queda dentro de la %d y no se veria' % (i, j)
     return verts, faces
 
 
@@ -285,7 +321,7 @@ def pistol():
         ring(guarda_ext, guarda_int, 0.26),
         # Disparador con su leva de seguridad: dos piezas, no una paleta.
         box(-0.28, -0.16, -0.34, -0.04, 0.12),
-        box(-0.24, -0.20, -0.32, -0.06, 0.05, y=0.038),
+        box(-0.24, -0.20, -0.32, -0.06, 0.05, y=0.065),
         # El canon cruza la ventana en vez de asomar solo por la boca. Sin el,
         # el fondo del hueco tiene la misma normal que la cara de fuera y sale
         # del mismo color: la ventana se leia como una raya, no como un hueco.
@@ -385,7 +421,7 @@ def rifle():
         tube(0.78, 1.10, 0.21, 0.21, 12, 0, 0.66),
         chamfer(box(0.06, 0.32, 0.50, 0.82, 0.36), 0.02),      # bloque de torretas
         move(turn(tube(0, 0.16, 0.10, 0.10, 8), math.radians(-90), 'Y'), 0.19, 0, 0.80),
-        move(turn(tube(0, 0.16, 0.10, 0.10, 8), math.radians(-90), 'Z'), 0.19, 0.16, 0.66),
+        move(turn(tube(0, 0.16, 0.10, 0.10, 8), math.radians(-90), 'Z'), 0.19, -0.16, 0.66),
         box(-0.38, -0.26, 0.40, 0.62, 0.22),
         box(0.40, 0.52, 0.40, 0.62, 0.22),
     ])
@@ -506,7 +542,10 @@ def reddot():
 
     return build([
         chamfer(box(-1.00, 1.00, -0.64, -0.36, 0.62), 0.03),   # base de carril
-        tube(-0.40, 0.40, 0.075, 0.075, 8, 0, -0.50),          # tornillo de apriete
+        # Perno de apriete: cruza la base de lado a lado y asoma por los dos
+        # cantos. A lo largo del eje del visor quedaba dentro y no se veia.
+        move(turn(tube(0, 0.80, 0.075, 0.075, 8), math.radians(90), 'Z'),
+             -0.55, -0.40, -0.50),
         # Tornillos de fijacion al carril, que es por donde se sujeta.
         move(turn(tube(0, 0.12, 0.075, 0.075, 8), math.radians(-90), 'Y'),
              -0.62, 0, -0.68),
@@ -521,7 +560,7 @@ def reddot():
         bisel(0.74, 0.84, 0.0),
         bisel(-0.06, 0.04, 0.22),
         tornillo(-0.34, 0, -0.10, 'Y'),                        # alza
-        tornillo(-0.34, 0.20, -0.20, 'Z'),                     # deriva
+        tornillo(-0.34, -0.22, -0.20, 'Z'),                    # deriva
     ])
 
 
@@ -568,8 +607,8 @@ def gunCase():
         rueda(0.34), rueda(-0.44),
         # Valvula de compensacion de presion: el boton redondo del frente, que
         # es lo que distingue una maleta estanca de una caja de herramientas.
-        move(turn(tube(0, 0.05, 0.12, 0.12, 10), math.radians(-90), 'Z'),
-             2.10, 0.44, -0.16),
+        move(turn(tube(0, 0.10, 0.12, 0.12, 10), math.radians(90), 'Z'),
+             2.10, 0.40, -0.16),
         # Nervios de apilado en la tapa.
         box(-1.90, 1.90, 0.46, 0.50, 0.16, y=0.24),
         box(-1.90, 1.90, 0.46, 0.50, 0.16, y=-0.24),
@@ -608,9 +647,10 @@ def binocular():
         # Anillo de dioptrias, solo en un ocular: en un prismatico real la
         # correccion va en uno de los dos, no en los dos.
         tube(-0.86, -0.74, 0.245, 0.245, 12, -0.40, 0),
-        # Tapa de la rosca de tripode, en el frente del espinazo.
-        move(turn(tube(0, 0.06, 0.09, 0.09, 8), math.radians(-90), 'Z'),
-             0.30, 0.17, -0.04),
+        # Tapa de la rosca de tripode: en el frente del espinazo y mirando
+        # adelante, que es donde va. El tubo ya nace sobre X, girarlo la
+        # metia dentro del propio espinazo.
+        move(tube(0, 0.10, 0.09, 0.09, 8), 0.36, 0, -0.04),
     ])
 
 
@@ -658,7 +698,10 @@ def num(x):
 def emit(path):
     out = [HEAD]
     for name in sorted(MODELS):
-        verts, faces = MODELS[name]()
+        try:
+            verts, faces = MODELS[name]()
+        except AssertionError as e:
+            raise AssertionError('%s: %s' % (name, e))
         check(name, verts, faces)
         sys.stdout.write('  %-10s %4d vertices  %4d caras\n'
                          % (name, len(verts), len(faces)))
