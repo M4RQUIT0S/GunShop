@@ -217,44 +217,90 @@ def build(parts):
 
 
 def pistol():
-    corredera = [
-        (-1.30, 0.26), (1.36, 0.26), (1.42, 0.32), (1.42, 0.56),
-        (1.34, 0.62), (-1.22, 0.62), (-1.30, 0.54),
+    # Pistola de servicio de polimero, cotas de una Glock 17: 204 mm de largo
+    # por 138 de alto, corredera de 25,5 mm y empunadura de 30. A 75 mm por
+    # unidad eso es 2,72 x 1,84.
+    ANCHO = 0.34          # corredera
+    MEDIA = ANCHO * 0.5
+
+    # La ventana de expulsion no se finge: la corredera real es un puente por
+    # debajo del hueco y una pared a un solo lado. Cuatro bloques cerrados
+    # hacen esa forma, y las paredes interiores del hueco quedan de cara al
+    # observador, o sea que pintan oscuro. Que es como se ve una ventana.
+    PORT_X0, PORT_X1 = 0.30, 0.88
+    PORT_Z = 0.37
+
+    trasera = [
+        (-1.30, 0.24), (0.30, 0.24), (0.30, 0.62), (-1.22, 0.62), (-1.30, 0.54),
     ]
-    # La empunadura se inclina 16 grados: el canto de abajo cae mas atras que
-    # el de arriba, que es lo que distingue una pistola de un taladro.
+    delantera = [
+        (0.88, 0.24), (1.36, 0.24), (1.42, 0.30), (1.42, 0.56),
+        (1.34, 0.62), (0.88, 0.62),
+    ]
+
+    # Ranuras de los dedos en el frente de la empunadura y cola de castor
+    # arriba y detras. Van en el perfil: es silueta, y la silueta sale gratis.
     empunadura = [
-        (-0.33, 0.04), (-0.42, -0.40), (-0.52, -0.84), (-0.60, -1.16),
-        (-0.70, -1.32), (-1.38, -1.32), (-1.40, -1.10), (-1.36, -0.62),
-        (-1.28, 0.04),
+        (-0.32, 0.04), (-0.41, -0.32), (-0.49, -0.60), (-0.485, -0.72),
+        (-0.525, -0.86), (-0.52, -0.98), (-0.565, -1.12), (-0.56, -1.22),
+        (-0.68, -1.34), (-1.40, -1.34), (-1.42, -1.08), (-1.38, -0.58),
+        (-1.33, -0.12), (-1.44, 0.06), (-1.30, 0.20),
     ]
-    # La pata trasera del guardamonte se mete dentro de la empunadura en vez
-    # de quedarse a un lado: en un arma real ese aro nace del frente de la
-    # empunadura, y separados se leen como dos piezas sueltas.
+    anchos = [0.40, 0.41, 0.41, 0.41, 0.41, 0.40, 0.40, 0.39,
+              0.38, 0.38, 0.39, 0.40, 0.40, 0.36, 0.34]
+
     guarda_ext = [
-        (0.26, 0.06), (0.32, -0.12), (0.28, -0.34), (0.14, -0.48),
-        (-0.18, -0.52), (-0.38, -0.44), (-0.46, -0.22), (-0.40, 0.06),
+        (0.26, 0.06), (0.32, -0.10), (0.31, -0.26), (0.24, -0.40),
+        (0.10, -0.50), (-0.10, -0.53), (-0.28, -0.49), (-0.40, -0.38),
+        (-0.46, -0.20), (-0.40, 0.06),
     ]
     guarda_int = [
-        (0.16, 0.06), (0.21, -0.13), (0.18, -0.30), (0.08, -0.39),
-        (-0.16, -0.42), (-0.30, -0.36), (-0.36, -0.20), (-0.31, 0.06),
+        (0.16, 0.06), (0.21, -0.11), (0.20, -0.24), (0.15, -0.33),
+        (0.05, -0.40), (-0.10, -0.42), (-0.23, -0.39), (-0.31, -0.30),
+        (-0.36, -0.18), (-0.31, 0.06),
     ]
+
+    # Estrias de amartillado. Sobresalen 0,035 (tres pixeles a tamano de
+    # ficha) y cruzan la corredera de canto a canto: asi rompen silueta y no
+    # dependen de que el ordenado por profundidad las ponga delante del panel.
+    estrias = []
+    for i in range(5):
+        x = -1.20 + i * 0.115
+        for lado in (1, -1):
+            estrias.append(box(x, x + 0.055, 0.26, 0.60, 0.07,
+                               y=lado * (MEDIA + 0.018)))
+
     return build([
-        chamfer(slab(corredera, 0.34), 0.04),
-        chamfer(box(-1.28, 0.98, 0.02, 0.28, 0.31), 0.025),
-        # Ancho por punto: la empunadura engorda en la palma y adelgaza hacia
-        # el cargador. Y es mas ancha que la corredera, no al reves: 30 mm
-        # contra 25,5. Con grosor constante esto es una tabla.
-        chamfer(slab(empunadura, [0.40, 0.41, 0.40, 0.38, 0.37,
-                                  0.37, 0.38, 0.40, 0.40]), 0.035),
+        chamfer(slab(trasera, ANCHO), 0.035),
+        chamfer(slab(delantera, ANCHO), 0.035),
+        box(PORT_X0, PORT_X1, 0.24, PORT_Z, ANCHO),          # puente bajo la ventana
+        box(PORT_X0, PORT_X1, PORT_Z, 0.62, 0.15, y=0.095),  # pared del lado opuesto
+    ] + estrias + [
+        chamfer(box(-1.30, 1.04, 0.06, 0.24, 0.31), 0.025),  # armazon
+        # Riel de accesorios: dos tramos con la ranura en medio, que es lo que
+        # lo distingue de un simple resalte.
+        box(0.42, 0.66, -0.01, 0.07, 0.26),
+        box(0.74, 1.02, -0.01, 0.07, 0.26),
+        chamfer(slab(empunadura, anchos), 0.03),
         ring(guarda_ext, guarda_int, 0.26),
+        # Disparador con su leva de seguridad: dos piezas, no una paleta.
         box(-0.28, -0.16, -0.34, -0.04, 0.12),
-        tube(1.34, 1.46, 0.085, 0.085, 10, 0, 0.44),
-        box(1.14, 1.24, 0.62, 0.70, 0.09),
-        box(-1.18, -1.08, 0.62, 0.72, 0.26),
-        # Base del cargador: sobresale un poco del cuerpo, que es lo que
-        # remata la empunadura por abajo.
-        chamfer(box(-1.42, -0.68, -1.44, -1.30, 0.44), 0.02),
+        box(-0.24, -0.20, -0.32, -0.06, 0.05, y=0.038),
+        # El canon cruza la ventana en vez de asomar solo por la boca. Sin el,
+        # el fondo del hueco tiene la misma normal que la cara de fuera y sale
+        # del mismo color: la ventana se leia como una raya, no como un hueco.
+        # Un cilindro ahi dentro reparte luz por cada gajo y ya se ve agujero.
+        tube(0.24, 1.46, 0.085, 0.085, 12, 0, 0.46),
+        # Retenida de corredera y boton del cargador, ambos a la izquierda.
+        box(-0.30, 0.10, 0.08, 0.17, 0.05, y=0.18),
+        box(-0.46, -0.34, -0.14, -0.02, 0.06, y=0.20),
+        box(0.16, 0.26, 0.04, 0.14, 0.40),                   # pasador de desmontaje
+        # Alza con su muesca: dos bloques y el hueco entre ellos. La muesca es
+        # silueta, que a este tamano se ve; un rebaje en la cara no.
+        box(-1.18, -1.08, 0.62, 0.74, 0.11, y=0.10),
+        box(-1.18, -1.08, 0.62, 0.74, 0.11, y=-0.10),
+        box(1.12, 1.22, 0.62, 0.72, 0.08),                   # punto de mira
+        chamfer(box(-1.44, -0.70, -1.46, -1.32, 0.44), 0.02),  # base del cargador
     ])
 
 

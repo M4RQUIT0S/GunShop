@@ -54,7 +54,7 @@ de cada una, con cotas reales:
 
 ## Fases
 
-- [ ] **F1 · Pistola.** La que mas gana: ventana de expulsion, riel, retenida,
+- [x] **F1 · Pistola.** La que mas gana: ventana de expulsion, riel, retenida,
       boton del cargador, estrias, cola de castor. Mide el techo real de la
       regla nueva. Commit.
 - [ ] **F2 · Rifle y escopeta.** Commit.
