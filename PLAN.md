@@ -33,8 +33,8 @@ rehacen en Blender.
       Exportador, `js/meshes.js`, orden de scripts, selftest. Commit.
 - [x] **F2 · Rifle y escopeta.** Culata con conicidad, guardamonte real. Commit.
 - [x] **F3 · Punto rojo y maletin.** Commit.
-- [ ] **F4 · Prismaticos** (opcional, tiene costuras feas en el puente).
-- [ ] **F5 · Documentacion:** CLAUDE.md con la tuberia y como regenerar. Commit.
+- [x] **F4 · Prismaticos** (opcional, tiene costuras feas en el puente).
+- [x] **F5 · Documentacion:** CLAUDE.md con la tuberia y como regenerar. Commit.
 
 ## Comprobaciones
 

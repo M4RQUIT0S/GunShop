@@ -22,21 +22,53 @@ node test/selftest.js
 ```
 
 Cubre lo que no se ve a simple vista: el catálogo es determinista, la
-paginación no repite ni pierde fichas, y las caras de las mallas 3D miran
-hacia fuera. Si tocas `js/catalog.js` o `js/scene.js`, ejecútalo.
+paginación no repite ni pierde fichas, y las mallas 3D cierran con las caras
+hacia fuera. Si tocas `js/catalog.js`, `js/scene.js` o `tools/models.py`,
+ejecútalo.
 
 ## Restricciones del código
 
 - Nada de `import`/`export` en `js/`: los scripts se cargan con `<script>`
   clásico para que funcione sobre `file://`. `js/scene.js` y `js/catalog.js`
   además exportan por `module.exports` sólo para el selftest en Node.
-- El orden de los `<script>` en `index.html` importa: scene → art → catalog →
-  nav → main.
+- El orden de los `<script>` en `index.html` importa: meshes → scene → art →
+  catalog → nav → main.
 - Un único motor de dibujo: `js/scene.js` pinta el fondo y, vía `js/art.js`,
   las imágenes de todas las fichas. No metas otra forma de generar imágenes.
+- `js/meshes.js` está **generado**: no se edita a mano. Ver «Modelos 3D».
 - Paleta oscura pero nunca negra pura (`--ink-900: #14181f`). Contraste mínimo
   4.5:1 sobre el fondo; los tokens de `css/tokens.css` ya están ajustados a eso.
 - Respetar `prefers-reduced-motion` en cualquier animación nueva.
+
+## Modelos 3D
+
+Las ocho piezas del catálogo salen de dos sitios distintos, a propósito:
+
+| Origen | Piezas | Por qué |
+|---|---|---|
+| `tools/models.py` (Blender) → `js/meshes.js` | rifle, escopeta, pistola, punto rojo, prismáticos, maletín | Necesitan volumen: culata que estrangula en la muñeca, guardamonte con su hueco, tapa separada de la base. Un perfil extruido con grosor constante da un recorte de cartón. |
+| `js/scene.js`, a mano | mira, cartucho | Son de revolución. Un tubo escrito son dos números; horneado, doscientos vértices. |
+
+Para regenerar tras tocar `tools/models.py`:
+
+```
+"D:\Editores Codigo\blender.exe" --background --factory-startup --python tools/models.py
+```
+
+Escribe `js/meshes.js` y aborta si alguna pieza no cierra o tiene el volumen
+negativo. Se modela en ejes de Blender (X a la boca, Y ancho, Z arriba) y se
+exporta girado a los de la escena; el giro tiene determinante +1, porque con
+un espejo se invertirían todas las caras y el recorte de traseras borraría la
+pieza entera.
+
+**El presupuesto es de 150-350 caras por modelo.** No es un límite de
+rendimiento: el render dibuja el borde de cada cara en dorado, y pasado ese
+número el plano técnico se convierte en una maraña. Por lo mismo no se
+triangula nunca al exportar, y los biseles van a un solo segmento.
+
+Nada de booleanos: cada modelo es una unión de sólidos cerrados simples. Un
+boolean deja n-gons rotos y vértices en T que el ordenado por profundidad
+pinta mal.
 
 ## Precios
 

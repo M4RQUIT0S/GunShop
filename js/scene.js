@@ -5,8 +5,10 @@
   var TAU = Math.PI * 2;
 
   /* ----------------------------------------------------------------- *
-   * Geometria: todo se construye con dos primitivas, perfil extruido   *
-   * y tubo. Suficiente para leerse como plano tecnico.                 *
+   * Geometria: las piezas de revolucion se escriben aqui con dos       *
+   * primitivas, perfil extruido y tubo. Las que necesitan volumen de   *
+   * verdad se hornean en Blender (tools/models.py) y entran por        *
+   * meshes.js ya en vertices.                                          *
    * ----------------------------------------------------------------- */
 
   // Area con signo del poligono: normaliza el sentido de giro a CCW.
@@ -62,13 +64,6 @@
       faces.push([i, i + seg, j + seg, j]);
     }
     return { verts: verts, faces: faces };
-  }
-
-  function shift(mesh, dx, dy, dz) {
-    return {
-      verts: mesh.verts.map(function (v) { return [v[0] + dx, v[1] + dy, v[2] + dz]; }),
-      faces: mesh.faces
-    };
   }
 
   function merge(parts) {
@@ -129,29 +124,13 @@
     ]);
   }
 
-  function binocular() {
-    function barrel(z) {
-      return merge([
-        tube(-1.30, -0.86, 0.24, 0.30, 16, 0, z),
-        tube(-0.86, 0.50, 0.30, 0.25, 16, 0, z),
-        tube(0.50, 0.98, 0.25, 0.17, 16, 0, z),
-        tube(0.98, 1.26, 0.17, 0.21, 16, 0, z)
-      ]);
-    }
-    var bridge = [[-0.22, -0.09], [0.26, -0.09], [0.26, 0.09], [-0.22, 0.09]];
-    return merge([
-      barrel(-0.62), barrel(0.62), extrude(bridge, 1.10),
-      tube(0.02, 0.22, 0.10, 0.10, 12, 0.26, 0)
-    ]);
-  }
-
   var MODELS = {
     rifle: { build: baked('rifle'), palette: STEEL, scale: 1 },
     shotgun: { build: baked('shotgun'), palette: STEEL, scale: 1 },
     pistol: { build: baked('pistol'), palette: STEEL, scale: 1.15 },
     optic: { build: optic, palette: STEEL, scale: 1.05 },
     reddot: { build: baked('reddot'), palette: STEEL, scale: 1.35 },
-    binocular: { build: binocular, palette: STEEL, scale: 1.25 },
+    binocular: { build: baked('binocular'), palette: STEEL, scale: 1.25 },
     cartridge: { build: cartridge, palette: BRASS, scale: 1.15 },
     gcase: { build: baked('gcase'), palette: STEEL, scale: 1 }
   };
@@ -372,7 +351,7 @@
   }
 
   var api = {
-    area2: area2, extrude: extrude, tube: tube, merge: merge, shift: shift,
+    area2: area2, extrude: extrude, tube: tube, merge: merge,
     normal: normal, rotate: rotate, render: render, yawAt: yawAt,
     models: MODELS, model: model, mount: mount,
     BASE_YAW: BASE_YAW, YAW_CENTER: YAW_CENTER, YAW_AMP: YAW_AMP

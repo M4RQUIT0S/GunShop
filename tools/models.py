@@ -430,12 +430,39 @@ def gunCase():
     ])
 
 
+def binocular():
+    # Techo, no porro: dos cuerpos rectos separados por un espinazo. El
+    # modelo viejo los pegaba tanto que se leian como una sola vaina; aqui
+    # se separan y entre medias asoma la rueda de enfoque.
+    def cuerpo(y):
+        return [
+            tube(0.58, 1.25, 0.24, 0.32, 12, y, 0),    # campana del objetivo
+            tube(-0.80, 0.58, 0.22, 0.22, 12, y, 0),
+            tube(-1.18, -0.80, 0.17, 0.20, 12, y, 0),  # ocular
+        ]
+
+    # Solo ocupa el hueco entre los dos cuerpos (0,34 de los 0,36 que quedan
+    # libres). Si lo hago tan ancho como la separacion entera, tapa el aire
+    # de en medio y los dos cilindros se leen como un tronco.
+    espinazo = [
+        (-0.46, 0.08), (-0.40, 0.18), (0.34, 0.18), (0.40, 0.06),
+        (0.40, -0.10), (0.34, -0.20), (-0.40, -0.20), (-0.46, -0.06),
+    ]
+    rueda = turn(tube(0, 0.32, 0.20, 0.20, 12), math.radians(90), 'Z')
+
+    return build(cuerpo(0.40) + cuerpo(-0.40) + [
+        chamfer(slab(espinazo, 0.34), 0.03),
+        move(rueda, -0.12, -0.16, 0.16),
+    ])
+
+
 MODELS = {
     'pistol': pistol,
     'rifle': rifle,
     'shotgun': shotgun,
     'reddot': reddot,
     'gcase': gunCase,
+    'binocular': binocular,
 }
 
 
@@ -446,7 +473,7 @@ MODELS = {
 HEAD = """/* meshes.js - GENERADO por tools/models.py, no editar a mano.
    Vertices horneados en Blender; los pinta js/scene.js, que sigue siendo el
    unico motor de dibujo. Para regenerar:
-     "D:\\\\Editores Codigo\\\\blender.exe" --background --factory-startup \\
+     "D:\\Editores Codigo\\blender.exe" --background --factory-startup \\
          --python tools/models.py */
 (function (global) {
   'use strict';
