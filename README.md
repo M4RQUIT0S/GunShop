@@ -13,7 +13,7 @@ node test/selftest.js   # catálogo, paginación y geometría 3D
 - `index.html` · estructura y orden de carga de los scripts
 - `css/tokens.css` · paleta y escala tipográfica
 - `js/scene.js` · motor 3D (fondo y fichas)
-- `js/meshes.js` · mallas horneadas en Blender (generado, no editar)
+- `js/meshes.js` · las 7 mallas horneadas en Blender (generado, no editar)
 - `tools/models.py` · las modela y las exporta
 - `js/catalog.js` · 102 referencias reales, precios en USD y cambio a pesos
 - `js/main.js` · rejilla infinita, filtros y cesta

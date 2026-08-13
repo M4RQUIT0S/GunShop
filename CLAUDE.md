@@ -42,12 +42,23 @@ ejecútalo.
 
 ## Modelos 3D
 
-Las ocho piezas del catálogo salen de dos sitios distintos, a propósito:
+Siete de las ocho piezas se modelan en `tools/models.py` con Blender y se
+hornean a `js/meshes.js`. La octava, el cartucho, sigue escrita a mano en
+`js/scene.js`: es pura revolucion y no gana nada pasando por Blender.
 
-| Origen | Piezas | Por qué |
+Cada modelo apunta a un arquetipo con cotas reales, porque uno solo sirve a
+toda una familia del catalogo:
+
+| Modelo | Arquetipo | Lo que lo delata |
 |---|---|---|
-| `tools/models.py` (Blender) → `js/meshes.js` | rifle, escopeta, pistola, punto rojo, prismáticos, maletín | Necesitan volumen: culata que estrangula en la muñeca, guardamonte con su hueco, tapa separada de la base. Un perfil extruido con grosor constante da un recorte de cartón. |
-| `js/scene.js`, a mano | mira, cartucho | Son de revolución. Un tubo escrito son dos números; horneado, doscientos vértices. |
+| `pistol` | pistola de servicio de polimero, 204 x 138 mm | ventana de expulsion con el canon dentro, riel, estrias |
+| `rifle` | cerrojo de caza con visor 3-9x40 | culata que estrangula en la muneca, manillar, torretas |
+| `shotgun` | superpuesta de tiro | banda ventilada sobre pilares, pico de pato, llave caida |
+| `optic` | visor 3-9x40 | torretas de alza y deriva, anillo de aumentos |
+| `reddot` | reflex abierto | dos montantes con aire en medio y el cristal inclinado |
+| `binocular` | prismatico de techo 10x42 | oculares con copa, rueda de enfoque, dioptrias |
+| `gcase` | maleta rigida estanca | ranura de tapa, cuatro cierres, valvula, ruedas |
+| `cartridge` | vaina de gollete | piston, ranura de extraccion, hombro |
 
 Para regenerar tras tocar `tools/models.py`:
 
@@ -58,17 +69,46 @@ Para regenerar tras tocar `tools/models.py`:
 Escribe `js/meshes.js` y aborta si alguna pieza no cierra o tiene el volumen
 negativo. Se modela en ejes de Blender (X a la boca, Y ancho, Z arriba) y se
 exporta girado a los de la escena; el giro tiene determinante +1, porque con
-un espejo se invertirían todas las caras y el recorte de traseras borraría la
+un espejo se invertirian todas las caras y el recorte de traseras borraria la
 pieza entera.
 
-**El presupuesto es de 150-350 caras por modelo.** No es un límite de
-rendimiento: el render dibuja el borde de cada cara en dorado, y pasado ese
-número el plano técnico se convierte en una maraña. Por lo mismo no se
-triangula nunca al exportar, y los biseles van a un solo segmento.
+### Las cuatro reglas del detalle
 
-Nada de booleanos: cada modelo es una unión de sólidos cerrados simples. Un
-boolean deja n-gons rotos y vértices en T que el ordenado por profundidad
-pinta mal.
+Salen de medir, no de suponer: la misma pistola a 214, 694 y 2614 caras.
+
+1. **Presupuesto de 200 a 700 caras por modelo.** No es rendimiento: el render
+   dibuja el borde de cada cara en dorado, y pasado ese numero el plano
+   tecnico se vuelve una marana.
+2. **Bisel de un solo segmento, y nunca subdividido.** Lo que se fundio en la
+   prueba fue el bisel partido en cuatro, no el bisel: este da a cada canto un
+   valor de luz propio y es lo que separa una pieza de un prisma. Va en los
+   volumenes grandes; en los herrajes pequenos, no.
+3. **Nada que sobresalga menos de 0,03.** A tamano de ficha el encuadre da
+   85 px por unidad, asi que un resalte de 0,01 no llega a un pixel y solo
+   aporta raya. Por eso el grabado de las empunaduras no existe y las ranuras
+   de los dedos van en el perfil, que es silueta.
+4. **Cuidado con lo pegado a una superficie.** El pintor ordena por
+   profundidad media de cara: un control pequeno junto al extremo de un panel
+   grande puede quedar detras de el y desaparecer a ciertos angulos. Se monta
+   rompiendo silueta, y se revisa a yaw -1,45 y 0,9.
+
+Dos cosas mas que no cambian: no se triangula nunca al exportar, y nada de
+booleanos. Cada modelo es una union de solidos cerrados simples; un boolean
+deja n-gons rotos y vertices en T que el ordenado por profundidad pinta mal.
+
+### Hueco = pieza aparte, no rebaje
+
+Una cara con agujero no se puede dibujar, y un rebaje plano sale del mismo
+color que la superficie de al lado porque comparte normal. Asi que los huecos
+se construyen: la ventana de expulsion son cuatro bloques cerrados (puente
+debajo, pared a un lado) con el canon cruzando por dentro, y el guardamonte
+es un aro de quads. Fue la unica forma de que se leyeran como huecos.
+
+### Proporcion y encuadre
+
+Las armas largas se modelan con la relacion real canon/culata y se devuelven
+al hueco de la ficha bajando `scale` en `MODELS` (rifle 0,88, escopeta 0,84).
+Comprimir el canon para que quepa era lo que las hacia parecer de juguete.
 
 ## Precios
 
