@@ -1,0 +1,8 @@
+# Restos de trabajo: capturas, diffs y scratch de las revisiones.
+*.diff
+difftmp.txt
+shots/
+tmp/
+node_modules/
+.DS_Store
+Thumbs.db
