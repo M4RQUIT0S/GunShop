@@ -11,13 +11,27 @@ render dibuja el borde de cada cara, asi que subdividir una superficie plana
 es ruido puro mientras que una ventana de expulsion o un riel anaden lineas
 que el ojo lee como piezas.
 
-De ahi las dos reglas de esta tanda:
+De ahi las cuatro reglas de esta tanda:
 
 1. **Presupuesto 400-700 caras**, el doble que antes.
-2. **Se gasta en piezas, no en biseles.** El chaflan uniforme deja de
-   aplicarse por defecto: solo donde el arma real lo tiene (el corte de la
-   corredera, el canto de una tapa). Lo que se quita de bisel se invierte en
-   controles, aberturas y perfiles correctos.
+2. **El bisel de un segmento se queda; lo que nunca se hace es
+   subdividirlo.** Los modelos de la tanda anterior van chaflanados y salen
+   limpios: lo que se fundio en la prueba fue el bisel partido en cuatro, no
+   el bisel. El chaflan es ademas lo que da a cada canto un valor de luz
+   propio. Se mantiene en los volumenes grandes (corredera, culata, cajon,
+   cascos), se omite en los herrajes pequenos, y el presupuesto nuevo se
+   gasta en piezas **ademas** del bisel, no en su lugar.
+
+3. **Nada que sobresalga menos de 0,03.** A tamano de ficha el encuadre da
+   85 px por unidad: un resalte de 0,01 no llega a un pixel y solo aporta
+   raya. Por eso no hay grabado en la empunadura; las ranuras de los dedos
+   van en el perfil, que es silueta y sale gratis.
+
+4. **Ojo con lo pegado a una superficie.** El pintor ordena por profundidad
+   media de cara: un control pequeno junto al extremo de un panel grande
+   puede quedar detras de el y desaparecer a ciertos angulos. Se monta
+   rompiendo silueta o a caballo de dos piezas, y se revisa a yaw -1,45 y
+   0,9, que son los extremos del barrido.
 
 El resto de restricciones no cambia: nada de triangular, nada de booleanos,
 union de solidos cerrados, ejes con determinante +1.
