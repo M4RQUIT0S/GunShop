@@ -12,8 +12,8 @@ var a = catalog.build();
 var b = catalog.build();
 assert.strictEqual(a.length, b.length, 'el catalogo cambia de tamaño entre cargas');
 assert.deepStrictEqual(
-  a.map(function (p) { return p.id + '|' + p.price; }),
-  b.map(function (p) { return p.id + '|' + p.price; }),
+  a.map(function (p) { return p.id + '|' + p.usd; }),
+  b.map(function (p) { return p.id + '|' + p.usd; }),
   'el catalogo no es determinista'
 );
 
@@ -28,7 +28,7 @@ catalog.LINES.forEach(function (line) {
     }
     assert.ok(item.brand && item.ref && item.kind, line.id + ': ficha incompleta');
     assert.ok(item.spec && item.spec.length, line.id + '/' + item.ref + ': sin ficha tecnica');
-    assert.ok(item.price > 0, line.id + '/' + item.ref + ': precio invalido');
+    assert.ok(item.usd > 0, line.id + '/' + item.ref + ': precio invalido');
   });
 });
 
@@ -72,6 +72,35 @@ assert.strictEqual(none.total, a.length, 'size 0 no deberia cambiar el total');
 var over = catalog.page(a, 'todo', a.length + 50, catalog.PAGE);
 assert.deepStrictEqual(over.items, [], 'mas alla del final deberia venir vacio');
 assert.ok(over.done, 'mas alla del final deberia estar terminado');
+
+/* --- moneda ----------------------------------------------------------- */
+
+// Todo producto tiene precio y se puede expresar en las dos monedas.
+a.forEach(function (p) {
+  assert.ok(typeof p.usd === 'number' && p.usd > 0, p.id + ': sin precio en dolares');
+  Object.keys(catalog.MONEDAS).forEach(function (code) {
+    var txt = catalog.money(p.usd, code);
+    assert.ok(/\d/.test(txt), p.id + ': importe vacio en ' + code);
+  });
+});
+
+// Los pesos salen de multiplicar, no de una segunda lista que pueda
+// desincronizarse: mismo producto, mismo cambio, mismo importe.
+var ref = a[0];
+assert.strictEqual(catalog.money(ref.usd, 'usd'), catalog.money(ref.usd * 1, 'usd'));
+assert.strictEqual(
+  catalog.money(1, 'ars'),
+  catalog.money(catalog.ARS_POR_USD, 'usd'),
+  'un dolar no equivale a ARS_POR_USD pesos'
+);
+
+// Una moneda que no existe no puede reventar la ficha: cae en pesos.
+assert.strictEqual(catalog.money(100, 'yen'), catalog.money(100, 'ars'),
+  'una moneda desconocida deberia caer en pesos');
+
+// El recuento del titular es un numero suelto: nunca lleva moneda.
+assert.strictEqual(catalog.format(a.length), catalog.format(a.length));
+assert.ok(catalog.format(1520).indexOf('$') === -1, 'format no deberia poner moneda');
 
 /* --- geometria: las caras miran hacia fuera --------------------------- */
 

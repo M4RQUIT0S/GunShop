@@ -19,6 +19,18 @@
     return node;
   }
 
+  var STORE = 'gunshop:moneda';
+
+  function readMoney() {
+    try {
+      var saved = global.localStorage.getItem(STORE);
+      return shop.catalog.MONEDAS[saved] ? saved : 'ars';
+    } catch (e) {
+      // Sobre file:// hay navegadores que bloquean el almacenamiento.
+      return 'ars';
+    }
+  }
+
   function lineOf(id) {
     return shop.catalog.LINES.filter(function (l) { return l.id === id; })[0];
   }
@@ -44,6 +56,9 @@
     var hero = doc.getElementById('hero');
     var cartCount = doc.getElementById('cartCount');
     var scene = shop.scene.mount(doc.getElementById('scene'), { model: 'rifle' });
+
+    var moneyBox = doc.getElementById('money');
+    var money = readMoney();
 
     var filter = 'todo';
     var offset = 0;
@@ -82,8 +97,11 @@
       body.appendChild(el('div', 'card__rule'));
 
       var foot = el('div', 'card__foot');
-      var price = el('p', 'card__price', shop.catalog.price(product.price));
-      price.appendChild(el('span', null, '€'));
+      // El importe en dolares se queda en la ficha: cambiar de moneda es
+      // repintar, no volver a pedir el producto.
+      var price = el('p', 'card__price');
+      price.dataset.usd = product.usd;
+      paintPrice(price);
       foot.appendChild(price);
 
       var add = el('button', 'card__add', 'Añadir');
@@ -97,6 +115,38 @@
 
       return card;
     }
+
+    /* --- moneda -------------------------------------------------------- */
+
+    function paintPrice(node) {
+      node.textContent = '';
+      node.appendChild(el('span', null, shop.catalog.MONEDAS[money].simbolo));
+      node.appendChild(doc.createTextNode(
+        shop.catalog.money(Number(node.dataset.usd), money)));
+    }
+
+    function setMoney(next) {
+      if (next === money || !shop.catalog.MONEDAS[next]) return;
+      money = next;
+      try {
+        global.localStorage.setItem(STORE, money);
+      } catch (e) {
+        // Sin almacenamiento la eleccion dura lo que la pagina; no es un fallo.
+      }
+      Array.prototype.forEach.call(moneyBox.children, function (button) {
+        button.setAttribute('aria-pressed', String(button.dataset.money === money));
+      });
+      // Repintar en sitio: volver a paginar devolveria el scroll al principio.
+      Array.prototype.forEach.call(grid.querySelectorAll('.card__price'), paintPrice);
+    }
+
+    Array.prototype.forEach.call(moneyBox.children, function (button) {
+      button.setAttribute('aria-pressed', String(button.dataset.money === money));
+    });
+    moneyBox.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-money]');
+      if (button) setMoney(button.dataset.money);
+    });
 
     /* --- paginacion --------------------------------------------------- */
 
@@ -214,7 +264,7 @@
 
     // El titular cuenta lo mismo que la rejilla, no un numero escrito a mano.
     var total = doc.getElementById('statTotal');
-    if (total) total.textContent = shop.catalog.price(counts.todo);
+    if (total) total.textContent = shop.catalog.format(counts.todo);
 
     pump();
     shop.art.warm();

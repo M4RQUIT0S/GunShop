@@ -25,6 +25,29 @@
   color: var(--steel-600);
 }
 
+/* Control segmentado: vive en la cabecera y no en la barra de filtros
+   porque esa barra desplaza en horizontal y el selector quedaria fuera. */
+.money {
+  display: flex;
+  flex: 0 0 auto;
+  border: 1px solid var(--ink-600);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.money__opt {
+  padding: 0.5rem 0.85rem;
+  background: var(--ink-800);
+  border: 0;
+  font: 500 var(--step-mono)/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--steel-200);
+  cursor: pointer;
+  transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.money__opt + .money__opt { border-left: 1px solid var(--ink-600); }
+.money__opt:hover { color: var(--bone); }
+.money__opt[aria-pressed="true"] { background: var(--brass); color: var(--ink-900); }
+
 /* --- filtros ---------------------------------------------------------- */
 
 .filters {
@@ -177,7 +200,7 @@
   font: 600 1.35rem/1 var(--font-display);
   letter-spacing: 0.01em;
 }
-.card__price span { font-size: 0.85rem; color: var(--steel-400); margin-left: 0.15rem; }
+.card__price span { font-size: 0.8rem; color: var(--steel-400); margin-right: 0.2rem; }
 
 .card__add {
   padding: 0.5rem 0.85rem;
