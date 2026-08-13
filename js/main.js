@@ -266,6 +266,11 @@
     var total = doc.getElementById('statTotal');
     if (total) total.textContent = shop.catalog.format(counts.todo);
 
+    // El cambio del pie sale de la misma constante que los precios. El numero
+    // escrito en el HTML solo cubre el caso sin JS.
+    var cambio = doc.getElementById('cambioArs');
+    if (cambio) cambio.textContent = shop.catalog.format(shop.catalog.ARS_POR_USD);
+
     pump();
     shop.art.warm();
   }
