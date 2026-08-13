@@ -90,6 +90,18 @@
   var STEEL = { base: '#161a21', hi: '#5d6a78', edge: 'rgba(201,167,96,0.50)' };
   var BRASS = { base: '#3d2f16', hi: '#c9a760', edge: 'rgba(232,214,180,0.45)' };
 
+  // Las piezas con volumen de verdad se hornean en Blender (tools/models.py) y
+  // llegan por meshes.js. Las de revolucion salen mejor aqui: un tubo escrito
+  // son dos numeros y horneado son doscientos vertices.
+  // Se lee tarde a proposito, asi el orden de carga deja de importar.
+  function baked(name) {
+    return function () {
+      var all = (global.GunShop && global.GunShop.meshes) || {};
+      if (!all[name]) throw new Error('falta la malla "' + name + '": js/meshes.js');
+      return all[name];
+    };
+  }
+
   function rifle() {
     var stock = [
       [-2.10, 0.30], [-1.62, 0.41], [-1.20, 0.38], [-0.92, 0.32],
@@ -123,24 +135,6 @@
       tube(-0.14, 2.30, 0.085, 0.080, 14, 0.02, 0),
       tube(2.26, 2.34, 0.10, 0.10, 14, 0.20, 0),
       tube(2.26, 2.34, 0.10, 0.10, 14, 0.02, 0)
-    ]);
-  }
-
-  function pistol() {
-    var frame = [
-      [-1.30, 0.62], [1.40, 0.62], [1.44, 0.30], [1.10, 0.26],
-      [0.30, 0.24], [0.24, 0.02], [-0.28, 0.00], [-0.36, -0.30],
-      [-0.62, -0.34], [-0.72, -0.16], [-0.86, 0.10], [-1.02, 0.16],
-      [-1.30, 0.20]
-    ];
-    var grip = [
-      [-0.86, 0.10], [-0.34, 0.00], [-0.16, -1.10], [-0.40, -1.24],
-      [-0.86, -1.16], [-1.02, -0.30]
-    ];
-    return merge([
-      extrude(frame, 0.34),
-      extrude(grip, 0.30),
-      tube(0.30, 1.44, 0.075, 0.075, 12, 0.42, 0)
     ]);
   }
 
@@ -219,7 +213,7 @@
   var MODELS = {
     rifle: { build: rifle, palette: STEEL, scale: 1 },
     shotgun: { build: shotgun, palette: STEEL, scale: 1 },
-    pistol: { build: pistol, palette: STEEL, scale: 1.15 },
+    pistol: { build: baked('pistol'), palette: STEEL, scale: 1.15 },
     optic: { build: optic, palette: STEEL, scale: 1.05 },
     reddot: { build: reddot, palette: STEEL, scale: 1.35 },
     binocular: { build: binocular, palette: STEEL, scale: 1.25 },

@@ -3,6 +3,7 @@
 'use strict';
 
 var assert = require('assert');
+require('../js/meshes.js');
 var scene = require('../js/scene.js');
 var catalog = require('../js/catalog.js');
 
@@ -160,6 +161,31 @@ assert.strictEqual(pipe.faces.length, 10, 'al tubo le faltan caras');
 assert.ok(normalOf(pipe, 0)[0] < -0.99, 'la boca del tubo no mira a -X');
 assertOutward(pipe, 'tubo');
 assertOutward(scene.tube(0, 2, 0.6, 0.2, 10, 0, 0), 'cono');
+
+// Un solido cerrado recorre cada arista una vez en cada sentido. Las mallas
+// horneadas en Blender ya se comprueban al exportarlas, pero llegan aqui como
+// datos: si alguien edita meshes.js a mano o el volcado sale a medias, el
+// render dejaria un agujero por el que se ve el interior de la pieza.
+function assertClosed(mesh, label) {
+  var seen = Object.create(null);
+  mesh.faces.forEach(function (face, i) {
+    assert.ok(face.length >= 3, label + ': la cara ' + i + ' tiene ' + face.length + ' lados');
+    face.forEach(function (a, k) {
+      assert.ok(a >= 0 && a < mesh.verts.length, label + ': vertice ' + a + ' fuera de rango');
+      var key = a + '>' + face[(k + 1) % face.length];
+      assert.ok(!seen[key], label + ': arista ' + key + ' recorrida dos veces igual');
+      seen[key] = true;
+    });
+  });
+  Object.keys(seen).forEach(function (key) {
+    var p = key.split('>');
+    assert.ok(seen[p[1] + '>' + p[0]], label + ': la arista ' + key + ' no cierra');
+  });
+}
+
+Object.keys(scene.models).forEach(function (name) {
+  assertClosed(scene.model(name).mesh, name);
+});
 
 // A cualquier angulo se ve alrededor de la mitad de las caras: si el sentido
 // de giro estuviera mal, se verian casi todas o casi ninguna.

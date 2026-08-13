@@ -29,7 +29,7 @@ rehacen en Blender.
 
 ## Fases
 
-- [ ] **F1 · Tuberia completa con la pistola.** Es el peor modelo (37 caras).
+- [x] **F1 · Tuberia completa con la pistola.** Es el peor modelo (37 caras).
       Exportador, `js/meshes.js`, orden de scripts, selftest. Commit.
 - [ ] **F2 · Rifle y escopeta.** Culata con conicidad, guardamonte real. Commit.
 - [ ] **F3 · Punto rojo y maletin.** Commit.
