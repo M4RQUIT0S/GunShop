@@ -10,7 +10,7 @@
 
   var LINES = [
     {
-      id: 'rifles', label: 'Rifles', model: 'rifle', licence: 'Licencia D', seed: 8123,
+      id: 'rifles', label: 'Rifles', model: 'rifle', licence: 'Uso civil condicional', seed: 8123,
       items: [
         { brand: 'Bergara', ref: 'B-14 Ridge', kind: 'Rifle de cerrojo',
           cals: ['.308 Win', '.30-06 Sprg', '6,5 Creedmoor'],
@@ -51,16 +51,16 @@
         { brand: 'Benelli', ref: 'Argo E Comfort', kind: 'Rifle semiautomático',
           cals: ['.30-06 Sprg', '.300 Win Mag'],
           spec: ['cañón 510 mm', '3,3 kg'], usd: 2950 },
-        { brand: 'CZ', ref: '457 Varmint', kind: 'Rifle del 22',
+        { brand: 'CZ', ref: '457 Varmint', kind: 'Rifle del 22', licence: 'Uso civil', licence: 'Uso civil',
           cals: ['.22 LR'],
           spec: ['cañón 525 mm', '3,2 kg'], usd: 1210 },
-        { brand: 'Anschütz', ref: '1761 HB', kind: 'Rifle del 22',
+        { brand: 'Anschütz', ref: '1761 HB', kind: 'Rifle del 22', licence: 'Uso civil', licence: 'Uso civil',
           cals: ['.22 LR'],
           spec: ['cañón 560 mm', '3,4 kg', 'gatillo ajustable'], usd: 2800 }
       ]
     },
     {
-      id: 'escopetas', label: 'Escopetas', model: 'shotgun', licence: 'Licencia E', seed: 4471,
+      id: 'escopetas', label: 'Escopetas', model: 'shotgun', licence: 'Uso civil', seed: 4471,
       items: [
         { brand: 'AyA', ref: 'No. 4/53', kind: 'Paralela · Eibar',
           cals: ['cal. 12/70', 'cal. 20/70'],
@@ -92,33 +92,33 @@
         { brand: 'Zoli', ref: 'Z-Sport', kind: 'Superpuesta de tiro',
           cals: ['cal. 12/76'],
           spec: ['cañón 810 mm', '3,9 kg', 'culata regulable'], usd: 11550 },
-        { brand: 'Benelli', ref: 'Raffaello Crio', kind: 'Semiautomática',
+        { brand: 'Benelli', ref: 'Raffaello Crio', kind: 'Semiautomática', licence: 'Uso civil condicional',
           cals: ['cal. 12/76'],
           spec: ['cañón 710 mm', '3,0 kg', 'sistema inercial'], usd: 3000 },
-        { brand: 'Beretta', ref: 'A400 Xtreme Plus', kind: 'Semiautomática',
+        { brand: 'Beretta', ref: 'A400 Xtreme Plus', kind: 'Semiautomática', licence: 'Uso civil condicional',
           cals: ['cal. 12/89'],
           spec: ['cañón 760 mm', '3,4 kg', 'Kick-Off'], usd: 3400 },
-        { brand: 'Winchester', ref: 'SX4 Field', kind: 'Semiautomática',
+        { brand: 'Winchester', ref: 'SX4 Field', kind: 'Semiautomática', licence: 'Uso civil condicional',
           cals: ['cal. 12/76', 'cal. 20/76'],
           spec: ['cañón 710 mm', '3,2 kg'], usd: 1510 }
       ]
     },
     {
-      id: 'pistolas', label: 'Pistolas', model: 'pistol', licence: 'Licencia F', seed: 9902,
+      id: 'pistolas', label: 'Pistolas', model: 'pistol', licence: 'Uso civil condicional', seed: 9902,
       items: [
-        { brand: 'Pardini', ref: 'SP', kind: 'Pistola de precisión',
+        { brand: 'Pardini', ref: 'SP', kind: 'Pistola de precisión', licence: 'Uso civil',
           cals: ['.22 LR'], spec: ['cañón 152 mm', 'gatillo 1.000 g'], usd: 3200 },
-        { brand: 'Pardini', ref: 'K12 Absorber', kind: 'Pistola de aire',
+        { brand: 'Pardini', ref: 'K12 Absorber', kind: 'Pistola de aire', licence: 'Aire comprimido',
           cals: ['4,5 mm'], spec: ['gatillo 500 g', '940 g'], usd: 2600 },
-        { brand: 'Walther', ref: 'GSP Expert', kind: 'Pistola de precisión',
+        { brand: 'Walther', ref: 'GSP Expert', kind: 'Pistola de precisión', licence: 'Uso civil',
           cals: ['.22 LR'], spec: ['cañón 152 mm', 'gatillo 1.000 g'], usd: 4000 },
-        { brand: 'Walther', ref: 'LP500 Expert', kind: 'Pistola de aire',
+        { brand: 'Walther', ref: 'LP500 Expert', kind: 'Pistola de aire', licence: 'Aire comprimido',
           cals: ['4,5 mm'], spec: ['gatillo 500 g', '960 g'], usd: 3400 },
-        { brand: 'Morini', ref: 'CM 162 EI', kind: 'Pistola de aire',
+        { brand: 'Morini', ref: 'CM 162 EI', kind: 'Pistola de aire', licence: 'Aire comprimido',
           cals: ['4,5 mm'], spec: ['gatillo 500 g', '940 g'], usd: 2900 },
-        { brand: 'Feinwerkbau', ref: 'AW93', kind: 'Pistola de precisión',
+        { brand: 'Feinwerkbau', ref: 'AW93', kind: 'Pistola de precisión', licence: 'Uso civil',
           cals: ['.22 LR'], spec: ['cañón 153 mm', 'gatillo 1.000 g'], usd: 3600 },
-        { brand: 'Steyr', ref: 'EVO 10 E', kind: 'Pistola de aire',
+        { brand: 'Steyr', ref: 'EVO 10 E', kind: 'Pistola de aire', licence: 'Aire comprimido',
           cals: ['4,5 mm'], spec: ['gatillo 500 g', '960 g'], usd: 2700 },
         { brand: 'Beretta', ref: '92X Performance', kind: 'Arma corta de tiro',
           cals: ['9 mm Pb'], spec: ['cañón 125 mm', '15+1'], usd: 2600 },
@@ -165,7 +165,7 @@
     },
     {
       id: 'municion', label: 'Munición', model: 'cartridge',
-      licence: 'Guía de pertenencia', seed: 6605,
+      licence: 'Requiere TCCM', seed: 6605,
       items: [
         { brand: 'Federal', ref: 'Power-Shok .308 Win 150 gr', kind: 'Cartuchería metálica',
           spec: ['punta blanda', 'caja de 20'], usd: 70 },
@@ -282,7 +282,7 @@
             name: item.brand + ' ' + item.ref + (cal ? ' ' + cal : ''),
             spec: (cal ? [cal] : []).concat(item.spec).join(' · '),
             usd: item.usd,
-            licence: line.licence,
+            licence: item.licence || line.licence,
             stock: units === 0 ? 'order' : units === 1 ? 'last' : 'ok',
             units: units,
             // Relevancia: lo que hay en tienda pesa mas que lo que hay que encargar.

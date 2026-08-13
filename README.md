@@ -1,7 +1,8 @@
 # Armería Alcántara
 
-Tienda de armería para tiro deportivo y caza: catálogo con scroll infinito,
-esquema 3D de fondo que gira con el scroll y navegación responsive.
+Armería argentina para tiro deportivo y caza: catálogo con scroll infinito,
+esquema 3D de fondo que gira con el scroll y navegación responsive. Cada
+ficha lleva su régimen ANMaC y el precio en pesos o dólares.
 
 Sitio estático sin build ni dependencias: abre `index.html` en el navegador.
 

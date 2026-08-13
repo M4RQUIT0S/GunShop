@@ -50,8 +50,24 @@ tácticos. El resto de la lista se derivó de esas anclas por familia. Las
 piezas que casi no entran al país —paralelas de Eibar, pistolas de precisión
 ISSF, óptica alpina— van modeladas, no verificadas una a una.
 
-## Pendiente conocido
+## Régimen legal
 
-Las licencias D/E/F y el domicilio de Eibar son españoles; con precios
-argentinos eso queda incoherente. Adaptarlo a ANMaC (usuario legítimo,
-tenencia, portación) es una tarea aparte.
+La tienda es argentina y se rige por ANMaC. La etiqueta de cada ficha sale
+del art. 5 del decreto 395/75, que corta el arma de hombro en 5,6 mm y la
+pistola en 6,35 mm:
+
+| Etiqueta | Qué la lleva |
+|---|---|
+| `Uso civil` | escopetas tiro a tiro, rifles y pistolas del .22 |
+| `Uso civil condicional` | calibres mayores y toda semiautomática |
+| `Aire comprimido` | pistolas de 4,5 mm; no son armas de fuego |
+| `Requiere TCCM` | munición |
+| `null` → «Venta libre» | óptica y accesorios |
+
+`test/selftest.js` comprueba que ningún rifle salga con un régimen que no
+corresponde a su calibre. Al añadir productos, la familia pone la etiqueta
+por defecto y la ficha la sobreescribe con `licence:` si es una excepción.
+
+El pie cita las resoluciones vigentes (Tenencia Express 45/2025, TCCM
+14/2025, semiautomáticas 37/2025). Si cambia la normativa, ahí es donde hay
+que mirar.

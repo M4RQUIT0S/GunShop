@@ -73,6 +73,25 @@ var over = catalog.page(a, 'todo', a.length + 50, catalog.PAGE);
 assert.deepStrictEqual(over.items, [], 'mas alla del final deberia venir vacio');
 assert.ok(over.done, 'mas alla del final deberia estar terminado');
 
+/* --- regimen ANMaC ---------------------------------------------------- */
+
+// Las etiquetas son categorias del decreto 395/75, no texto libre: una mal
+// escrita anunciaria en la ficha un regimen que no existe.
+var REGIMENES = ['Uso civil', 'Uso civil condicional', 'Aire comprimido',
+  'Requiere TCCM', null];
+a.forEach(function (p) {
+  var reg = p.licence === undefined ? null : p.licence;
+  assert.ok(REGIMENES.indexOf(reg) !== -1, p.id + ': regimen desconocido ' + reg);
+});
+
+// El art. 5 corta el arma de hombro en 5,6 mm: un .22 nunca es condicional
+// y un calibre de caza mayor nunca deja de serlo.
+a.filter(function (p) { return p.cat === 'rifles'; }).forEach(function (p) {
+  var esVeintidos = p.spec.indexOf('.22 LR') === 0;
+  assert.strictEqual(p.licence, esVeintidos ? 'Uso civil' : 'Uso civil condicional',
+    p.id + ': regimen que no corresponde al calibre (' + p.spec + ')');
+});
+
 /* --- moneda ----------------------------------------------------------- */
 
 // Todo producto tiene precio y se puede expresar en las dos monedas.
