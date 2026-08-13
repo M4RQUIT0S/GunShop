@@ -57,7 +57,7 @@ de cada una, con cotas reales:
 - [x] **F1 · Pistola.** La que mas gana: ventana de expulsion, riel, retenida,
       boton del cargador, estrias, cola de castor. Mide el techo real de la
       regla nueva. Commit.
-- [ ] **F2 · Rifle y escopeta.** Commit.
+- [x] **F2 · Rifle y escopeta.** Commit.
 - [ ] **F3 · Visor y punto rojo.** El visor pasa a Blender: las torretas no son
       de revolucion. Commit.
 - [ ] **F4 · Prismaticos, maletin y cartucho.** El cartucho se queda escrito a

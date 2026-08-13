@@ -125,8 +125,8 @@
   }
 
   var MODELS = {
-    rifle: { build: baked('rifle'), palette: STEEL, scale: 1 },
-    shotgun: { build: baked('shotgun'), palette: STEEL, scale: 1 },
+    rifle: { build: baked('rifle'), palette: STEEL, scale: 0.88 },
+    shotgun: { build: baked('shotgun'), palette: STEEL, scale: 0.84 },
     pistol: { build: baked('pistol'), palette: STEEL, scale: 1.15 },
     optic: { build: optic, palette: STEEL, scale: 1.05 },
     reddot: { build: baked('reddot'), palette: STEEL, scale: 1.35 },

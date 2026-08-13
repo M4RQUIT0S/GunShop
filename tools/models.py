@@ -313,16 +313,16 @@ def rifle():
         (-2.10, 0.34), (-1.78, 0.40), (-1.40, 0.34), (-1.16, 0.22),
         (-0.88, 0.14), (-0.34, 0.10), (0.62, 0.06), (0.80, 0.00),
         (1.52, -0.02), (1.56, -0.24), (0.70, -0.32), (0.16, -0.30),
-        (0.12, -0.08), (-0.48, -0.12), (-0.58, -0.46), (-0.72, -0.86),
-        (-1.04, -0.90), (-1.20, -0.52), (-1.34, -0.16), (-1.62, -0.26),
-        (-2.10, -0.34),
+        (0.12, -0.08), (-0.48, -0.12), (-0.56, -0.44), (-0.66, -0.74),
+        (-0.86, -0.82), (-1.06, -0.74), (-1.18, -0.46), (-1.34, -0.16),
+        (-1.62, -0.26), (-2.10, -0.34),
     ]
     # Un ancho por punto. Aqui esta la diferencia con la chapa: la muneca
     # estrangula a 0,28 y la cantonera abre a 0,44.
     anchos = [
         0.44, 0.38, 0.32, 0.28, 0.30, 0.34, 0.36, 0.36, 0.34, 0.34,
-        0.36, 0.36, 0.34, 0.32, 0.30, 0.30, 0.30, 0.28, 0.28, 0.38,
-        0.44,
+        0.36, 0.36, 0.34, 0.32, 0.30, 0.30, 0.31, 0.30, 0.28, 0.28,
+        0.38, 0.44,
     ]
     guarda_ext = [
         (0.14, -0.06), (0.16, -0.22), (0.04, -0.34), (-0.24, -0.38),
@@ -338,24 +338,56 @@ def rifle():
         bm = tube(x0, x1, r, r, 8)
         turn(bm, math.radians(90), 'Z')
         turn(bm, math.radians(-35), 'X')
-        return move(bm, -0.06, 0, 0.26)
+        return move(bm, 0.10, 0, 0.30)
+
+    # Cantonera: pieza aparte y un pelo mas ancha que la culata, que es como
+    # se ve en el arma real, con su ceja sobresaliendo de la madera.
+    cantonera = [(-2.18, 0.36), (-2.04, 0.34), (-2.04, -0.34), (-2.18, -0.36)]
+
+    def anilla(x):
+        # Portafusil. Va bajo el guardamano y bajo la culata, colgando lo
+        # justo para verse en silueta.
+        return tube(-0.05, 0.05, 0.055, 0.055, 8, 0, 0)
+
+    # Ventana de expulsion del cajon, con la misma receta que la corredera de
+    # la pistola: puente por debajo, pared a un lado y el cerrojo cruzando el
+    # hueco para que se vea que hay algo dentro.
+    PORT = (0.04, 0.48, 0.28)
 
     return build([
         chamfer(slab(culata, anchos), 0.022),
-        chamfer(box(-0.34, 0.66, 0.06, 0.42, 0.32), 0.03),
-        tube(0.62, 2.32, 0.105, 0.075, 12, 0, 0.24),
-        ring(guarda_ext, guarda_int, 0.16),
-        box(-0.30, -0.20, -0.30, -0.08, 0.10),          # disparador
+        chamfer(slab(cantonera, 0.46), 0.02),
+        chamfer(box(-0.34, PORT[0], 0.06, 0.42, 0.32), 0.03),
+        chamfer(box(PORT[1], 0.66, 0.06, 0.42, 0.32), 0.03),
+        box(PORT[0], PORT[1], 0.06, PORT[2], 0.32),
+        box(PORT[0], PORT[1], PORT[2], 0.42, 0.13, y=0.085),
+        tube(-0.30, 0.62, 0.075, 0.075, 10, 0, 0.33),   # cuerpo del cerrojo
         cerrojo(0.0, 0.30, 0.045),
         cerrojo(0.28, 0.42, 0.075),                     # perilla
-        box(-0.20, 0.30, -0.32, -0.10, 0.26),           # cargador
-        # Visor: cuerpo, garganta y campana del objetivo, mas las dos anillas
-        # que lo amarran al cajon. La campana va delante, no detras.
-        tube(-0.90, 0.20, 0.135, 0.135, 12, 0, 0.66),
-        tube(0.20, 0.42, 0.135, 0.20, 12, 0, 0.66),
-        tube(0.42, 0.95, 0.20, 0.20, 12, 0, 0.66),
-        box(-0.56, -0.44, 0.40, 0.62, 0.20),
-        box(0.04, 0.16, 0.40, 0.62, 0.20),
+        # Canon de caza: recamara gruesa, adelgazamiento y boca. Un solo cono
+        # de punta a punta no es el perfil de ninguna arma.
+        tube(0.66, 1.20, 0.115, 0.112, 10, 0, 0.24),
+        tube(1.20, 2.05, 0.112, 0.088, 10, 0, 0.24),
+        tube(2.05, 2.88, 0.088, 0.076, 10, 0, 0.24),
+        ring(guarda_ext, guarda_int, 0.16),
+        box(-0.30, -0.20, -0.30, -0.08, 0.10),          # disparador
+        chamfer(box(-0.20, 0.30, -0.32, -0.12, 0.26), 0.02),   # tapa del cargador
+        move(anilla(0), 1.32, 0, -0.30),
+        move(anilla(0), -1.72, 0, -0.34),
+        # Visor 3-9x40: ocular, garganta, anillo de aumentos, tubo de 25,4,
+        # campana de 40 y el bloque de torretas. Las torretas son lo que se
+        # reconoce de un visor a cualquier tamano.
+        tube(-0.95, -0.68, 0.19, 0.19, 12, 0, 0.66),
+        tube(-0.68, -0.58, 0.19, 0.135, 12, 0, 0.66),
+        tube(-0.58, -0.44, 0.155, 0.155, 12, 0, 0.66),
+        tube(-0.44, 0.62, 0.135, 0.135, 12, 0, 0.66),
+        tube(0.62, 0.78, 0.135, 0.21, 12, 0, 0.66),
+        tube(0.78, 1.10, 0.21, 0.21, 12, 0, 0.66),
+        chamfer(box(0.06, 0.32, 0.50, 0.82, 0.36), 0.02),      # bloque de torretas
+        move(turn(tube(0, 0.16, 0.10, 0.10, 8), math.radians(-90), 'Y'), 0.19, 0, 0.80),
+        move(turn(tube(0, 0.16, 0.10, 0.10, 8), math.radians(-90), 'Z'), 0.19, 0.16, 0.66),
+        box(-0.38, -0.26, 0.40, 0.62, 0.22),
+        box(0.40, 0.52, 0.40, 0.62, 0.22),
     ])
 
 
@@ -373,9 +405,11 @@ def shotgun():
         0.44, 0.38, 0.32, 0.28, 0.34, 0.34, 0.30, 0.28, 0.28, 0.28,
         0.32, 0.40, 0.44,
     ]
+    # Pico de pato en la punta: ese labio hacia delante es de una superpuesta
+    # de tiro y de nada mas.
     guardamano = [
-        (1.52, 0.00), (1.46, -0.20), (1.10, -0.32), (0.66, -0.32),
-        (0.50, -0.20), (0.50, 0.00),
+        (1.55, 0.02), (1.63, -0.07), (1.55, -0.17), (1.44, -0.25),
+        (1.10, -0.32), (0.66, -0.32), (0.52, -0.20), (0.52, 0.02),
     ]
     guarda_ext = [
         (0.10, -0.12), (0.12, -0.28), (0.00, -0.40), (-0.24, -0.44),
@@ -385,16 +419,36 @@ def shotgun():
         (0.02, -0.12), (0.04, -0.27), (-0.04, -0.34), (-0.22, -0.37),
         (-0.35, -0.30), (-0.38, -0.13),
     ]
+    cantonera = [(-2.30, 0.36), (-2.16, 0.34), (-2.16, -0.34), (-2.30, -0.36)]
+
+    # Banda ventilada: la cinta va despegada del cano y se apoya en pilares.
+    # Ese hueco de 0,05 entre cano y cinta es la firma de una escopeta de
+    # tiro; pegada al cano seria una banda maciza, que es otra arma.
+    pilares = [box(x, x + 0.11, 0.30, 0.37, 0.07)
+               for x in (0.88, 1.32, 1.76, 2.20, 2.64)]
+
     return build([
         chamfer(slab(culata, anchos), 0.022),
+        chamfer(slab(cantonera, 0.46), 0.02),
         chamfer(box(-0.36, 0.48, -0.14, 0.30, 0.38), 0.035),   # cajon
-        tube(0.44, 2.30, 0.09, 0.085, 12, 0, 0.22),            # cano superior
-        tube(0.44, 2.30, 0.09, 0.085, 12, 0, 0.02),            # cano inferior
-        box(0.50, 2.30, 0.30, 0.335, 0.10),                    # banda de mira
+        tube(0.44, 2.90, 0.09, 0.082, 12, 0, 0.22),            # cano superior
+        tube(0.44, 2.90, 0.09, 0.082, 12, 0, 0.02),            # cano inferior
+        tube(2.86, 3.00, 0.094, 0.094, 12, 0, 0.22),           # choke
+        tube(2.86, 3.00, 0.094, 0.094, 12, 0, 0.02),
+        # Costillas laterales: lo que mantiene los dos canos unidos.
+        box(0.62, 2.88, 0.03, 0.21, 0.035, y=0.082),
+        box(0.62, 2.88, 0.03, 0.21, 0.035, y=-0.082),
+    ] + pilares + [
+        box(0.55, 2.98, 0.37, 0.405, 0.10),                    # cinta de la banda
+        move(turn(tube(0, 0.06, 0.04, 0.04, 8), math.radians(-90), 'Y'),
+             2.92, 0, 0.40),                                   # perla
         chamfer(slab(guardamano, 0.34), 0.03),
         ring(guarda_ext, guarda_int, 0.16),
         box(-0.26, -0.16, -0.36, -0.14, 0.10),                 # disparador
-        box(-0.12, 0.16, 0.30, 0.36, 0.11),                    # llave de apertura
+        # Llave de apertura: en reposo cae a la derecha, no centrada.
+        box(-0.10, 0.20, 0.30, 0.355, 0.12),
+        box(0.02, 0.18, 0.298, 0.352, 0.11, y=0.11),
+        box(-0.34, -0.16, 0.28, 0.33, 0.13),                   # seguro y selector
     ])
 
 
