@@ -190,6 +190,9 @@
 }
 .card__foot {
   display: flex;
+  /* Un importe en pesos son ocho cifras: si aun asi no entra junto al boton,
+     que baje de linea antes que desbordar la ficha. */
+  flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
   gap: 0.75rem;
@@ -197,7 +200,8 @@
   padding-top: 0.35rem;
 }
 .card__price {
-  font: 600 1.35rem/1 var(--font-display);
+  /* En movil la ficha se estrecha pero el numero no encoge solo. */
+  font: 600 clamp(1.1rem, 0.85rem + 0.8vw, 1.35rem)/1 var(--font-display);
   letter-spacing: 0.01em;
 }
 .card__price span { font-size: 0.8rem; color: var(--steel-400); margin-right: 0.2rem; }

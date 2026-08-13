@@ -38,8 +38,20 @@ hacia fuera. Si tocas `js/catalog.js` o `js/scene.js`, ejecútalo.
   4.5:1 sobre el fondo; los tokens de `css/tokens.css` ya están ajustados a eso.
 - Respetar `prefers-reduced-motion` en cualquier animación nueva.
 
+## Precios
+
+El campo `usd` de cada producto es el precio **en dólares**, como se cotizan
+las armas en Argentina. Los pesos salen de `ARS_POR_USD` en `js/catalog.js`:
+al mover el cambio se toca ese número y nada más.
+
+Los importes están anclados a precios publicados por armerías argentinas
+(agosto de 2026): Glock, Bersa, Pelican, munición del 22, escopetas y rifles
+tácticos. El resto de la lista se derivó de esas anclas por familia. Las
+piezas que casi no entran al país —paralelas de Eibar, pistolas de precisión
+ISSF, óptica alpina— van modeladas, no verificadas una a una.
+
 ## Pendiente conocido
 
-Los precios de `js/catalog.js` son estimaciones de mercado, no tarifa de
-proveedor. Marcas, modelos, calibres y fichas técnicas sí son reales. Hay que
-sustituir el campo `price` con precios reales antes de publicar.
+Las licencias D/E/F y el domicilio de Eibar son españoles; con precios
+argentinos eso queda incoherente. Adaptarlo a ANMaC (usuario legítimo,
+tenencia, portación) es una tarea aparte.

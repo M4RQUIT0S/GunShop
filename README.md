@@ -12,8 +12,9 @@ node test/selftest.js   # catálogo, paginación y geometría 3D
 - `index.html` · estructura y orden de carga de los scripts
 - `css/tokens.css` · paleta y escala tipográfica
 - `js/scene.js` · motor 3D (fondo y fichas)
-- `js/catalog.js` · 102 referencias reales
+- `js/catalog.js` · 102 referencias reales, precios en USD y cambio a pesos
 - `js/main.js` · rejilla infinita, filtros y cesta
 
-Marcas, modelos y fichas técnicas son reales; los precios son orientativos.
-Página de demostración.
+Marcas, modelos y fichas técnicas son reales. Los precios son de referencia
+del mercado argentino y se muestran en pesos o en dólares. Página de
+demostración.
