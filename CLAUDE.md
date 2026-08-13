@@ -66,8 +66,12 @@ Para regenerar tras tocar `tools/models.py`:
 "D:\Editores Codigo\blender.exe" --background --factory-startup --python tools/models.py
 ```
 
-Escribe `js/meshes.js` y aborta si alguna pieza no cierra o tiene el volumen
-negativo. Se modela en ejes de Blender (X a la boca, Y ancho, Z arriba) y se
+Escribe `js/meshes.js` y aborta si alguna pieza no cierra, si tiene el volumen
+negativo o si queda enterrada dentro de otra. Lo ultimo cubre la regla 4 de
+mas abajo: girar un tubo hacia el lado que no es lo mete dentro de la pieza
+que deberia decorar y simplemente no se ve. Un aro no cuenta como
+contenedor -- llena muy poco su caja, y lo que cae en su agujero se ve
+perfectamente. Se modela en ejes de Blender (X a la boca, Y ancho, Z arriba) y se
 exporta girado a los de la escena; el giro tiene determinante +1, porque con
 un espejo se invertirian todas las caras y el recorte de traseras borraria la
 pieza entera.
