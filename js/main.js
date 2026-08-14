@@ -74,12 +74,19 @@
       card.dataset.model = product.model;
 
       var art = el('div', 'card__art');
+      // Cascada: la foto del producto si la hay, si no el render horneado, y
+      // si tampoco esta, el esquema que dibuja scene.js. Cada peldano cubre
+      // al siguiente, asi que la ficha nunca sale en blanco.
       var img = el('img');
-      img.src = shop.art.sprite(product.model, product.variant);
+      img.src = product.photo || shop.art.foto(product.model, product.variant);
+      img.onerror = function () {
+        this.onerror = null;
+        this.src = shop.art.sprite(product.model, product.variant);
+      };
       img.width = shop.art.width;
       img.height = shop.art.height;
       img.loading = 'lazy';
-      img.alt = '';
+      img.alt = product.name;
       art.appendChild(img);
 
       var tags = el('div', 'card__tags');
@@ -272,7 +279,6 @@
     if (cambio) cambio.textContent = shop.catalog.format(shop.catalog.ARS_POR_USD);
 
     pump();
-    shop.art.warm();
   }
 
   if (doc.readyState === 'loading') {

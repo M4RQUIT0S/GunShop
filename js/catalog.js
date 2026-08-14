@@ -283,6 +283,9 @@
             spec: (cal ? [cal] : []).concat(item.spec).join(' · '),
             usd: item.usd,
             licence: item.licence || line.licence,
+        // Foto propia del producto. Sin ella la ficha usa el render horneado;
+        // ponerla no exige tocar codigo.
+        photo: item.photo || null,
             stock: units === 0 ? 'order' : units === 1 ? 'last' : 'ok',
             units: units,
             // Relevancia: lo que hay en tienda pesa mas que lo que hay que encargar.

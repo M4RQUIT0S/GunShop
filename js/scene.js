@@ -239,6 +239,39 @@
     return YAW_CENTER + YAW_AMP * Math.sin(YAW_PHASE + scrollY * TURN_PER_PX);
   }
 
+  /* ----------------------------------------------------------------- *
+   * Fondo horneado                                                     *
+   * ----------------------------------------------------------------- */
+
+  // El fondo son 24 renders por pieza repartidos por el barrido, y el scroll
+  // elige el mas cercano. Se dibujan en el mismo lienzo y desde el mismo
+  // mount(), asi que el frenado del giro, el respeto a prefers-reduced-motion
+  // y el observador de visibilidad siguen siendo los de siempre.
+  var FOTOGRAMAS = 24;
+  // Lo que cubre cada imagen en unidades de modelo, por MARGEN_FONDO de
+  // tools/render.py. La division por `scale` que hace el horno se cancela con
+  // la multiplicacion que hace `unit`, asi que aqui no aparece.
+  var FONDO_SPAN = 5.2 * 1.35;
+
+  var bancos = {};
+  function fotogramas(name, cuandoListo) {
+    var banco = bancos[name];
+    if (banco) return banco;
+    banco = bancos[name] = { listos: 0, imgs: [], roto: false };
+    for (var i = 0; i < FOTOGRAMAS; i++) {
+      var im = new global.Image();
+      im.onload = function () {
+        if (++banco.listos === FOTOGRAMAS && cuandoListo) cuandoListo();
+      };
+      // Sin renders no hay nada que esperar: se dibuja el esquema y se deja
+      // de intentarlo, que si no cada scroll pide 24 imagenes que no existen.
+      im.onerror = function () { banco.roto = true; };
+      im.src = 'img/hero/' + name + '-' + (i < 10 ? '0' : '') + i + '.webp';
+      banco.imgs.push(im);
+    }
+    return banco;
+  }
+
   function mount(canvas, options) {
     var opts = options || {};
     var ctx = canvas.getContext('2d');
@@ -269,8 +302,24 @@
       return yawAt(global.scrollY);
     }
 
+    // Devuelve false mientras las imagenes no esten todas: hasta entonces (y
+    // para siempre, si no existen) dibuja el esquema.
+    function pintarRender() {
+      var banco = fotogramas(current, refresh);
+      if (banco.roto || banco.listos < FOTOGRAMAS) return false;
+      var paso = 2 * YAW_AMP / (FOTOGRAMAS - 1);
+      var i = Math.round((yaw - (YAW_CENTER - YAW_AMP)) / paso);
+      var im = banco.imgs[Math.max(0, Math.min(FOTOGRAMAS - 1, i))];
+      var unidad = Math.min(w / place.span, h / (place.span * 0.57)) * grow;
+      var dw = FONDO_SPAN * unidad;
+      var dh = dw * (im.naturalHeight / im.naturalWidth);
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(im, w * place.x - dw / 2, h * place.y - dh / 2, dw, dh);
+      return true;
+    }
+
     function draw() {
-      render(ctx, current, yaw, pitch, w, h, grow, place);
+      if (!pintarRender()) render(ctx, current, yaw, pitch, w, h, grow, place);
       pending = false;
     }
 
@@ -332,6 +381,7 @@
       setModel: function (name) {
         if (name === current || !MODELS[name]) return;
         current = name;
+        fotogramas(name, refresh);
         pending = true;
         if (quiet) { draw(); return; }
         grow = 0.72;
@@ -344,7 +394,7 @@
   var api = {
     area2: area2, extrude: extrude, tube: tube, merge: merge,
     normal: normal, rotate: rotate, render: render, yawAt: yawAt,
-    models: MODELS, model: model, mount: mount,
+    models: MODELS, model: model, mount: mount, FOTOGRAMAS: FOTOGRAMAS,
     BASE_YAW: BASE_YAW, YAW_CENTER: YAW_CENTER, YAW_AMP: YAW_AMP
   };
 

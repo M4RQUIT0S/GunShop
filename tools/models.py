@@ -18,6 +18,11 @@ from mathutils import Matrix, Vector
 
 TAU = math.pi * 2
 
+# Multiplicador de gajos de los tubos. El sitio dibuja el borde de cada cara y
+# necesita pocos; el render fotorrealista los necesita redondos. Es la misma
+# geometria con un knob, no dos modelados que puedan divergir.
+DETALLE = 1
+
 # ------------------------------------------------------------------ #
 # Primitivas                                                          #
 # ------------------------------------------------------------------ #
@@ -90,6 +95,8 @@ def ring(outer, inner, depth):
 
 def tube(x0, x1, r0, r1, seg=12, y=0.0, z=0.0, phase=0.0):
     """Cilindro o cono truncado a lo largo de X."""
+    seg = max(3, int(round(seg * DETALLE)))
+
     def rim(x, r):
         return [(x, y + math.sin(phase + i / seg * TAU) * r,
                  z + math.cos(phase + i / seg * TAU) * r) for i in range(seg)]
@@ -218,6 +225,25 @@ def compacidad(verts, faces):
     return abs(volume(verts, faces)) / v if v > 1e-9 else 0.0
 
 
+def etiquetadas(parts):
+    """Separa las piezas de su material.
+
+    Una pieza se pasa suelta o como ('nogal', bm). El sitio no sabe de
+    materiales y las desempaqueta sin mirar; `tools/render.py` lee la etiqueta
+    para saber que shader ponerle. Solo se etiquetan las excepciones: lo que
+    no lleva etiqueta cae en el material por defecto del modelo.
+    """
+    nombres, bms = [], []
+    for p in parts:
+        if isinstance(p, tuple):
+            nombres.append(p[0])
+            bms.append(p[1])
+        else:
+            nombres.append(None)
+            bms.append(p)
+    return nombres, bms
+
+
 def build(parts):
     """Une los solidos de un modelo. Cada uno se comprueba por separado:
     juntos dejarian de ser cerrados donde se cruzan.
@@ -228,7 +254,7 @@ def build(parts):
     salta al exportar.
     """
     piezas, verts, faces = [], [], []
-    for i, bm in enumerate(parts):
+    for i, bm in enumerate(etiquetadas(parts)[1]):
         pv, pf = dump(bm)
         check('pieza %d' % i, pv, pf)
         piezas.append((caja(pv), compacidad(pv, pf)))
@@ -312,13 +338,13 @@ def pistol():
         box(PORT_X0, PORT_X1, 0.24, PORT_Z, ANCHO),          # puente bajo la ventana
         box(PORT_X0, PORT_X1, PORT_Z, 0.62, 0.15, y=0.095),  # pared del lado opuesto
     ] + estrias + [
-        chamfer(box(-1.30, 1.04, 0.06, 0.24, 0.31), 0.025),  # armazon
+        ('polimero', chamfer(box(-1.30, 1.04, 0.06, 0.24, 0.31), 0.025)),
         # Riel de accesorios: dos tramos con la ranura en medio, que es lo que
         # lo distingue de un simple resalte.
         box(0.42, 0.66, -0.01, 0.07, 0.26),
         box(0.74, 1.02, -0.01, 0.07, 0.26),
-        chamfer(slab(empunadura, anchos), 0.03),
-        ring(guarda_ext, guarda_int, 0.26),
+        ('polimero', chamfer(slab(empunadura, anchos), 0.03)),
+        ('polimero', ring(guarda_ext, guarda_int, 0.26)),
         # Disparador con su leva de seguridad: dos piezas, no una paleta.
         box(-0.28, -0.16, -0.34, -0.04, 0.12),
         box(-0.24, -0.20, -0.32, -0.06, 0.05, y=0.065),
@@ -336,7 +362,7 @@ def pistol():
         box(-1.18, -1.08, 0.62, 0.74, 0.11, y=0.10),
         box(-1.18, -1.08, 0.62, 0.74, 0.11, y=-0.10),
         box(1.12, 1.22, 0.62, 0.72, 0.08),                   # punto de mira
-        chamfer(box(-1.44, -0.70, -1.46, -1.32, 0.44), 0.02),  # base del cargador
+        ('polimero', chamfer(box(-1.44, -0.70, -1.46, -1.32, 0.44), 0.02)),
     ])
 
 
@@ -391,8 +417,8 @@ def rifle():
     PORT = (0.04, 0.48, 0.28)
 
     return build([
-        chamfer(slab(culata, anchos), 0.022),
-        chamfer(slab(cantonera, 0.46), 0.02),
+        ('nogal', chamfer(slab(culata, anchos), 0.022)),
+        ('goma', chamfer(slab(cantonera, 0.46), 0.02)),
         chamfer(box(-0.34, PORT[0], 0.06, 0.42, 0.32), 0.03),
         chamfer(box(PORT[1], 0.66, 0.06, 0.42, 0.32), 0.03),
         box(PORT[0], PORT[1], 0.06, PORT[2], 0.32),
@@ -464,8 +490,8 @@ def shotgun():
                for x in (0.88, 1.32, 1.76, 2.20, 2.64)]
 
     return build([
-        chamfer(slab(culata, anchos), 0.022),
-        chamfer(slab(cantonera, 0.46), 0.02),
+        ('nogal', chamfer(slab(culata, anchos), 0.022)),
+        ('goma', chamfer(slab(cantonera, 0.46), 0.02)),
         chamfer(box(-0.36, 0.48, -0.14, 0.30, 0.38), 0.035),   # cajon
         tube(0.44, 2.90, 0.09, 0.082, 12, 0, 0.22),            # cano superior
         tube(0.44, 2.90, 0.09, 0.082, 12, 0, 0.02),            # cano inferior
@@ -478,7 +504,7 @@ def shotgun():
         box(0.55, 2.98, 0.37, 0.405, 0.10),                    # cinta de la banda
         move(turn(tube(0, 0.06, 0.04, 0.04, 8), math.radians(-90), 'Y'),
              2.92, 0, 0.40),                                   # perla
-        chamfer(slab(guardamano, 0.34), 0.03),
+        ('nogal', chamfer(slab(guardamano, 0.34), 0.03)),
         ring(guarda_ext, guarda_int, 0.16),
         box(-0.26, -0.16, -0.36, -0.14, 0.10),                 # disparador
         # Llave de apertura: en reposo cae a la derecha, no centrada.
@@ -556,7 +582,7 @@ def reddot():
         chamfer(box(-0.72, -0.10, -0.32, -0.10, 0.10, y=0.30), 0.02),
         chamfer(move(slab(montante, 0.11), 0, 0.215, 0), 0.02),
         chamfer(move(slab(montante, 0.11), 0, -0.215, 0), 0.02),
-        slab(cristal, 0.34),
+        ('cristal', slab(cristal, 0.34)),
         bisel(0.74, 0.84, 0.0),
         bisel(-0.06, 0.04, 0.22),
         tornillo(-0.34, 0, -0.10, 'Y'),                        # alza
@@ -597,14 +623,14 @@ def gunCase():
                     -2.22, y, -0.40)
 
     return build([
-        chamfer(slab(base, 0.88), 0.04),
-        chamfer(slab(tapa, 0.88), 0.04),
+        ('plastico', chamfer(slab(base, 0.88), 0.04)),
+        ('plastico', chamfer(slab(tapa, 0.88), 0.04)),
         ring(asa_ext, asa_int, 0.26),
         cierre(-1.45),
         cierre(-0.55),
         cierre(0.55),
         cierre(1.45),
-        rueda(0.34), rueda(-0.44),
+        ('goma', rueda(0.34)), ('goma', rueda(-0.44)),
         # Valvula de compensacion de presion: el boton redondo del frente, que
         # es lo que distingue una maleta estanca de una caja de herramientas.
         move(turn(tube(0, 0.10, 0.12, 0.12, 10), math.radians(90), 'Z'),
@@ -612,8 +638,8 @@ def gunCase():
         # Nervios de apilado en la tapa.
         box(-1.90, 1.90, 0.46, 0.50, 0.16, y=0.24),
         box(-1.90, 1.90, 0.46, 0.50, 0.16, y=-0.24),
-        box(-1.92, -1.48, -0.58, -0.44, 0.80),                 # pies
-        box(1.48, 1.92, -0.58, -0.44, 0.80),
+        ('goma', box(-1.92, -1.48, -0.58, -0.44, 0.80)),       # pies
+        ('goma', box(1.48, 1.92, -0.58, -0.44, 0.80)),
     ])
 
 
@@ -629,7 +655,7 @@ def binocular():
             tube(-1.10, -0.80, 0.17, 0.20, 12, y, 0),
             # Copa del ocular: se ensancha en el borde, que es donde apoya la
             # cuenca del ojo. Sin ese reborde el ocular es un tubo cortado.
-            tube(-1.30, -1.10, 0.21, 0.21, 12, y, 0),
+            ('goma', tube(-1.30, -1.10, 0.21, 0.21, 12, y, 0)),
         ]
 
     # Solo ocupa el hueco entre los dos cuerpos (0,34 de los 0,36 que quedan

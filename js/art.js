@@ -9,6 +9,14 @@
   var PLACE = { x: 0.5, y: 0.5, span: 5.2 };
   var cache = {};
 
+  // Ruta del render horneado (tools/render.py). Es lo que ve la ficha; el
+  // esquema de abajo queda de respaldo para cuando las imagenes no estan:
+  // repositorio recien clonado sin hornear, o alguien las borro. La pagina
+  // sigue abriendose con doble clic en cualquiera de los dos casos.
+  function foto(model, variant) {
+    return 'img/card/' + model + '-' + (variant % ANGLES.length) + '.webp';
+  }
+
   function sprite(model, variant) {
     var key = model + ':' + variant;
     if (cache[key]) return cache[key];
@@ -24,8 +32,8 @@
     return cache[key];
   }
 
-  // Codificar el PNG bloquea el hilo principal. Son 8 piezas x 4 angulos: se
-  // generan en tiempo muerto para que el scroll no pague nunca ese coste.
+  // Solo se usa si faltan los renders. Codificar el PNG bloquea el hilo
+  // principal, asi que cuando toca, se hace en tiempo muerto.
   function warm() {
     var jobs = [];
     Object.keys(global.GunShop.scene.models).forEach(function (name) {
@@ -41,5 +49,6 @@
   }
 
   global.GunShop = global.GunShop || {};
-  global.GunShop.art = { sprite: sprite, warm: warm, ANGLES: ANGLES, width: W, height: H };
+  global.GunShop.art = { foto: foto, sprite: sprite, warm: warm,
+    ANGLES: ANGLES, width: W, height: H };
 })(window);
