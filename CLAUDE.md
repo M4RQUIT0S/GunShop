@@ -22,9 +22,9 @@ node test/selftest.js
 ```
 
 Cubre lo que no se ve a simple vista: el catálogo es determinista, la
-paginación no repite ni pierde fichas, y las mallas 3D cierran con las caras
-hacia fuera. Si tocas `js/catalog.js`, `js/scene.js` o `tools/models.py`,
-ejecútalo.
+paginación no repite ni pierde fichas, las mallas 3D cierran con las caras
+hacia fuera, y están las 224 imágenes horneadas. Si tocas `js/catalog.js`,
+`js/scene.js`, `tools/models.py` o `tools/render.py`, ejecútalo.
 
 ## Restricciones del código
 
@@ -33,9 +33,14 @@ ejecútalo.
   además exportan por `module.exports` sólo para el selftest en Node.
 - El orden de los `<script>` en `index.html` importa: meshes → scene → art →
   catalog → nav → main.
-- Un único motor de dibujo: `js/scene.js` pinta el fondo y, vía `js/art.js`,
-  las imágenes de todas las fichas. No metas otra forma de generar imágenes.
-- `js/meshes.js` está **generado**: no se edita a mano. Ver «Modelos 3D».
+- **Una sola geometría, tres consumidores.** `tools/models.py` es la única
+  fuente: de ahí salen `js/meshes.js` (el esquema que dibuja `js/scene.js`) y,
+  vía `tools/render.py`, las imágenes de `img/`. No modeles nada en otro
+  sitio; si divergen, no hay forma de notarlo mirando.
+- `js/meshes.js` e `img/` están **generados**: no se editan a mano.
+- Todo render tiene respaldo: si `img/` falta, las fichas y el fondo caen al
+  esquema y la página sigue abriéndose con doble clic. Al tocar esa cascada,
+  compruébala borrando `img/`.
 - Paleta oscura pero nunca negra pura (`--ink-900: #14181f`). Contraste mínimo
   4.5:1 sobre el fondo; los tokens de `css/tokens.css` ya están ajustados a eso.
 - Respetar `prefers-reduced-motion` en cualquier animación nueva.
@@ -113,6 +118,38 @@ es un aro de quads. Fue la unica forma de que se leyeran como huecos.
 Las armas largas se modelan con la relacion real canon/culata y se devuelven
 al hueco de la ficha bajando `scale` en `MODELS` (rifle 0,88, escopeta 0,84).
 Comprimir el canon para que quepa era lo que las hacia parecer de juguete.
+
+## Imagenes
+
+Las fichas y el fondo usan renders fotorrealistas hechos con Cycles a partir
+de la misma geometria. Se hornean con:
+
+```
+"D:\Editores Codigo\blender.exe" --background --factory-startup --python tools/render.py -- [modelo]
+```
+
+Sin argumento hornea los ocho (unos catorce minutos con OptiX). Escribe
+`img/card/<modelo>-<0..3>.webp` y `img/hero/<modelo>-<00..23>.webp`.
+
+**Nada de fotos de fabricante.** Las fotos de producto de Glock, Beretta o
+Peli son obra ajena con derechos; meterlas en el repositorio seria
+redistribuir material protegido, y que la tienda sea una demostracion no
+cambia nada. Por lo mismo, los materiales y el mundo del render son
+procedurales: ni una textura ni un HDRI descargado.
+
+Cuando haya fotos con licencia -- las del proveedor, las del propio taller --
+entran por el campo `photo:` de cada producto en `js/catalog.js`, sin tocar
+codigo. La cascada de la ficha es: `photo` -> render horneado -> esquema.
+
+Cuatro angulos por modelo, los mismos que ya repartia `art.js`: con una sola
+imagen los 34 rifles saldrian identicos y eso se lee como averia.
+
+El fondo son 24 fotogramas que recorren el mismo barrido que el scroll. Los
+dibuja `mount()` con `drawImage` sobre el lienzo de siempre, asi que el
+frenado del giro, `prefers-reduced-motion` y el observador de visibilidad no
+cambian. `MARGEN_FONDO` en `tools/render.py` y `FONDO_SPAN` en `js/scene.js`
+son el mismo numero por los dos lados: si tocas uno, toca el otro o el fondo
+se dibuja a la escala que no es.
 
 ## Precios
 
