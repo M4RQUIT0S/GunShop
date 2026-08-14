@@ -33,10 +33,13 @@ hacia fuera, y están las 224 imágenes horneadas. Si tocas `js/catalog.js`,
   además exportan por `module.exports` sólo para el selftest en Node.
 - El orden de los `<script>` en `index.html` importa: meshes → scene → art →
   catalog → nav → main.
-- **Una sola geometría, tres consumidores.** `tools/models.py` es la única
-  fuente: de ahí salen `js/meshes.js` (el esquema que dibuja `js/scene.js`) y,
-  vía `tools/render.py`, las imágenes de `img/`. No modeles nada en otro
-  sitio; si divergen, no hay forma de notarlo mirando.
+- **Una sola geometría, tres consumidores.** `tools/models.py` es la fuente:
+  de ahí salen `js/meshes.js` (el esquema que dibuja `js/scene.js`) y, vía
+  `tools/render.py`, las imágenes de `img/`. No modeles nada en otro sitio; si
+  divergen, no hay forma de notarlo mirando.
+  **Con una excepción:** el cartucho vive en `js/scene.js` y sus cotas están
+  repetidas en `render.py::cartucho()`. Si tocas unas, toca las otras o las
+  fichas dejarán de coincidir con el esquema.
 - `js/meshes.js` e `img/` están **generados**: no se editan a mano.
 - Todo render tiene respaldo: si `img/` falta, las fichas y el fondo caen al
   esquema y la página sigue abriéndose con doble clic. Al tocar esa cascada,
@@ -49,7 +52,9 @@ hacia fuera, y están las 224 imágenes horneadas. Si tocas `js/catalog.js`,
 
 Siete de las ocho piezas se modelan en `tools/models.py` con Blender y se
 hornean a `js/meshes.js`. La octava, el cartucho, sigue escrita a mano en
-`js/scene.js`: es pura revolucion y no gana nada pasando por Blender.
+`js/scene.js`: para el esquema es pura revolucion y alli son ocho lineas. Para
+las imagenes si pasa por Blender, con las mismas cotas copiadas en
+`render.py::cartucho()`. Es la unica pieza con las medidas en dos sitios.
 
 Cada modelo apunta a un arquetipo con cotas reales, porque uno solo sirve a
 toda una familia del catalogo:

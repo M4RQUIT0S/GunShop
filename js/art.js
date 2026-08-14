@@ -32,23 +32,7 @@
     return cache[key];
   }
 
-  // Solo se usa si faltan los renders. Codificar el PNG bloquea el hilo
-  // principal, asi que cuando toca, se hace en tiempo muerto.
-  function warm() {
-    var jobs = [];
-    Object.keys(global.GunShop.scene.models).forEach(function (name) {
-      ANGLES.forEach(function (_, variant) { jobs.push([name, variant]); });
-    });
-    var idle = global.requestIdleCallback || function (fn) { return global.setTimeout(fn, 60); };
-    (function next() {
-      var job = jobs.shift();
-      if (!job) return;
-      sprite(job[0], job[1]);
-      idle(next);
-    })();
-  }
-
   global.GunShop = global.GunShop || {};
-  global.GunShop.art = { foto: foto, sprite: sprite, warm: warm,
+  global.GunShop.art = { foto: foto, sprite: sprite,
     ANGLES: ANGLES, width: W, height: H };
 })(window);
