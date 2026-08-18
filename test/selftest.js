@@ -231,6 +231,38 @@ var faltan = Object.keys(scene.models).filter(function (name) {
 assert.strictEqual(faltan.length, 0,
   'faltan ' + faltan.length + ' fotos, la primera ' + faltan[0] + '.webp');
 
+// Cada `photo:` del catalogo tiene que existir en disco. Una ruta rota no
+// rompe la pagina -- cae a la foto del modelo -- y por eso hay que mirarla
+// aqui: el fallo es invisible salvo que se cuente.
+var rotas = a.filter(function (p) {
+  return p.photo && !fs.existsSync(path.join(__dirname, '..', p.photo));
+});
+assert.strictEqual(rotas.length, 0,
+  'hay ' + rotas.length + ' rutas photo: rotas, la primera ' +
+  (rotas[0] && rotas[0].photo));
+
+var conFoto = a.filter(function (p) { return p.photo; }).length;
+
+// Ningun producto comparte foto con otro. Compartirla entre calibres del
+// mismo producto si es correcto -- son la misma arma -- y por eso se compara
+// contra el slug del nombre y no contra la ficha: el fichero se llama como
+// marca+referencia, asi que el nombre completo tiene que empezar por ahi.
+function slug(s) {
+  return s.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+var ajenas = a.filter(function (p) {
+  if (!p.photo) return false;
+  var base = p.photo.replace(/^.*\//, '').replace(/\.webp$/, '');
+  return slug(p.name).indexOf(base) !== 0;
+});
+assert.strictEqual(ajenas.length, 0,
+  'foto de otro producto: ' + (ajenas[0] && ajenas[0].name) +
+  ' usa ' + (ajenas[0] && ajenas[0].photo));
+
+assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'product', 'CREDITS.md')),
+  'falta img/product/CREDITS.md: las fotos CC BY y CC BY-SA exigen atribucion');
+
 // Media de las ocho son CC BY o CC BY-SA, que exigen citar al autor. Si el
 // fichero de creditos desaparece la atribucion se pierde sin que nadie lo note.
 assert.ok(fs.existsSync(path.join(IMG, 'CREDITS.md')),
@@ -238,4 +270,4 @@ assert.ok(fs.existsSync(path.join(IMG, 'CREDITS.md')),
 
 process.stdout.write('selftest ok · ' + a.length + ' referencias · ' +
   Object.keys(scene.models).length + ' modelos · ' +
-  Object.keys(scene.models).length + ' fotos\n');
+  conFoto + '/' + a.length + ' con foto propia\n');

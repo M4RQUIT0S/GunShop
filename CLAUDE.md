@@ -135,10 +135,14 @@ Comprimir el canon para que quepa era lo que las hacia parecer de juguete.
 
 ## Imagenes
 
-Cada modelo del catalogo tiene **una** foto en `img/model/<modelo>.webp`,
-1200x750. La ficha las usa asi:
+Dos niveles. Cada **producto** tiene su foto en `img/product/<marca-ref>.webp`,
+y cada **modelo** tiene una generica en `img/model/<modelo>.webp` para los
+productos que no encontraron la suya. Todas 1200x750. La ficha las usa asi:
 
     product.photo  ->  img/model/<modelo>.webp  ->  esquema de scene.js
+
+El `photo:` de `js/catalog.js` apunta al primer nivel; 65 de los 76 productos
+lo tienen. Los 11 restantes estan listados en `img/product/CREDITS.md`.
 
 `img/hero.webp` (2400x1350) es el fondo de la portada.
 
@@ -157,9 +161,18 @@ sitio salga a produccion.
 La mitad son CC BY o CC BY-SA, que **exigen citar al autor**. La tabla vive en
 `img/model/CREDITS.md` y el selftest comprueba que el fichero siga ahi.
 
-Las actuales son marcadores. Para poner las definitivas basta con dejar otro
-`<modelo>.webp` de 1200x750 en `img/model/`, o rellenar el campo `photo:` de un
-producto concreto en `js/catalog.js`. Ninguna de las dos cosas toca codigo.
+Las actuales son marcadores. Todas son de la familia correcta pero en general
+**no del modelo exacto**: Commons y Openverse no tienen fotografia de producto
+de modelos comerciales concretos. Estan revisadas a ojo una por una, porque una
+busqueda automatica por marca+modelo devuelve un pueblo de Colorado llamado
+Rifle, un sepulcro para la AyA Aguila y el museo de cristal para el Swarovski.
+
+Para poner las definitivas basta con dejar otro `.webp` de 1200x750 con el
+mismo nombre en `img/product/`, o cambiar el `photo:` del producto en
+`js/catalog.js`. Ninguna de las dos cosas toca codigo.
+
+El selftest comprueba que ninguna ruta `photo:` este rota y que ningun producto
+use la foto de otro.
 
 ## Diseno
 
