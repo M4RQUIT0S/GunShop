@@ -9,12 +9,11 @@
   var PLACE = { x: 0.5, y: 0.5, span: 5.2 };
   var cache = {};
 
-  // Ruta del render horneado (tools/render.py). Es lo que ve la ficha; el
-  // esquema de abajo queda de respaldo para cuando las imagenes no estan:
-  // repositorio recien clonado sin hornear, o alguien las borro. La pagina
-  // sigue abriendose con doble clic en cualquiera de los dos casos.
-  function foto(model, variant) {
-    return 'img/card/' + model + '-' + (variant % ANGLES.length) + '.webp';
+  // Una foto por modelo (img/model/, ver su CREDITS.md). Es lo que ve la
+  // ficha; el esquema de abajo queda de respaldo para cuando la imagen no
+  // esta, asi la pagina sigue abriendose con doble clic en cualquier caso.
+  function foto(model) {
+    return 'img/model/' + model + '.webp';
   }
 
   function sprite(model, variant) {

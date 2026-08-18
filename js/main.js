@@ -74,11 +74,11 @@
       card.dataset.model = product.model;
 
       var art = el('div', 'card__art');
-      // Cascada: la foto del producto si la hay, si no el render horneado, y
+      // Cascada: la foto del producto si la hay, si no la foto del modelo, y
       // si tampoco esta, el esquema que dibuja scene.js. Cada peldano cubre
       // al siguiente, asi que la ficha nunca sale en blanco.
       var img = el('img');
-      img.src = product.photo || shop.art.foto(product.model, product.variant);
+      img.src = product.photo || shop.art.foto(product.model);
       img.onerror = function () {
         this.onerror = null;
         this.src = shop.art.sprite(product.model, product.variant);

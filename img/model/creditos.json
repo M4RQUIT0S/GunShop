@@ -1,0 +1,58 @@
+[
+  {
+    "modelo": "pistol",
+    "titulo": "Glock 17 (transparent background).jpg",
+    "autor": "U.S. Bureau of Alcohol, Tobacco, Firearms and Explosives",
+    "licencia": "Public domain",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Glock_17_(transparent_background).jpg"
+  },
+  {
+    "modelo": "rifle",
+    "titulo": "Hunting rifle greyBG 01.jpg",
+    "autor": "Ragnhild Kjeldsen",
+    "licencia": "CC BY-SA 4.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Hunting_rifle_greyBG_01.jpg"
+  },
+  {
+    "modelo": "shotgun",
+    "titulo": "O-U-Shotgun.jpg",
+    "autor": "Waltherppx",
+    "licencia": "CC BY-SA 4.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:O-U-Shotgun.jpg"
+  },
+  {
+    "modelo": "optic",
+    "titulo": "Leupold Ultra Light Scope.jpg",
+    "autor": "Surv1v4l1st",
+    "licencia": "CC BY-SA 4.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Leupold_Ultra_Light_Scope.jpg"
+  },
+  {
+    "modelo": "reddot",
+    "titulo": "Red Dot Sight \"Docter Sight 3\".jpg",
+    "autor": "Andreas Klehr",
+    "licencia": "CC BY-SA 4.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Red_Dot_Sight_%22Docter_Sight_3%22.jpg"
+  },
+  {
+    "modelo": "binocular",
+    "titulo": "Vortex Diamonback roof prism binoculars.jpg",
+    "autor": "pxhere.com",
+    "licencia": "CC0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Vortex_Diamonback_roof_prism_binoculars.jpg"
+  },
+  {
+    "modelo": "gcase",
+    "titulo": "AKKAR Over & Under Hunting Shotgun 12G 01.jpg",
+    "autor": "Kamitoghani",
+    "licencia": "CC BY-SA 4.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:AKKAR_Over_%26_Under_Hunting_Shotgun_12G_01.jpg"
+  },
+  {
+    "modelo": "cartridge",
+    "titulo": "Modern-rifle-cartridges-cases.jpg",
+    "autor": "DL24",
+    "licencia": "CC0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Modern-rifle-cartridges-cases.jpg"
+  }
+]
