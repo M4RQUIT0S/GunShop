@@ -49,10 +49,16 @@ caras hacia fuera, y están las ocho fotos con su fichero de créditos. Si tocas
 ## Modelos 3D (sólo respaldo)
 
 **El 3D está apartado.** Las fichas enseñan fotos; el esquema vectorial sólo
-aparece si una foto falta. `tools/models.py`, `tools/render.py` y las 224
-imágenes horneadas de `img/card/` e `img/hero/` siguen en el repositorio pero
-ya no los usa nadie: se conservan por si vuelve a hacer falta esa vía. No
-inviertas en ellos sin decidir antes que el 3D vuelve.
+aparece si una foto falta. Las 224 imágenes horneadas de `img/card/` e
+`img/hero/` están borradas, y con ellas el banco de fotogramas y el `mount()`
+de `js/scene.js`, que era lo único que las leía. De `js/scene.js` queda lo que
+dibuja el esquema de respaldo.
+
+`tools/models.py` y `tools/render.py` siguen en el repositorio y funcionan,
+pero nada de la página depende ya de ellos. `render.py` volvería a escribir
+`img/card/` e `img/hero/` desde cero; el segundo no tendría quien lo pintase
+sin recuperar antes el `mount()` que está en el historial. No inviertas ahí sin
+decidir primero que el 3D vuelve.
 
 Lo que sigue describe cómo funciona ese respaldo. Siete de las ocho piezas se
 modelan en `tools/models.py` con Blender y se hornean a `js/meshes.js`. La

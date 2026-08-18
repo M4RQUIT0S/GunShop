@@ -16,7 +16,8 @@ node test/selftest.js   # catálogo, paginación, geometría 3D e imágenes
 - `js/meshes.js` · las 7 mallas horneadas en Blender (generado, no editar)
 - `img/` · renders de Cycles: 4 por ficha y 24 de fondo por pieza (generado)
 - `tools/models.py` · las modela y las exporta
-- `tools/render.py` · hornea con Cycles las imágenes de `img/`
+- `tools/fotos.py` · baja las fotos libres de `img/model/` y comprueba la licencia
+- `tools/render.py` · el horno de Cycles del 3D apartado; la página ya no lo usa
 - `js/catalog.js` · 102 referencias reales, precios en USD y cambio a pesos
 - `js/main.js` · rejilla infinita, filtros y cesta
 
