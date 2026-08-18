@@ -212,37 +212,30 @@ for (var y = 0; y <= 60000; y += 25) {
 assert.ok(worst < 1.35,
   'el barrido llega a ' + worst.toFixed(2) + ' rad y la pieza se ve de canto');
 
-/* --- imagenes horneadas ----------------------------------------------- */
+/* --- fotos del catalogo ------------------------------------------------ */
 
-// Las fichas y el fondo salen de tools/render.py. Que falte un archivo no
-// rompe la pagina, porque cae al esquema, y por eso mismo hay que comprobarlo
-// aqui: un horneado a medias no se ve mirando, se ve contando.
+// La ficha muestra img/model/<modelo>.webp (ver su CREDITS.md). Que falte un
+// archivo no rompe la pagina, porque cae al esquema de scene.js, y por eso
+// mismo hay que comprobarlo aqui: no se ve mirando, se ve contando.
 var fs = require('fs');
 var path = require('path');
-var IMG = path.join(__dirname, '..', 'img');
-var VARIANTES = 4;   // los cuatro angulos que reparte art.js entre las fichas
+var IMG = path.join(__dirname, '..', 'img', 'model');
 
 assert.ok(fs.existsSync(IMG),
-  'falta img/: hornealas con tools/render.py. Sin ellas la pagina sigue ' +
+  'falta img/model/: bajalas con tools/fotos.py. Sin ellas la pagina sigue ' +
   'funcionando con el esquema, pero no es lo que se quiere publicar.');
 
-var faltan = [];
-Object.keys(scene.models).forEach(function (name) {
-  var v, i;
-  for (v = 0; v < VARIANTES; v++) {
-    if (!fs.existsSync(path.join(IMG, 'card', name + '-' + v + '.webp'))) {
-      faltan.push('card/' + name + '-' + v + '.webp');
-    }
-  }
-  for (i = 0; i < scene.FOTOGRAMAS; i++) {
-    var f = name + '-' + (i < 10 ? '0' : '') + i + '.webp';
-    if (!fs.existsSync(path.join(IMG, 'hero', f))) faltan.push('hero/' + f);
-  }
+var faltan = Object.keys(scene.models).filter(function (name) {
+  return !fs.existsSync(path.join(IMG, name + '.webp'));
 });
 assert.strictEqual(faltan.length, 0,
-  'faltan ' + faltan.length + ' imagenes horneadas, la primera ' + faltan[0]);
+  'faltan ' + faltan.length + ' fotos, la primera ' + faltan[0] + '.webp');
 
-var imagenes = Object.keys(scene.models).length * (VARIANTES + scene.FOTOGRAMAS);
+// Media de las ocho son CC BY o CC BY-SA, que exigen citar al autor. Si el
+// fichero de creditos desaparece la atribucion se pierde sin que nadie lo note.
+assert.ok(fs.existsSync(path.join(IMG, 'CREDITS.md')),
+  'falta img/model/CREDITS.md: las fotos CC BY y CC BY-SA exigen atribucion');
 
 process.stdout.write('selftest ok · ' + a.length + ' referencias · ' +
-  Object.keys(scene.models).length + ' modelos · ' + imagenes + ' imagenes\n');
+  Object.keys(scene.models).length + ' modelos · ' +
+  Object.keys(scene.models).length + ' fotos\n');

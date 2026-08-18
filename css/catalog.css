@@ -1,146 +1,126 @@
-/* catalog.css - barra de filtros, rejilla infinita y ficha de producto. */
+/* catalog.css - barra de filtros, rejilla infinita y ficha de producto.
+   La ficha es blanca sobre papel y no lleva borde: la separa el color, como
+   en el resto de la pagina. Al pasar por encima se vuelve tinta. */
 
-.catalog {
-  max-width: 96rem;
-  margin: 0 auto;
-  padding: 0 var(--pad-x) 5rem;
-}
+/* --- cabecera ----------------------------------------------------------- */
 
 .catalog__head {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1rem 2rem;
-  padding: 3.5rem 0 1.4rem;
+  gap: 1.5rem 3rem;
+  margin-bottom: 2rem;
 }
-.catalog__head h2 {
-  font: 800 var(--step-h2)/0.9 var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.005em;
-}
-.catalog__note {
-  max-width: 42ch;
-  font: 400 var(--step-mono)/1.65 var(--font-mono);
-  color: var(--steel-600);
-}
+.catalog__head > div:not(.money) { display: grid; gap: 1.25rem; }
 
 /* Control segmentado: vive en la cabecera y no en la barra de filtros
    porque esa barra desplaza en horizontal y el selector quedaria fuera. */
 .money {
   display: flex;
   flex: 0 0 auto;
-  border: 1px solid var(--ink-600);
-  border-radius: var(--radius);
-  overflow: hidden;
+  padding: 3px;
+  gap: 3px;
+  background: var(--white);
+  border-radius: var(--r);
 }
 .money__opt {
-  padding: 0.5rem 0.85rem;
-  background: var(--ink-800);
+  padding: 0.55rem 0.9rem;
+  background: transparent;
   border: 0;
-  font: 500 var(--step-mono)/1 var(--font-mono);
-  letter-spacing: 0.08em;
-  color: var(--steel-200);
+  border-radius: 2px;
+  font: 400 var(--fs-mono)/1 var(--mono);
+  color: var(--grey-500);
   cursor: pointer;
-  transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+  transition: color var(--t) var(--ease), background var(--t) var(--ease);
 }
-.money__opt + .money__opt { border-left: 1px solid var(--ink-600); }
-.money__opt:hover { color: var(--bone); }
-.money__opt[aria-pressed="true"] { background: var(--brass); color: var(--ink-900); }
+.money__opt:hover { color: var(--ink); }
+.money__opt[aria-pressed="true"] { background: var(--lime); color: var(--ink); }
 
-/* --- filtros ---------------------------------------------------------- */
+/* --- filtros ------------------------------------------------------------ */
 
 .filters {
   position: sticky;
   top: var(--nav-h-tight);
   z-index: 20;
   display: flex;
-  gap: 0.45rem;
-  padding: 0.85rem 0;
-  margin-bottom: 1.6rem;
+  gap: 0.4rem;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
   overflow-x: auto;
   scrollbar-width: none;
-  background: linear-gradient(var(--ink-900) 72%, rgba(20, 24, 31, 0));
-  border-bottom: 1px solid var(--hairline);
+  /* Degradado al color de la seccion para que las fichas pasen por debajo
+     sin cortarse de golpe. */
+  background: linear-gradient(var(--paper) 74%, rgba(242, 242, 242, 0));
 }
 .filters::-webkit-scrollbar { display: none; }
 
 .chip {
   flex: 0 0 auto;
-  padding: 0.55rem 1rem;
-  background: var(--ink-800);
-  border: 1px solid var(--ink-600);
-  border-radius: var(--radius);
-  font: 500 var(--step-mono)/1 var(--font-mono);
-  letter-spacing: 0.1em;
+  padding: 0.6rem 1rem;
+  background: var(--white);
+  border: 0;
+  border-radius: var(--r);
+  font: 400 var(--fs-mono)/1 var(--mono);
   text-transform: uppercase;
-  color: var(--steel-200);
+  color: var(--grey-500);
   cursor: pointer;
   white-space: nowrap;
-  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease),
-    background var(--t-fast) var(--ease);
+  transition: color var(--t) var(--ease), background var(--t) var(--ease);
 }
-.chip:hover { color: var(--bone); border-color: var(--steel-600); }
-.chip[aria-pressed="true"] {
-  background: var(--brass);
-  border-color: var(--brass);
-  color: var(--ink-900);
-}
-.chip__n { margin-left: 0.4rem; color: var(--steel-600); }
-.chip[aria-pressed="true"] .chip__n { color: inherit; }
+.chip:hover { color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.chip__n { margin-left: 0.45rem; color: var(--grey-400); }
+.chip[aria-pressed="true"] .chip__n { color: var(--lime); }
 
-/* --- rejilla ---------------------------------------------------------- */
+/* --- rejilla ------------------------------------------------------------ */
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
-  gap: var(--gap);
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1.25rem;
 }
 
 .card {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--ink-800);
-  border: 1px solid var(--ink-600);
-  border-radius: var(--radius-lg);
+  background: var(--white);
+  border-radius: var(--r);
   overflow: hidden;
-  transition: border-color var(--t-mid) var(--ease), background var(--t-mid) var(--ease);
-  /* La ficha entra al insertarse, no al cruzar el borde de la pantalla: asi no
-     depende de ningun observador para llegar a verse. */
-  animation: card-in var(--t-slow) var(--ease-out) both;
+  transition: background var(--t) var(--ease), transform var(--t) var(--ease);
+  /* La ficha entra al insertarse, no al cruzar el borde de la pantalla: asi
+     no depende de ningun observador para llegar a verse. */
+  animation: card-in var(--t-slow) var(--ease) both;
   animation-delay: calc(var(--i, 0) * 55ms);
 }
 @keyframes card-in {
-  from { opacity: 0; transform: translateY(1.4rem); }
+  from { opacity: 0; transform: translateY(1.25rem); }
   to { opacity: 1; transform: none; }
 }
-.card:hover {
-  border-color: var(--hairline-strong);
-  background: var(--ink-700);
-}
+.card:hover { background: var(--ink); color: var(--paper); transform: translateY(-4px); }
+.card:hover .card__cat, .card:hover .card__spec { color: var(--grey-300); }
 .card:hover .card__rule { transform: scaleX(1); }
+.card:hover .card__art { background: var(--ink-soft); }
 
 .card__art {
   position: relative;
   aspect-ratio: 8 / 5;
-  background-color: var(--ink-850);
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 1.5rem 1.5rem;
-  border-bottom: 1px solid var(--ink-600);
+  background: var(--paper-warm);
   overflow: hidden;
+  transition: background var(--t) var(--ease);
 }
 .card__art img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  transition: transform var(--t-slow) var(--ease);
 }
+.card:hover .card__art img { transform: scale(1.04); }
 
 .card__tags {
   position: absolute;
-  top: 0.6rem; left: 0.6rem; right: 0.6rem;
+  top: 0.75rem; left: 0.75rem; right: 0.75rem;
   display: flex;
   /* «Uso civil condicional» junto a las existencias no entra en una ficha
      estrecha; que baje de linea antes que solaparse. */
@@ -149,48 +129,49 @@
   gap: 0.4rem 0.5rem;
   pointer-events: none;
 }
-.tag { max-width: 100%; }
 .tag {
-  padding: 0.25rem 0.5rem;
+  max-width: 100%;
+  padding: 0.3rem 0.55rem;
   border-radius: 2px;
-  background: rgba(20, 24, 31, 0.82);
-  border: 1px solid var(--ink-600);
-  font: 500 var(--step-micro)/1.25 var(--font-mono);
-  letter-spacing: 0.12em;
+  background: rgba(28, 28, 28, 0.86);
+  backdrop-filter: blur(6px);
+  font: 400 0.6875rem/1.3 var(--mono);
   text-transform: uppercase;
-  color: var(--steel-400);
+  color: var(--grey-300);
 }
-.tag--licence { border-color: var(--brass-dim); color: var(--brass); }
-.tag--last { border-color: var(--blaze); color: var(--blaze-text); }
-.tag--order { color: var(--steel-600); }
+.tag--licence { color: var(--lime); }
+.tag--last { color: var(--alert); }
 
 .card__body {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.95rem 1rem 1.05rem;
+  gap: 0.6rem;
+  padding: 1.25rem;
   flex: 1;
 }
 .card__cat {
-  font: 500 var(--step-micro)/1 var(--font-mono);
-  letter-spacing: 0.18em;
+  font: 400 0.6875rem/1 var(--mono);
   text-transform: uppercase;
-  color: var(--steel-600);
+  color: var(--grey-500);
+  transition: color var(--t) var(--ease);
 }
 .card__name {
-  font: 600 1.32rem/1.12 var(--font-display);
-  letter-spacing: 0.005em;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: var(--tr-hero);
 }
 .card__spec {
-  font: 400 var(--step-mono)/1.5 var(--font-mono);
-  color: var(--steel-400);
+  font-size: 0.875rem;
+  color: var(--grey-700);
+  transition: color var(--t) var(--ease);
 }
 .card__rule {
   height: 1px;
-  background: var(--brass);
+  background: var(--lime);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform var(--t-mid) var(--ease-out);
+  transition: transform var(--t) var(--ease);
 }
 .card__foot {
   display: flex;
@@ -201,45 +182,48 @@
   justify-content: space-between;
   gap: 0.75rem;
   margin-top: auto;
-  padding-top: 0.35rem;
+  padding-top: 0.5rem;
 }
 .card__price {
   /* En movil la ficha se estrecha pero el numero no encoge solo. */
-  font: 600 clamp(1.1rem, 0.85rem + 0.8vw, 1.35rem)/1 var(--font-display);
-  letter-spacing: 0.01em;
+  font-size: clamp(1.15rem, 0.9rem + 0.8vw, 1.4rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--tr-h2);
 }
-.card__price span { font-size: 0.8rem; color: var(--steel-400); margin-right: 0.2rem; }
+.card__price span { font-size: 0.6em; color: var(--grey-500); margin-right: 0.2em; }
+.card:hover .card__price span { color: var(--grey-400); }
 
 .card__add {
-  padding: 0.5rem 0.85rem;
-  background: transparent;
-  border: 1px solid var(--ink-500);
-  border-radius: var(--radius);
-  font: 500 var(--step-mono)/1 var(--font-mono);
-  letter-spacing: 0.1em;
+  padding: 0.55rem 0.9rem;
+  background: var(--paper-warm);
+  border: 0;
+  border-radius: var(--r);
+  font: 400 var(--fs-mono)/1 var(--mono);
   text-transform: uppercase;
-  color: var(--steel-200);
+  color: var(--ink);
   cursor: pointer;
-  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
-    border-color var(--t-fast) var(--ease);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
-.card__add:hover { background: var(--brass); border-color: var(--brass); color: var(--ink-900); }
-.card__add.is-added { border-color: var(--brass-dim); color: var(--brass); }
+.card__add:hover { background: var(--lime); }
+.card:hover .card__add { background: var(--ink-soft); color: var(--paper); }
+.card:hover .card__add:hover { background: var(--lime); color: var(--ink); }
+.card__add.is-added,
+.card:hover .card__add.is-added { background: transparent; color: var(--lime-ink); }
+.card:hover .card__add.is-added { color: var(--lime); }
 
-/* --- pie de la rejilla ------------------------------------------------ */
+/* --- pie de la rejilla --------------------------------------------------- */
 
 .grid__status {
-  margin-top: 2.2rem;
+  margin-top: 3rem;
   text-align: center;
-  font: 400 var(--step-mono)/1.6 var(--font-mono);
-  letter-spacing: 0.12em;
+  font: 400 var(--fs-mono)/1.6 var(--mono);
   text-transform: uppercase;
-  color: var(--steel-600);
+  color: var(--grey-500);
 }
 
 .sentinel { height: 1px; }
 
 @media (max-width: 40rem) {
-  .grid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
-  .catalog__head { padding-top: 2.5rem; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
 }

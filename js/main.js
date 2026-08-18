@@ -1,4 +1,4 @@
-/* main.js - une catalogo, rejilla infinita y fondo 3D. */
+/* main.js - une catalogo, rejilla infinita y las secciones de la portada. */
 (function (global) {
   'use strict';
 
@@ -41,11 +41,6 @@
     return line ? line.label.toLowerCase() : id;
   }
 
-  function modelOf(id) {
-    var line = lineOf(id);
-    return line ? line.model : 'rifle';
-  }
-
   function init() {
     var items = shop.catalog.build();
     var counts = shop.catalog.counts(items);
@@ -53,9 +48,7 @@
     var status = doc.getElementById('status');
     var sentinel = doc.getElementById('sentinel');
     var filters = doc.getElementById('filters');
-    var hero = doc.getElementById('hero');
     var cartCount = doc.getElementById('cartCount');
-    var scene = shop.scene.mount(doc.getElementById('scene'), { model: 'rifle' });
 
     var moneyBox = doc.getElementById('money');
     var money = readMoney();
@@ -189,7 +182,6 @@
       Array.prototype.forEach.call(filters.children, function (chip) {
         chip.setAttribute('aria-pressed', String(chip.dataset.filter === filter));
       });
-      scene.setModel(modelOf(filter));
       pump();
     }
 
@@ -241,13 +233,67 @@
       button.setAttribute('aria-label', button.dataset.name + ', ya en la cesta');
     });
 
-    // El fondo muestra la pieza que se esta mirando.
-    function follow(event) {
-      var card = event.target.closest('.card');
-      if (card) scene.setModel(card.dataset.model);
+    /* --- familias, marcas y preguntas ---------------------------------- */
+
+    // Las tres se derivan del catalogo, no de una lista escrita a mano: al
+    // tocar js/catalog.js se actualizan solas.
+    function brands() {
+      var visto = {};
+      var out = [];
+      shop.catalog.LINES.forEach(function (line) {
+        line.items.forEach(function (item) {
+          if (visto[item.brand]) return;
+          visto[item.brand] = true;
+          out.push(item.brand);
+        });
+      });
+      return out;
     }
-    grid.addEventListener('pointerover', follow);
-    grid.addEventListener('focusin', follow);
+
+    var FLECHA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="2" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"></path></svg>';
+
+    var tiles = doc.getElementById('tiles');
+    if (tiles) {
+      shop.catalog.LINES.forEach(function (line, i) {
+        var tile = el('a', 'tile');
+        tile.href = '#catalogo';
+        tile.dataset.filter = line.id;
+        tile.setAttribute('data-reveal', '');
+        tile.style.setProperty('--d', i % 3);
+        tile.appendChild(el('span', 'tile__n',
+          (counts[line.id] || 0) + ' referencias'));
+        tile.appendChild(el('h3', 'tile__name', line.label));
+        tile.appendChild(el('p', 'tile__spec', line.licence || 'Venta libre'));
+        var go = el('span', 'tile__go');
+        go.innerHTML = FLECHA;
+        tile.appendChild(go);
+        tiles.appendChild(tile);
+      });
+    }
+
+    var track = doc.querySelector('.marquee__track');
+    if (track) {
+      // La lista va dos veces: la animacion recorre la mitad justa y empalma.
+      var marcas = brands();
+      marcas.concat(marcas).forEach(function (name) {
+        track.appendChild(el('span', 'marquee__item', name));
+      });
+    }
+
+    var faq = doc.getElementById('faq');
+    if (faq) {
+      faq.addEventListener('click', function (event) {
+        var q = event.target.closest('.faq__q');
+        if (!q) return;
+        var abierta = q.getAttribute('aria-expanded') === 'true';
+        // Acordeon: abrir una cierra el resto.
+        Array.prototype.forEach.call(faq.querySelectorAll('.faq__q'), function (otra) {
+          otra.setAttribute('aria-expanded', 'false');
+        });
+        q.setAttribute('aria-expanded', String(!abierta));
+      });
+    }
 
     /* --- arranque ------------------------------------------------------ */
 
@@ -257,21 +303,12 @@
       }, { rootMargin: '700px 0px' }).observe(sentinel);
     }
 
-    // Al dejar la portada el esquema del fondo se apaga para que las fichas manden.
-    var browsing = false;
-    function onScroll() {
-      var next = global.scrollY > hero.offsetHeight * 0.55;
-      if (next !== browsing) {
-        browsing = next;
-        doc.body.classList.toggle('is-browsing', browsing);
-      }
-    }
-    global.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-
     // El titular cuenta lo mismo que la rejilla, no un numero escrito a mano.
     var total = doc.getElementById('statTotal');
     if (total) total.textContent = shop.catalog.format(counts.todo);
+
+    var marcasN = doc.getElementById('statBrands');
+    if (marcasN) marcasN.textContent = brands().length;
 
     // El cambio del pie sale de la misma constante que los precios. El numero
     // escrito en el HTML solo cubre el caso sin JS.
@@ -279,6 +316,7 @@
     if (cambio) cambio.textContent = shop.catalog.format(shop.catalog.ARS_POR_USD);
 
     pump();
+    shop.reveal.init();
   }
 
   if (doc.readyState === 'loading') {

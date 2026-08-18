@@ -25,6 +25,10 @@ ELEGIDAS = {
 
 LIBRES = ('public domain', 'cc0', 'cc by', 'cc-by', 'pd-')
 
+# La portada usa la misma foto que la ficha del visor, pero a lo ancho y con
+# resolucion de pantalla: como fondo se estira a todo el ancho de la ventana.
+HERO = ('optic', 2400, 1350)
+
 
 def limpia(html):
     return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', '', html or '')).strip()
@@ -42,13 +46,13 @@ def ficha(titulo):
     return pagina['imageinfo'][0]
 
 
-def encuadra(img):
-    """Rellena 8:5 recortando por el centro: todas las fichas con el mismo aire."""
+def encuadra(img, ancho=ANCHO, alto=ALTO):
+    """Rellena el marco recortando por el centro: todas las fichas con el mismo aire."""
     img = img.convert('RGB')
-    escala = max(ANCHO / img.width, ALTO / img.height)
+    escala = max(ancho / img.width, alto / img.height)
     img = img.resize((round(img.width * escala), round(img.height * escala)), Image.LANCZOS)
-    x, y = (img.width - ANCHO) // 2, (img.height - ALTO) // 2
-    return img.crop((x, y, x + ANCHO, y + ALTO))
+    x, y = (img.width - ancho) // 2, (img.height - alto) // 2
+    return img.crop((x, y, x + ancho, y + alto))
 
 
 def main():
@@ -69,6 +73,12 @@ def main():
         salida = os.path.join(DESTINO, modelo + '.webp')
         encuadra(Image.open(io.BytesIO(datos))).save(salida, 'WEBP', quality=82, method=6)
         print('%-10s %7d B  %s' % (modelo, os.path.getsize(salida), licencia))
+
+        if modelo == HERO[0]:
+            portada = os.path.join(os.path.dirname(DESTINO), 'hero.webp')
+            encuadra(Image.open(io.BytesIO(datos)), HERO[1], HERO[2]).save(
+                portada, 'WEBP', quality=80, method=6)
+            print('%-10s %7d B  (portada)' % ('hero', os.path.getsize(portada)))
 
         creditos.append({
             'modelo': modelo,
