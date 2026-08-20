@@ -57,6 +57,7 @@
     var offset = 0;
     var done = false;
     var pumping = false;
+    var saltando = 0;
     var cart = 0;
 
     /* --- ficha ------------------------------------------------------- */
@@ -162,9 +163,40 @@
         : 'Mostrando ' + offset + ' de ' + res.total + ' referencias';
     }
 
+    // Un enlace del menu se resuelve con la posicion que tiene el destino al
+    // pulsarlo. Si mientras el navegador baja el centinela va anadiendo
+    // fichas, el destino se aleja -- entre la primera pagina y el listado
+    // entero el taller cae 12.777 px mas abajo -- y el viaje termina a mitad
+    // del catalogo. Asi que durante el salto no se carga nada.
+    //
+    // `scrollend` levanta el freno en cuanto el viaje termina de verdad, y el
+    // reloj es el techo para Safari, que no lo trae hasta la 26. Dos segundos
+    // sobran: la animacion mas larga no pasa de 700 ms en ningun navegador.
+    // Quedarse corto devuelve el fallo; pasarse solo retrasa un poco la
+    // siguiente pagina, y eso se arregla solo.
+    function saltoEnCurso() {
+      return Date.now() < saltando;
+    }
+
+    function sigueCargando() {
+      saltando = 0;
+      pump();          // el centinela puede seguir a la vista sin dispararse
+    }
+
+    doc.addEventListener('click', function (event) {
+      var a = event.target.closest('a[href^="#"]');
+      if (!a || a.getAttribute('href').length < 2) return;
+      saltando = Date.now() + 2000;
+      global.setTimeout(function () { if (saltando) sigueCargando(); }, 2050);
+    });
+
+    global.addEventListener('scrollend', function () {
+      if (saltando) sigueCargando();
+    });
+
     // Si tras cargar el centinela sigue a la vista, hay que seguir llenando.
     function pump() {
-      if (done || pumping) return;
+      if (done || pumping || saltoEnCurso()) return;
       pumping = true;
       loadMore();
       global.requestAnimationFrame(function () {
@@ -178,7 +210,8 @@
       filter = next;
       offset = 0;
       done = false;
-      grid.textContent = '';
+      saltando = 0;          // tocar un filtro cancela el salto: la rejilla
+      grid.textContent = ''; // se acaba de vaciar y hay que rellenarla ya
       Array.prototype.forEach.call(filters.children, function (chip) {
         chip.setAttribute('aria-pressed', String(chip.dataset.filter === filter));
       });
