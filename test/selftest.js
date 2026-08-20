@@ -286,6 +286,57 @@ assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'product', 'CREDITS.md
 assert.ok(fs.existsSync(path.join(IMG, 'CREDITS.md')),
   'falta img/model/CREDITS.md: las fotos CC BY y CC BY-SA exigen atribucion');
 
+/* --- regimen, cupos y busqueda ---------------------------------------- */
+
+// La cesta decide si deja reservar preguntando por la etiqueta de la ficha.
+// Una etiqueta que no este en la tabla se trata como venta libre, y eso es
+// exactamente el fallo que nadie ve: se vende sin pedir la credencial.
+a.forEach(function (p) {
+  if (!p.licence) return;
+  assert.ok(catalog.REGIMEN[p.licence],
+    p.id + ': regimen desconocido «' + p.licence + '», la cesta lo daria por libre');
+});
+
+// La municion se cuenta en cartuchos contra el cupo de la TCCM: hace falta
+// sacar el calibre del nombre y el tamaño de la caja de la ficha tecnica.
+a.filter(function (p) { return p.cat === 'municion'; }).forEach(function (p) {
+  var cal = catalog.calibre(p.name);
+  assert.ok(cal, p.name + ': no se le saca el calibre, no contaria para el cupo');
+  assert.ok(catalog.porCaja(p.spec) > 0, p.name + ': sin cartuchos por caja');
+  assert.ok(catalog.topeTccm(cal) > 0, cal + ': sin cupo anual');
+});
+
+assert.strictEqual(catalog.topeTccm('cal. 12/70'), 2500, 'anima lisa: el cupo es 2.500');
+assert.strictEqual(catalog.topeTccm('.22 LR'), 2500, '.22 LR: el cupo es 2.500');
+assert.strictEqual(catalog.topeTccm('.308 Win'), 1000, 'el cupo general es 1.000');
+assert.strictEqual(catalog.regimen('Requiere TCCM').tccm, true);
+assert.strictEqual(catalog.regimen(null).clu, false, 'sin etiqueta es venta libre');
+
+// Buscar tiene que aguantar acentos, mayusculas y familia, que es como se
+// escribe de verdad en una caja de busqueda.
+assert.ok(catalog.buscar(a, 'anschutz').length > 0, 'la busqueda no ignora los acentos');
+assert.ok(catalog.buscar(a, 'MUNICIÓN').length > 0, 'la busqueda no encuentra por familia');
+assert.strictEqual(catalog.buscar(a, '   ').length, 0, 'una busqueda vacia no filtra nada');
+assert.strictEqual(catalog.buscar(a, 'zzzz').length, 0);
+
+/* --- base de datos ----------------------------------------------------- */
+
+// El seed sale del catalogo, asi que tiene que salir igual dos veces: si no,
+// cada regeneracion ensucia el diff y deja de servir para comparar.
+var seed = require('../tools/seed.js');
+var sql = seed.genera();
+assert.strictEqual(sql, seed.genera(), 'tools/seed.js no es determinista');
+
+catalog.LINES.forEach(function (line) {
+  line.items.forEach(function (item) {
+    assert.ok(sql.indexOf("'" + item.ref.replace(/'/g, "''") + "'") > -1,
+      item.brand + ' ' + item.ref + ': no llega a db/seed.sql');
+  });
+});
+
+assert.ok(fs.existsSync(path.join(__dirname, '..', 'db', 'schema.sql')),
+  'falta db/schema.sql, que es a donde apunta el seed');
+
 process.stdout.write('selftest ok · ' + a.length + ' referencias · ' +
   Object.keys(scene.models).length + ' modelos · ' +
   conFoto + '/' + a.length + ' con foto propia\n');

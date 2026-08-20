@@ -19,7 +19,7 @@ para el futuro backend y no lo lee nadie desde el navegador.
       manda el resultado a la rejilla.
 - [x] 4. `js/account.js` + panel: perfil local (CLU, vencimiento, TCCM). La
       cesta lo usa para decir que falta antes de reservar.
-- [ ] 5. `db/schema.sql`: catalogo, existencias serializadas con CUIM, clientes,
+- [x] 5. `db/schema.sql`: catalogo, existencias serializadas con CUIM, clientes,
       credenciales, pedidos, tramites ANMaC, taller. `tools/seed.js` lo llena
       desde `js/catalog.js`.
-- [ ] 6. Selftest y documentacion.
+- [x] 6. Selftest y documentacion.

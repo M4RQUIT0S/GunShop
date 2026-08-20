@@ -25,8 +25,21 @@ Cubre lo que no se ve a simple vista: el catálogo es determinista, la
 paginación no repite ni pierde fichas, las mallas del respaldo cierran con las
 caras hacia fuera, están las ocho fotos genéricas con su fichero de créditos, y
 ninguna ficha apunta a una ruta rota, a la foto de otro producto ni a un
-fichero idéntico al de otro. Si tocas `js/catalog.js`, `js/scene.js`,
-`tools/models.py` o `tools/fotos.py`, ejecútalo.
+fichero idéntico al de otro. También que ninguna etiqueta de régimen se salga
+de la tabla —una desconocida se trataría como venta libre, que es vender sin
+pedir la credencial—, que a cada munición se le saque calibre y cartuchos por
+caja, y que `tools/seed.js` siga siendo determinista. Si tocas
+`js/catalog.js`, `js/scene.js`, `tools/models.py`, `tools/fotos.py` o
+`tools/seed.js`, ejecútalo.
+
+La base de datos se comprueba aparte, porque necesita un Postgres:
+
+```
+docker run -d --name gunshop-pg -e POSTGRES_PASSWORD=demo -v "$PWD/db:/db:ro" postgres:17-alpine
+docker exec gunshop-pg psql -U postgres -v ON_ERROR_STOP=1 -f /db/schema.sql
+docker exec gunshop-pg psql -U postgres -v ON_ERROR_STOP=1 -f /db/seed.sql
+docker exec gunshop-pg psql -U postgres -v ON_ERROR_STOP=1 -f /db/smoke.sql
+```
 
 ## Restricciones del código
 
@@ -34,7 +47,10 @@ fichero idéntico al de otro. Si tocas `js/catalog.js`, `js/scene.js`,
   clásico para que funcione sobre `file://`. `js/scene.js` y `js/catalog.js`
   además exportan por `module.exports` sólo para el selftest en Node.
 - El orden de los `<script>` en `index.html` importa: meshes → scene → art →
-  catalog → nav → reveal → main. `main.js` llama a `reveal.init()` al final,
+  catalog → cart → search → account → nav → reveal → main. Los tres paneles
+  se cargan antes que `main.js` porque es él quien los arranca, y arranca
+  primero `account` (la cesta le pregunta por la CLU nada más pintarse).
+  `main.js` llama a `reveal.init()` al final,
   cuando las baldosas de familias ya existen: si se observan antes, nacen
   invisibles y nadie las descubre.
 - `js/meshes.js` e `img/` están **generados**: no se editan a mano.
@@ -47,6 +63,71 @@ fichero idéntico al de otro. Si tocas `js/catalog.js`, `js/scene.js`,
   dos fondos y se queda en trazos. Los números están anotados en
   `css/tokens.css` junto a cada gris.
 - Respetar `prefers-reduced-motion` en cualquier animación nueva.
+
+## Cesta, cuenta y búsqueda
+
+Los tres botones de la barra abren un `<dialog>` modal, que ya trae fondo
+oscuro, foco atrapado y cierre con Escape: no hay nada de eso escrito a mano.
+El marcado vive al final de `index.html` y la pintura en `css/shop.css`.
+
+| Fichero | Qué hace | Qué guarda |
+|---|---|---|
+| `js/cart.js` | cesta, cantidades, avisos de régimen y reserva | `gunshop:cesta`, `gunshop:pedidos` |
+| `js/search.js` | panel de la lupa, y «/» lo abre | nada |
+| `js/account.js` | perfil del cliente: CLU, vencimiento, TCCM | `gunshop:cuenta` |
+
+Cosas que no son evidentes:
+
+- **La cesta guarda `{id: unidades}`, no la ficha.** El producto se vuelve a
+  resolver contra el catálogo al cargar, así que un precio nuevo entra solo y
+  una referencia que desaparece se cae sola.
+- **La ficha no tiene estado propio**: su botón le pregunta a la cesta cuántas
+  unidades hay. Por eso quitar una línea en el panel devuelve el botón a
+  «Añadir» sin que nadie sincronice nada.
+- **La búsqueda vive por encima de los filtros**: entra en «Todo» y deja un
+  chip para deshacerla. Ese chip también es `.chip`, así que el manejador de
+  los filtros exige `[data-filter]` para no tratarlo como una familia.
+- **La cuenta no tiene contraseña a propósito.** Guardar una en `localStorage`
+  es peor que no tenerla. El alta de verdad es `customer` en el esquema SQL.
+- Lo que puede o no reservarse sale de `REGIMEN`, `calibre()`, `porCaja()` y
+  `topeTccm()` en `js/catalog.js`, que es la misma fuente de la que
+  `tools/seed.js` llena `licence_regime` y `calibre`. Si cada uno comparase
+  etiquetas por su cuenta, un día dirían cosas distintas.
+
+## Base de datos
+
+`db/schema.sql` es PostgreSQL 14 o más, y no lo lee nadie desde el navegador:
+es a donde se mudan el catálogo y la cesta el día que haya servidor. Está
+probado —se aplica, se llena y pasa `db/smoke.sql`, que es una venta entera
+de la cesta a la entrega— pero ninguna parte de la página depende de él.
+
+    js/catalog.js  LINES    → family        localStorage  cesta   → cart
+                   items    → brand+product               cuenta  → customer
+                   cals[]   → product_variant             pedidos → sales_order
+                   usd      → product.usd_cents + fx_rate
+
+Lo que decidió el modelo:
+
+- **Cada arma de fuego es una fila, no una cantidad**: lleva número de serie y
+  CUIM, y ANMaC pregunta por ella una a una (`firearm_unit`). Lo que no se
+  serializa —munición, óptica, fundas— va por cantidad.
+- **Las existencias se llevan por asiento** (`stock_move`) y `stock_level` es
+  sólo el saldo, mantenido por disparador. Un inventario que se edita a mano
+  no se puede auditar.
+- **Dinero en centavos de dólar, entero.** Los pesos salen de `fx_rate`, y el
+  pedido se queda con el cambio que se le aplicó: una factura de hace dos años
+  tiene que seguir cuadrando.
+- **La línea de pedido guarda copia** del nombre, del precio y del régimen. El
+  catálogo cambia; lo que se vendió y bajo qué ley, no.
+- La CLU y la TCCM son documentos con vencimiento (`credential`), no casillas.
+  El cupo de munición se comprueba contra la vista `ammo_consumed`.
+
+`db/seed.sql` está **generado**: sale de `js/catalog.js` con `node
+tools/seed.js` y no se edita a mano. Trae los 76 productos, las 102
+referencias y las mismas existencias que enseña la página —166 armas con
+número de serie de prueba y 118 unidades contadas—. Es determinista: dos
+ejecuciones dan el mismo fichero, y pasarlo dos veces por la base no duplica
+nada.
 
 ## Modelos 3D (sólo respaldo)
 
