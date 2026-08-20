@@ -17,6 +17,7 @@
   var moneda = function () { return 'ars'; };
   var perfil = function () { return null; };
   var nodo = {};
+  var scrollPrevio = '';
 
   /* --- almacen ------------------------------------------------------- */
 
@@ -288,7 +289,10 @@
   function abrir() {
     if (!nodo.panel) return;
     nodo.hecho.hidden = true;
-    // Un <dialog> modal atrapa el foco pero no frena el scroll de detras.
+    // Un <dialog> modal atrapa el foco pero no frena el scroll de detras. Se
+    // guarda lo que hubiera: en movil el menu ya lo tiene bloqueado, y
+    // dejarlo vacio al cerrar el panel lo soltaria con el menu abierto.
+    scrollPrevio = doc.body.style.overflow;
     doc.body.style.overflow = 'hidden';
     pinta();
     nodo.panel.showModal();
@@ -324,7 +328,7 @@
       function (b) { b.addEventListener('click', function () { nodo.panel.close(); }); });
     // Clic en el fondo oscuro: el evento cae en el propio <dialog>, no en el
     // contenido, porque el contenido es un hijo que ocupa menos.
-    nodo.panel.addEventListener('close', function () { doc.body.style.overflow = ''; });
+    nodo.panel.addEventListener('close', function () { doc.body.style.overflow = scrollPrevio; });
     nodo.panel.addEventListener('click', function (event) {
       if (event.target === nodo.panel) nodo.panel.close();
     });

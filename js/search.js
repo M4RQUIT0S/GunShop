@@ -11,6 +11,7 @@
   var items = [];
   var aplicar = function () {};
   var nodo = {};
+  var scrollPrevio = '';
   var hallados = [];
 
   function el(tag, clase, texto) {
@@ -60,7 +61,10 @@
 
   function abrir() {
     if (!nodo.panel) return;
-    // Un <dialog> modal atrapa el foco pero no frena el scroll de detras.
+    // Un <dialog> modal atrapa el foco pero no frena el scroll de detras. Se
+    // guarda lo que hubiera: en movil el menu ya lo tiene bloqueado, y
+    // dejarlo vacio al cerrar el panel lo soltaria con el menu abierto.
+    scrollPrevio = doc.body.style.overflow;
     doc.body.style.overflow = 'hidden';
     nodo.panel.showModal();
     pinta();
@@ -100,7 +104,7 @@
 
     Array.prototype.forEach.call(nodo.panel.querySelectorAll('[data-cierra]'),
       function (b) { b.addEventListener('click', function () { nodo.panel.close(); }); });
-    nodo.panel.addEventListener('close', function () { doc.body.style.overflow = ''; });
+    nodo.panel.addEventListener('close', function () { doc.body.style.overflow = scrollPrevio; });
     nodo.panel.addEventListener('click', function (event) {
       if (event.target === nodo.panel) nodo.panel.close();
     });

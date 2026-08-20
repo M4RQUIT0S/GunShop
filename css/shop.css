@@ -275,7 +275,13 @@
 }
 .estado__clu { color: var(--paper); letter-spacing: var(--tr-body); }
 .estado__clu.is-ojo { color: var(--lime); }
-.estado__clu.is-mal { color: var(--alert); }
+/* El naranja de alerta da 4.04:1 sobre `--ink-soft` y no llega a 4.5, asi que
+   aqui hace de marca y el texto se queda en papel, como en `.aviso--falta`. */
+.estado__clu.is-mal {
+  color: var(--paper);
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--alert);
+}
 
 .form {
   display: grid;

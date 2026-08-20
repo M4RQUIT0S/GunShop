@@ -260,7 +260,12 @@
       query = (q || '').trim();
       filter = 'todo';
       repinta();
-      doc.getElementById('catalogo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // `behavior: smooth` pisa la preferencia del sistema, que el CSS si
+      // respeta; hay que preguntarla a mano para no hacerlo.
+      var quieto = global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      doc.getElementById('catalogo').scrollIntoView({
+        behavior: quieto ? 'auto' : 'smooth', block: 'start'
+      });
     }
 
     function marcaBusqueda() {
