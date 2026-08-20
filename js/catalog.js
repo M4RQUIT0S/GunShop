@@ -259,6 +259,46 @@
     return grupos.format(Math.round(usd * m.factor));
   }
 
+  /* --- regimen ANMaC ---------------------------------------------------
+     Lo que la ley pide para llevarse cada cosa, indexado por la etiqueta que
+     ya lleva la ficha. Vive aqui porque preguntan dos sitios que no se
+     conocen entre si: la cesta, para decir que falta antes de reservar, y
+     tools/seed.js, para llenar la tabla `licence_regime` de la base. Si cada
+     uno comparase cadenas por su cuenta, un dia dirian cosas distintas. */
+
+  var REGIMEN = {
+    'Uso civil':             { clu: true,  tccm: false, certificado: false },
+    'Uso civil condicional': { clu: true,  tccm: false, certificado: true },
+    'Aire comprimido':       { clu: false, tccm: false, certificado: false },
+    'Requiere TCCM':         { clu: true,  tccm: true,  certificado: false }
+  };
+
+  var LIBRE = { clu: false, tccm: false, certificado: false };
+
+  function regimen(licence) { return REGIMEN[licence] || LIBRE; }
+
+  // La municion no lleva `cals`: el calibre va escrito en la referencia, que
+  // es de donde hay que sacarlo para contar el cupo de la TCCM.
+  var CALIBRE = /(cal\. \d{2}\/\d{2}|\.22 LR|\.223 Rem|\.308 Win|\.30-06 Sprg|\.300 Win Mag|6,5 Creedmoor|9 mm Pb|9,3x62|8x57 IS|4,5 mm)/;
+
+  function calibre(nombre) {
+    var m = CALIBRE.exec(nombre || '');
+    return m ? m[1] : null;
+  }
+
+  // Cartuchos por caja, que es la unidad en la que se compra la municion.
+  function porCaja(spec) {
+    var m = /caja de (\d+)/.exec(spec || '');
+    return m ? Number(m[1]) : 0;
+  }
+
+  // Res. ANMaC 14/2025: 1.000 cartuchos por calibre, 2.500 en anima lisa y
+  // .22 LR. Lo que no es municion no tiene cupo.
+  function topeTccm(cal) {
+    if (!cal) return 0;
+    return /^cal\./.test(cal) || cal === '.22 LR' ? 2500 : 1000;
+  }
+
   function build() {
     var out = [];
 
@@ -303,6 +343,30 @@
     return filter === 'todo' ? items : items.filter(function (p) { return p.cat === filter; });
   }
 
+  // Busqueda del panel de la lupa: todas las palabras tienen que aparecer,
+  // en el nombre o en la ficha tecnica. Sin acentos y sin mayusculas, porque
+  // nadie escribe «Anschutz» con dieresis en un buscador.
+  function llano(t) {
+    return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function buscar(items, q) {
+    var palabras = llano(q || '').split(/\s+/).filter(Boolean);
+    if (!palabras.length) return [];
+    var hallados = items.filter(function (p) {
+      var heno = llano(p.cat + ' ' + p.name + ' ' + p.kind + ' ' + p.spec + ' ' +
+        (p.licence || ''));
+      return palabras.every(function (w) { return heno.indexOf(w) > -1; });
+    });
+    // `items` ya viene ordenado por relevancia; esto solo sube lo que casa por
+    // nombre sobre lo que casa por la ficha, sin deshacer ese orden.
+    function porNombre(p) {
+      var n = llano(p.name);
+      return palabras.every(function (w) { return n.indexOf(w) > -1; }) ? 0 : 1;
+    }
+    return hallados.sort(function (a, b) { return porNombre(a) - porNombre(b); });
+  }
+
   // Devuelve el tramo siguiente y si ya se ha llegado al final.
   // size 0 es un tramo vacio, no "usa el tamaño por defecto".
   function page(items, filter, offset, size) {
@@ -327,7 +391,9 @@
     LINES: LINES, PAGE: PAGE,
     MONEDAS: MONEDAS, ARS_POR_USD: ARS_POR_USD,
     rng: rng, build: build, page: page, filtered: filtered, counts: counts,
-    format: format, money: money
+    format: format, money: money,
+    REGIMEN: REGIMEN, regimen: regimen,
+    calibre: calibre, porCaja: porCaja, topeTccm: topeTccm, buscar: buscar
   };
 
   global.GunShop = global.GunShop || {};
