@@ -99,3 +99,31 @@ no hay que tocar codigo.
 | Zeiss Victory SF 10x42 | `zeiss-victory-sf-10x42.webp` | [www.eurooptic.com](https://www.eurooptic.com/zeiss-victory-10x42-sf-binoculars-price-to-be-determined) |
 | Zeiss Victory V8 2,8-20x56 | `zeiss-victory-v8-2-8-20x56.webp` | [www.gentec-intl.com](https://www.gentec-intl.com/products/zeiss-victory-v8-2-8-20x56-riflescope) |
 | Zoli Z-Sport | `zoli-z-sport.webp` | [elite-shotguns.com](https://elite-shotguns.com/product/antonio-zoli-z-sport-greystone-12g-32-flat-rib-serial-257612/) |
+
+## De baja resolucion
+
+Estas 21 salieron de la cache del buscador a unos 474 px porque la
+tienda rechaza el hotlink. Se ven bien a tamano de ficha, pero son las
+primeras a sustituir.
+
+- Aimpoint Acro P-2 3,5 MOA
+- Benelli Raffaello Crio
+- Beretta 92X Performance
+- Beretta A400 Xtreme Plus
+- Bergara B-14 HMR
+- Bergara B-14 Ridge
+- Blaser R8 Professional
+- Browning B525 Game One
+- CCI Standard Velocity .22 LR 40 gr
+- Eley Tenex .22 LR 40 gr
+- Feinwerkbau AW93
+- Fiocchi Golden Pheasant cal. 12/70
+- Hornady Precision Hunter 6,5 Creedmoor 143 gr
+- Mauser M12 Pure
+- Negrini 1657
+- Pardini SP
+- Rottner Gun 5 Cargo
+- SAGA Heavy 34 cal. 12/70
+- Walther GSP Expert
+- Winchester Super X cal. 12/76
+- rottner-guntronic-5.web
