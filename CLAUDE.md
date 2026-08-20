@@ -23,8 +23,10 @@ node test/selftest.js
 
 Cubre lo que no se ve a simple vista: el catálogo es determinista, la
 paginación no repite ni pierde fichas, las mallas del respaldo cierran con las
-caras hacia fuera, y están las ocho fotos con su fichero de créditos. Si tocas
-`js/catalog.js`, `js/scene.js`, `tools/models.py` o `tools/fotos.py`, ejecútalo.
+caras hacia fuera, están las ocho fotos genéricas con su fichero de créditos, y
+ninguna ficha apunta a una ruta rota, a la foto de otro producto ni a un
+fichero idéntico al de otro. Si tocas `js/catalog.js`, `js/scene.js`,
+`tools/models.py` o `tools/fotos.py`, ejecútalo.
 
 ## Restricciones del código
 
@@ -135,44 +137,71 @@ Comprimir el canon para que quepa era lo que las hacia parecer de juguete.
 
 ## Imagenes
 
-Dos niveles. Cada **producto** tiene su foto en `img/product/<marca-ref>.webp`,
-y cada **modelo** tiene una generica en `img/model/<modelo>.webp` para los
-productos que no encontraron la suya. Todas 1200x750. La ficha las usa asi:
+Dos niveles, con licencias distintas. Cada **producto** tiene su foto en
+`img/product/<marca-ref>.webp` y cada **modelo** una generica en
+`img/model/<modelo>.webp`, que es donde cae la ficha si falta la del producto.
+Todas 1200x750. La cascada es:
 
     product.photo  ->  img/model/<modelo>.webp  ->  esquema de scene.js
 
-El `photo:` de `js/catalog.js` apunta al primer nivel; 65 de los 76 productos
-lo tienen. Los 11 restantes estan listados en `img/product/CREDITS.md`.
+Los 76 productos tienen la suya, asi que el segundo peldano hoy no se pisa;
+sigue ahi porque el fallo, si se rompe una ruta, es invisible.
 
 `img/hero.webp` (2400x1350) es el fondo de la portada.
 
-Las bajo `tools/fotos.py` de Wikimedia Commons:
+### img/model/ -- genericas, licencia libre
+
+Las baja `tools/fotos.py` de Wikimedia Commons:
 
 ```
 python tools/fotos.py
 ```
 
 **Solo licencias que permitan redistribuir** -- dominio publico, CC0, CC BY,
-CC BY-SA. El script comprueba la licencia y aborta si no lo es. No es una
-formalidad: el repositorio es publico, asi que una foto de producto de un
-fabricante queda redistribuida en cuanto se hace push, sin esperar a que el
-sitio salga a produccion.
-
-La mitad son CC BY o CC BY-SA, que **exigen citar al autor**. La tabla vive en
+CC BY-SA. El script comprueba la licencia y aborta si no lo es. La mitad son
+CC BY o CC BY-SA y **exigen citar al autor**: la tabla vive en
 `img/model/CREDITS.md` y el selftest comprueba que el fichero siga ahi.
 
-Las actuales son marcadores. Todas son de la familia correcta pero en general
-**no del modelo exacto**: Commons y Openverse no tienen fotografia de producto
-de modelos comerciales concretos. Estan revisadas a ojo una por una, porque una
-busqueda automatica por marca+modelo devuelve un pueblo de Colorado llamado
-Rifle, un sepulcro para la AyA Aguila y el museo de cristal para el Swarovski.
+### img/product/ -- del producto, licencia sin aclarar
 
-Para poner las definitivas basta con dejar otro `.webp` de 1200x750 con el
-mismo nombre en `img/product/`, o cambiar el `photo:` del producto en
-`js/catalog.js`. Ninguna de las dos cosas toca codigo.
+Son fotos de catalogo del fabricante o de un distribuidor. **No estan
+aclaradas para redistribuir** y el repositorio es publico, asi que antes de
+produccion hay que sustituirlas por fotos del taller o pedir permiso. Cada una
+lleva su pagina de origen en `img/product/CREDITS.md`, que es lo que permite
+saber a quien.
 
-El selftest comprueba que ninguna ruta `photo:` este rota y que ningun producto
-use la foto de otro.
+Commons no sirve para este nivel: no tiene fotografia de producto de modelos
+comerciales concretos, y buscar por marca+modelo alli devuelve un pueblo de
+Colorado llamado Rifle y un sepulcro para la AyA Aguila.
+
+Lo que si funciona es buscar imagenes por el nombre exacto y **mirarlas**. El
+titulo del resultado de una tienda es literalmente el nombre del producto, asi
+que puntuar por titulo deja arriba lo que hay que ver; pero elegir por el
+titulo sin abrir la imagen es como se colo un AR-15 en el Blaser R8. Se revisa
+una hoja de contactos por producto.
+
+Cuatro productos se cambiaron por otro de su misma familia porque de ellos no
+hay foto publicada y del sustituto si: `SAGA Perdiz 34` -> `SAGA Heavy 34`,
+`RIO Star 32` -> `RIO Game Load BlueSteel`, `Vanguard Pioneer 46` ->
+`Beretta Hunter Tech Rifle Case`, `Ferrimax Alfa 5` -> `Rottner Gun 5 Cargo`.
+Otros tres se renombraron al modelo que de verdad ensena su foto:
+`Arregui Rifle 180020` -> `Braco 5`, `AyA Aguila` -> `AyA No. 1 De Luxe`,
+`Grulla Consejo` -> `Grulla 216 RB`.
+
+Al encuadrar, `contain` y nunca `cover`: la foto de tienda trae el arma entera
+en diagonal y recortar a 8:5 se come la boca del canon. Antes hay que quitar el
+margen liso, porque un rifle fotografiado en un cuadrado de 1600x1600 entra en
+la ficha como una raya. El relleno es el color de las cuatro esquinas del
+original, no blanco fijo.
+
+Para cambiar una foto basta con dejar otro `.webp` de 1200x750 con el mismo
+nombre, o cambiar el `photo:` del producto en `js/catalog.js`. Ninguna de las
+dos cosas toca codigo.
+
+El selftest comprueba que ninguna ruta `photo:` este rota, que ningun producto
+use la foto de otro y que no haya dos ficheros identicos: el reparto
+automatico llego a dar la misma imagen al armero Arregui y al Ferrimax, y eso
+por nombre de fichero no se ve.
 
 ## Diseno
 

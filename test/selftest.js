@@ -260,6 +260,24 @@ assert.strictEqual(ajenas.length, 0,
   'foto de otro producto: ' + (ajenas[0] && ajenas[0].name) +
   ' usa ' + (ajenas[0] && ajenas[0].photo));
 
+// Dos productos con el mismo fichero pasarian la prueba de arriba -- cada uno
+// apunta al suyo -- pero en pantalla se ve la misma foto dos veces. Paso: el
+// reparto automatico daba la misma imagen al armero Arregui y al Ferrimax.
+var crypto = require('crypto');
+var porHash = {};
+fs.readdirSync(path.join(__dirname, '..', 'img', 'product'))
+  .filter(function (f) { return /\.webp$/.test(f); })
+  .forEach(function (f) {
+    var h = crypto.createHash('sha1')
+      .update(fs.readFileSync(path.join(__dirname, '..', 'img', 'product', f)))
+      .digest('hex');
+    (porHash[h] = porHash[h] || []).push(f);
+  });
+var repes = Object.keys(porHash).filter(function (h) { return porHash[h].length > 1; });
+assert.strictEqual(repes.length, 0,
+  'hay ' + repes.length + ' fotos repetidas, la primera en ' +
+  (repes[0] && porHash[repes[0]].join(' = ')));
+
 assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'product', 'CREDITS.md')),
   'falta img/product/CREDITS.md: las fotos CC BY y CC BY-SA exigen atribucion');
 
