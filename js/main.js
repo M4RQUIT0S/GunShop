@@ -54,18 +54,33 @@
     var money = readMoney();
 
     var filter = 'todo';
+    var query = '';
     var offset = 0;
     var done = false;
     var pumping = false;
     var saltando = 0;
-    var cart = 0;
+    var porId = {};
+    items.forEach(function (p) { porId[p.id] = p; });
 
     /* --- ficha ------------------------------------------------------- */
+
+    // La ficha no guarda su estado: se lo pregunta a la cesta. Asi, quitar
+    // una linea en el panel devuelve el boton a «Añadir» sin que nadie tenga
+    // que acordarse de sincronizar los dos sitios.
+    function pintaAdd(button, product) {
+      var n = shop.cart.unidades(product.id);
+      button.textContent = n > 1 ? 'En la cesta · ' + n : n ? 'En la cesta' : 'Añadir';
+      button.classList.toggle('is-added', n > 0);
+      button.setAttribute('aria-label', n
+        ? product.name + ', ' + n + ' en la cesta. Añadir otra'
+        : 'Añadir ' + product.name + ' a la cesta');
+    }
 
     function buildCard(product, i) {
       var card = el('article', 'card');
       card.style.setProperty('--i', Math.min(i, 7));
       card.dataset.model = product.model;
+      card.dataset.id = product.id;
 
       var art = el('div', 'card__art');
       // Cascada: la foto del producto si la hay, si no la foto del modelo, y
@@ -105,10 +120,9 @@
       paintPrice(price);
       foot.appendChild(price);
 
-      var add = el('button', 'card__add', 'Añadir');
+      var add = el('button', 'card__add');
       add.type = 'button';
-      add.dataset.name = product.name;
-      add.setAttribute('aria-label', 'Añadir ' + product.name + ' a la cesta');
+      pintaAdd(add, product);
       foot.appendChild(add);
 
       body.appendChild(foot);
@@ -139,6 +153,7 @@
       });
       // Repintar en sitio: volver a paginar devolveria el scroll al principio.
       Array.prototype.forEach.call(grid.querySelectorAll('.card__price'), paintPrice);
+      shop.cart.pinta();     // el panel lleva los mismos precios
     }
 
     Array.prototype.forEach.call(moneyBox.children, function (button) {
@@ -151,16 +166,25 @@
 
     /* --- paginacion --------------------------------------------------- */
 
+    // De donde salen las fichas: el catalogo entero, o lo que haya dejado la
+    // busqueda. Los filtros de familia siguen aplicandose encima.
+    function fuente() {
+      return query ? shop.catalog.buscar(items, query) : items;
+    }
+
     function loadMore() {
-      var res = shop.catalog.page(items, filter, offset, canObserve ? shop.catalog.PAGE : 999);
+      var res = shop.catalog.page(fuente(), filter, offset,
+        canObserve ? shop.catalog.PAGE : 999);
       var frag = doc.createDocumentFragment();
       res.items.forEach(function (product, i) { frag.appendChild(buildCard(product, i)); });
       grid.appendChild(frag);
       offset = res.offset;
       done = res.done;
+      var donde = query ? '«' + query + '»' : labelOf(filter);
+      var refs = res.total + (res.total === 1 ? ' referencia' : ' referencias');
       status.textContent = done
-        ? 'Fin del listado · ' + res.total + ' referencias en ' + labelOf(filter)
-        : 'Mostrando ' + offset + ' de ' + res.total + ' referencias';
+        ? 'Fin del listado · ' + refs + ' en ' + donde
+        : 'Mostrando ' + offset + ' de ' + refs;
     }
 
     // Un enlace del menu se resuelve con la posicion que tiene el destino al
@@ -205,17 +229,51 @@
       });
     }
 
-    function setFilter(next) {
-      if (next === filter) return;
-      filter = next;
+    function repinta() {
       offset = 0;
       done = false;
+      pumping = false;       // la pagina a medio pintar ya no sirve: si se
+                             // dejase marcada, el pump de abajo no arrancaria
+                             // y la rejilla se quedaria vacia hasta el
+                             // siguiente scroll
       saltando = 0;          // tocar un filtro cancela el salto: la rejilla
       grid.textContent = ''; // se acaba de vaciar y hay que rellenarla ya
-      Array.prototype.forEach.call(filters.children, function (chip) {
-        chip.setAttribute('aria-pressed', String(chip.dataset.filter === filter));
-      });
+      Array.prototype.forEach.call(filters.querySelectorAll('[data-filter]'),
+        function (chip) {
+          chip.setAttribute('aria-pressed', String(chip.dataset.filter === filter));
+        });
+      marcaBusqueda();
       pump();
+    }
+
+    function setFilter(next) {
+      if (next === filter && !query) return;
+      filter = next;
+      query = '';            // un filtro de familia deshace la busqueda
+      repinta();
+    }
+
+    // Lo que manda el panel de la lupa. La busqueda vive por encima de los
+    // filtros: entra siempre en «Todo» y deja su propio chip para poder
+    // deshacerla, porque si no la rejilla se queda corta sin explicacion.
+    function setQuery(q) {
+      query = (q || '').trim();
+      filter = 'todo';
+      repinta();
+      doc.getElementById('catalogo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function marcaBusqueda() {
+      var viejo = filters.querySelector('.chip--busqueda');
+      if (viejo) filters.removeChild(viejo);
+      if (!query) return;
+      var chip = el('button', 'chip chip--busqueda');
+      chip.type = 'button';
+      chip.setAttribute('aria-label', 'Quitar la búsqueda ' + query);
+      chip.appendChild(doc.createTextNode('«' + query + '»'));
+      chip.appendChild(el('span', 'chip__x', '✕'));
+      chip.addEventListener('click', function () { setQuery(''); });
+      filters.insertBefore(chip, filters.firstChild);
     }
 
     /* --- filtros ------------------------------------------------------ */
@@ -231,7 +289,10 @@
     });
 
     filters.addEventListener('click', function (event) {
-      var chip = event.target.closest('.chip');
+      // El chip de la busqueda tambien es .chip y tambien vive aqui, pero no
+      // filtra ninguna familia: sin este guardia el clic llegaba a setFilter
+      // con un id vacio y dejaba la rejilla sin nada que ensenar.
+      var chip = event.target.closest('.chip[data-filter]');
       if (chip) setFilter(chip.dataset.filter);
     });
 
@@ -245,26 +306,35 @@
 
     grid.addEventListener('click', function (event) {
       var button = event.target.closest('.card__add');
-      // Ya añadido: el boton se queda enfocable pero deja de contar.
-      if (!button || button.getAttribute('aria-disabled') === 'true') return;
-
-      cart += 1;
-      cartCount.textContent = cart;
-      // El contador es decorativo: el estado de la cesta viaja en la etiqueta del boton.
-      cartCount.parentNode.setAttribute('aria-label',
-        'Cesta, ' + cart + (cart === 1 ? ' artículo' : ' artículos'));
-      cartCount.classList.add('is-on');
-      // Quitar y volver a poner la clase en el mismo frame no reinicia nada:
-      // hay que forzar un recalculo entre medias para que la animacion repita.
-      cartCount.classList.remove('is-bump');
-      void cartCount.offsetWidth;
-      cartCount.classList.add('is-bump');
-
-      button.textContent = 'En la cesta';
-      button.classList.add('is-added');
-      button.setAttribute('aria-disabled', 'true');
-      button.setAttribute('aria-label', button.dataset.name + ', ya en la cesta');
+      if (!button) return;
+      var product = porId[button.closest('.card').dataset.id];
+      if (product) shop.cart.add(product);
     });
+
+    var piezas = 0;
+
+    // Unico sitio que pinta el contador y los botones de las fichas, lo haya
+    // movido la ficha o el panel de la cesta. La cesta avisa; aqui se obedece.
+    function pintaCesta() {
+      var n = shop.cart.piezas();
+      cartCount.textContent = n;
+      // El contador es decorativo: el estado de la cesta viaja en la etiqueta.
+      cartCount.parentNode.setAttribute('aria-label',
+        'Cesta, ' + n + (n === 1 ? ' artículo' : ' artículos'));
+      cartCount.classList.toggle('is-on', n > 0);
+      if (n > piezas) {
+        // Quitar y volver a poner la clase en el mismo frame no reinicia nada:
+        // hay que forzar un recalculo entre medias para que la animacion repita.
+        cartCount.classList.remove('is-bump');
+        void cartCount.offsetWidth;
+        cartCount.classList.add('is-bump');
+      }
+      piezas = n;
+      Array.prototype.forEach.call(grid.querySelectorAll('.card__add'), function (b) {
+        var p = porId[b.closest('.card').dataset.id];
+        if (p) pintaAdd(b, p);
+      });
+    }
 
     /* --- familias, marcas y preguntas ---------------------------------- */
 
@@ -347,6 +417,17 @@
     // escrito en el HTML solo cubre el caso sin JS.
     var cambio = doc.getElementById('cambioArs');
     if (cambio) cambio.textContent = shop.catalog.format(shop.catalog.ARS_POR_USD);
+
+    // La cuenta primero: la cesta le pregunta por la CLU nada mas pintarse.
+    shop.account.init();
+    shop.cart.on(pintaCesta);
+    shop.cart.init({
+      items: items,
+      moneda: function () { return money; },
+      perfil: shop.account.perfil
+    });
+    shop.search.init({ items: items, aplicar: setQuery });
+    shop.account.on(function () { shop.cart.pinta(); });
 
     pump();
     shop.reveal.init();

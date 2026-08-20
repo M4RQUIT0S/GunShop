@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/catalog.css">
+<link rel="stylesheet" href="css/shop.css">
 <script>document.documentElement.className += ' js';</script>
 </head>
 <body>
@@ -55,17 +56,18 @@
         </ul>
       </nav>
       <div class="nav__actions">
-        <button class="icon-btn" type="button" aria-label="Buscar en el catálogo">
+        <button class="icon-btn" id="btnSearch" type="button" aria-label="Buscar en el catálogo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
             <circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path>
           </svg>
         </button>
-        <button class="icon-btn" type="button" aria-label="Mi cuenta">
+        <button class="icon-btn" id="btnAccount" type="button" aria-label="Mi cuenta">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
             <circle cx="12" cy="8.5" r="4"></circle><path d="M4.5 20a7.5 7.5 0 0 1 15 0"></path>
           </svg>
+          <span class="icon-btn__ini" aria-hidden="true" hidden></span>
         </button>
-        <button class="icon-btn cart" type="button" aria-label="Cesta">
+        <button class="icon-btn cart" id="btnCart" type="button" aria-label="Cesta">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
             <path d="M4 7h16l-1.4 12.2a2 2 0 0 1-2 1.8H7.4a2 2 0 0 1-2-1.8Z"></path>
             <path d="M8.5 7V5.5a3.5 3.5 0 0 1 7 0V7"></path>
@@ -344,10 +346,105 @@
   </div>
 </footer>
 
+
+<!-- Los tres paneles de la barra. <dialog> ya trae modal, foco atrapado y
+     Escape; no hace falta escribir nada de eso. -->
+
+<dialog class="panel panel--top on-ink" id="searchPanel" aria-label="Buscar en el catálogo">
+  <div class="panel__box">
+    <form class="panel__buscar" id="searchForm" role="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 5 5"></path>
+      </svg>
+      <input id="searchInput" name="q" type="search" autocomplete="off" spellcheck="false"
+        placeholder="Marca, modelo, calibre o familia" aria-label="Buscar en el catálogo">
+      <button class="panel__x" type="button" data-cierra aria-label="Cerrar la búsqueda">✕</button>
+    </form>
+    <div class="panel__lista" id="searchLista"></div>
+    <div class="panel__pie" id="searchPie" hidden>
+      <button class="btn" type="button" id="searchVer">Ver en el catálogo</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="panel panel--side on-ink" id="cartPanel" aria-label="Cesta">
+  <div class="panel__box">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">Reserva en armería</p>
+        <h2 class="panel__title">Cesta</h2>
+        <p class="panel__resumen" id="cartResumen"></p>
+      </div>
+      <button class="panel__x" type="button" data-cierra aria-label="Cerrar la cesta">✕</button>
+    </header>
+    <div class="panel__lista" id="cartLines"></div>
+    <div class="panel__avisos" id="cartAvisos"></div>
+    <footer class="panel__pie">
+      <p class="panel__total"><span>Total</span><span id="cartTotal">$ 0</span></p>
+      <button class="btn" type="button" id="cartReserva">Reservar en la armería</button>
+      <div class="hecho" id="cartHecho" hidden></div>
+    </footer>
+  </div>
+</dialog>
+
+<dialog class="panel panel--side on-ink" id="accountPanel" aria-label="Mi cuenta">
+  <div class="panel__box">
+    <header class="panel__head">
+      <div>
+        <p class="eyebrow">Legítimo usuario</p>
+        <h2 class="panel__title">Mi cuenta</h2>
+      </div>
+      <button class="panel__x" type="button" data-cierra aria-label="Cerrar la cuenta">✕</button>
+    </header>
+
+    <div class="panel__estado" id="accEstado"></div>
+
+    <form class="form" id="accForm">
+      <label class="campo">
+        <span>Nombre y apellido</span>
+        <input name="nombre" type="text" required autocomplete="name" maxlength="60">
+      </label>
+      <label class="campo">
+        <span>Correo</span>
+        <input name="email" type="email" required autocomplete="email" maxlength="80">
+      </label>
+      <div class="campo__par">
+        <label class="campo">
+          <span>Nº de CLU</span>
+          <input name="clu" type="text" required inputmode="numeric" pattern="[0-9]{4,12}"
+            title="Entre 4 y 12 cifras" autocomplete="off">
+        </label>
+        <label class="campo">
+          <span>Vence el</span>
+          <input name="vence" type="date" required>
+        </label>
+      </div>
+      <label class="campo campo--check">
+        <input name="tccm" type="checkbox">
+        <span>Tengo Tarjeta de Consumo (TCCM) vigente</span>
+      </label>
+      <div class="form__pie">
+        <button class="btn" type="submit" id="accGuarda">Guardar en este navegador</button>
+        <button class="btn btn--ghost" type="button" id="accSalir" hidden>Borrar mis datos</button>
+      </div>
+      <p class="form__nota">
+        Sin contraseña y sin servidor: estos datos se quedan en este navegador y no
+        se envían a ninguna parte. La armería comprueba la credencial original en
+        el mostrador, siempre.
+      </p>
+    </form>
+
+    <div class="panel__pedidos" id="accPedidos"></div>
+  </div>
+</dialog>
+
 <script src="js/meshes.js"></script>
 <script src="js/scene.js"></script>
 <script src="js/art.js"></script>
 <script src="js/catalog.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/search.js"></script>
+<script src="js/account.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/reveal.js"></script>
 <script src="js/main.js"></script>
