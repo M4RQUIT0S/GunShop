@@ -89,6 +89,13 @@ Cosas que no son evidentes:
   los filtros exige `[data-filter]` para no tratarlo como una familia.
 - **La cuenta no tiene contraseña a propósito.** Guardar una en `localStorage`
   es peor que no tenerla. El alta de verdad es `customer` en el esquema SQL.
+- **Los tres paneles entran y salen con `@starting-style`**, no con
+  `@keyframes`. Un `<dialog>` pasa de `display: none` a `block` y no hay
+  desde donde animar: `@starting-style` da ese valor de partida y
+  `allow-discrete` retrasa el `display` hasta que la transicion acaba, que
+  es lo que permite animar tambien el cierre y el fondo oscuro. El bloque de
+  movimiento reducido de `base.css` nombra `::backdrop` aparte porque `*` no
+  lo alcanza.
 - Lo que puede o no reservarse sale de `REGIMEN`, `calibre()`, `porCaja()` y
   `topeTccm()` en `js/catalog.js`, que es la misma fuente de la que
   `tools/seed.js` llena `licence_regime` y `calibre`. Si cada uno comparase
@@ -297,8 +304,12 @@ medido de su CSS y no aproximado a ojo. Todo vive en `css/tokens.css`:
   titulares. Es la firma de la plantilla; si se quita, se cae el parecido.
 - Radio 4px en todo. Nada redondeado.
 - Separacion por color de fondo, no por bordes de 1px.
-- Una sola curva: `cubic-bezier(.44, 0, .56, 1)` a 0.4s, simetrica y sin
-  rebote. No metas easings nuevos.
+- Una sola curva: `cubic-bezier(.44, 0, .56, 1)`, simetrica y sin rebote. No
+  metas easings nuevos, y tampoco tiempos: son tres y solo tres. `--t-slow`
+  0.7s para lo que entra en pantalla, `--t` 0.4s para lo que responde al
+  puntero, `--t-fast` 0.2s unicamente para el salto de teclado. Lo que entra
+  en fila -- fichas, bloques, enlaces del menu -- se escalona con `--stagger`,
+  el mismo para los tres.
 - Aire vertical grande (`--sp-section`, 80 a 150px) contra lateral pequeno.
 
 Las animaciones que en Himon hace framer-motion aqui son `js/reveal.js`: dos

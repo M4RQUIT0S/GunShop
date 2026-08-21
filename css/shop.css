@@ -5,6 +5,12 @@
 
 /* --- caja comun ------------------------------------------------------- */
 
+/* Entra y sale con la misma curva. `allow-discrete` hace que `display` y la
+   capa superior esperen a que la transicion acabe, y `@starting-style` da el
+   valor de partida del primer pintado: sin el, el navegador no tiene desde
+   donde animar y la apertura seria un salto. Antes esto eran dos @keyframes
+   que solo cubrian la entrada -- el panel se abria animado, desaparecia de
+   golpe y el fondo oscuro nunca se fundia. */
 .panel {
   border: 0;
   padding: 0;
@@ -12,9 +18,22 @@
   max-height: none;
   background: transparent;
   color: var(--paper);
+  opacity: 0;
+  transition: opacity var(--t) var(--ease),
+    display var(--t) var(--ease) allow-discrete,
+    overlay var(--t) var(--ease) allow-discrete;
 }
+.panel[open] { opacity: 1; }
+@starting-style { .panel[open] { opacity: 0; } }
 
-.panel::backdrop { background: rgba(28, 28, 28, 0.55); }
+.panel::backdrop {
+  background: rgba(28, 28, 28, 0);
+  transition: background var(--t) var(--ease),
+    display var(--t) var(--ease) allow-discrete,
+    overlay var(--t) var(--ease) allow-discrete;
+}
+.panel[open]::backdrop { background: rgba(28, 28, 28, 0.55); }
+@starting-style { .panel[open]::backdrop { background: rgba(28, 28, 28, 0); } }
 
 /* base.css solo le pasa al boton la fuente y el color; el fondo gris y el
    borde del sistema siguen ahi, y sobre tinta eso se ve como una pastilla
@@ -34,6 +53,14 @@
   background: var(--ink);
   border-radius: var(--r);
   overflow: hidden;
+  transition: transform var(--t) var(--ease);
+}
+.panel--side .panel__box { transform: translateX(1.5rem); }
+.panel--top .panel__box { transform: translateY(-0.75rem); }
+.panel[open] .panel__box { transform: none; }
+@starting-style {
+  .panel--side[open] .panel__box { transform: translateX(1.5rem); }
+  .panel--top[open] .panel__box { transform: translateY(-0.75rem); }
 }
 
 /* Cajon lateral: pegado al borde derecho y de altura completa. */
@@ -92,7 +119,7 @@
   background: var(--ink-soft);
   color: var(--grey-300);
   font-size: 0.9rem;
-  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
 .panel__x:hover { background: var(--lime); color: var(--ink); }
 
@@ -150,7 +177,7 @@
   padding: 0.7rem 0.75rem;
   border-radius: var(--r);
   color: inherit;
-  transition: background var(--t-fast) var(--ease);
+  transition: background var(--t) var(--ease);
 }
 .sug:hover, .sug:focus-visible { background: var(--ink-soft); }
 .sug__name { letter-spacing: var(--tr-body); }
@@ -206,7 +233,7 @@
   color: var(--paper);
   font-size: 1rem;
   line-height: 1;
-  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
 .linea__paso:hover { background: var(--lime); color: var(--ink); }
 
@@ -225,7 +252,7 @@
   color: var(--grey-400);
   text-decoration: underline;
   text-underline-offset: 3px;
-  transition: color var(--t-fast) var(--ease);
+  transition: color var(--t) var(--ease);
 }
 .linea__quita:hover { color: var(--alert); }
 
@@ -307,7 +334,7 @@
   font: inherit;
   font-size: 0.95rem;
   padding: 0.6rem 0.7rem;
-  transition: border-color var(--t-fast) var(--ease);
+  transition: border-color var(--t) var(--ease);
 }
 .campo input:focus-visible { border-color: var(--lime); outline: none; }
 .campo input:user-invalid { border-color: var(--alert); }
@@ -371,18 +398,3 @@
 /* Chip de busqueda activa: sale delante de los filtros y se quita solo. */
 .chip--busqueda { background: var(--ink); color: var(--paper); }
 .chip--busqueda .chip__x { margin-left: 0.5rem; color: var(--lime); }
-
-/* --- movimiento ---------------------------------------------------------- */
-
-@media (prefers-reduced-motion: no-preference) {
-  .panel[open] .panel__box { animation: panel-in var(--t) var(--ease); }
-  .panel--top[open] .panel__box { animation-name: panel-baja; }
-}
-
-@keyframes panel-in {
-  from { transform: translateX(1.5rem); opacity: 0; }
-}
-
-@keyframes panel-baja {
-  from { transform: translateY(-0.75rem); opacity: 0; }
-}

@@ -59,7 +59,11 @@
   /* --- movimiento ------------------------------------------------------
      Sinusoidal simetrica: entra y sale igual, sin rebote. */
   --ease: cubic-bezier(0.44, 0, 0.56, 1);
+  /* Tres tiempos y no mas: 0.7 para lo que entra, 0.4 para lo que responde
+     al puntero, 0.2 solo para lo que no puede esperar (el salto de teclado).
+     El escalon es el mismo retraso para cualquier cosa que entre en fila. */
   --t: 0.4s;
   --t-fast: 0.2s;
   --t-slow: 0.7s;
+  --stagger: 55ms;
 }

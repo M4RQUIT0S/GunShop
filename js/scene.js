@@ -82,8 +82,11 @@
    * Modelos                                                            *
    * ----------------------------------------------------------------- */
 
-  var STEEL = { base: '#161a21', hi: '#5d6a78', edge: 'rgba(201,167,96,0.50)' };
-  var BRASS = { base: '#3d2f16', hi: '#c9a760', edge: 'rgba(232,214,180,0.45)' };
+  // Los cantos iban en dorado, que es un segundo acento y el sistema solo
+  // admite la lima. Las dos paletas se quedan en la rampa neutra de
+  // tokens.css y se distinguen por el valor del cuerpo, no por el color.
+  var METAL = { base: '#1c1c1c', hi: '#969aa1', edge: 'rgba(189,231,78,0.50)' };
+  var VAINA = { base: '#262629', hi: '#c6c7cc', edge: 'rgba(189,231,78,0.45)' };
 
   // Las piezas con volumen de verdad se hornean en Blender (tools/models.py) y
   // llegan por meshes.js. Las de revolucion salen mejor aqui: un tubo escrito
@@ -116,14 +119,14 @@
   }
 
   var MODELS = {
-    rifle: { build: baked('rifle'), palette: STEEL, scale: 0.88 },
-    shotgun: { build: baked('shotgun'), palette: STEEL, scale: 0.84 },
-    pistol: { build: baked('pistol'), palette: STEEL, scale: 1.15 },
-    optic: { build: baked('optic'), palette: STEEL, scale: 1.05 },
-    reddot: { build: baked('reddot'), palette: STEEL, scale: 1.35 },
-    binocular: { build: baked('binocular'), palette: STEEL, scale: 1.25 },
-    cartridge: { build: cartridge, palette: BRASS, scale: 1.15 },
-    gcase: { build: baked('gcase'), palette: STEEL, scale: 1 }
+    rifle: { build: baked('rifle'), palette: METAL, scale: 0.88 },
+    shotgun: { build: baked('shotgun'), palette: METAL, scale: 0.84 },
+    pistol: { build: baked('pistol'), palette: METAL, scale: 1.15 },
+    optic: { build: baked('optic'), palette: METAL, scale: 1.05 },
+    reddot: { build: baked('reddot'), palette: METAL, scale: 1.35 },
+    binocular: { build: baked('binocular'), palette: METAL, scale: 1.25 },
+    cartridge: { build: cartridge, palette: VAINA, scale: 1.15 },
+    gcase: { build: baked('gcase'), palette: METAL, scale: 1 }
   };
 
   var cache = {};

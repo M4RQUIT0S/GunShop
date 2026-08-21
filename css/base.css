@@ -20,13 +20,15 @@ body {
 h1, h2, h3, h4, p, dl, dd, figure, ul, ol { margin: 0; }
 ul, ol { padding: 0; list-style: none; }
 img { display: block; max-width: 100%; height: auto; }
-button { font: inherit; color: inherit; }
+/* Los controles nacen con la fuente del sistema operativo: sin esto un
+   `input` nuevo entra en Arial y solo se nota si lleva texto dentro. */
+button, input, select, textarea { font: inherit; color: inherit; }
 a { color: inherit; text-decoration: none; }
 
 :focus-visible {
   outline: 2px solid var(--lime-ink);
   outline-offset: 3px;
-  border-radius: 2px;
+  border-radius: var(--r);
 }
 .on-ink :focus-visible { outline-color: var(--lime); }
 
@@ -186,7 +188,7 @@ h1, h2, h3 { font-weight: 500; }
 
 .brand { display: flex; align-items: center; gap: 0.7rem; margin-right: auto; }
 .brand__mark { color: var(--lime); display: block; width: 1.9rem; }
-.brand__mark svg { width: 100%; height: auto; transition: transform var(--t-slow) var(--ease); }
+.brand__mark svg { width: 100%; height: auto; transition: transform var(--t) var(--ease); }
 .brand:hover .brand__mark svg { transform: rotate(45deg); }
 .brand__name {
   display: block;
@@ -239,14 +241,14 @@ h1, h2, h3 { font-weight: 500; }
   padding: 0 0.25rem;
   background: var(--lime);
   color: var(--ink);
-  border-radius: 999px;
+  border-radius: var(--r);
   font: 500 0.625rem/1.1rem var(--mono);
   text-align: center;
   transform: scale(0);
   transition: transform var(--t) var(--ease);
 }
 .cart__count.is-on { transform: scale(1); }
-.cart__count.is-bump { animation: bump 380ms var(--ease); }
+.cart__count.is-bump { animation: bump var(--t) var(--ease); }
 @keyframes bump {
   0% { transform: scale(1); }
   40% { transform: scale(1.35); }
@@ -268,7 +270,7 @@ h1, h2, h3 { font-weight: 500; }
   display: block;
   height: 1.5px;
   background: currentColor;
-  transition: transform var(--t) var(--ease), opacity var(--t-fast) var(--ease);
+  transition: transform var(--t) var(--ease), opacity var(--t) var(--ease);
 }
 .nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
 .nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(2) { opacity: 0; }
@@ -386,7 +388,7 @@ h1, h2, h3 { font-weight: 500; }
   display: grid;
   place-items: center;
   width: 2.25rem; height: 2.25rem;
-  border-radius: 50%;
+  border-radius: var(--r);
   background: var(--paper-warm);
   transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
@@ -401,10 +403,12 @@ h1, h2, h3 { font-weight: 500; }
   gap: 1.5rem 2rem;
   padding: 2.25rem 0;
   border-top: 1px solid var(--ink-line);
-  transition: padding-left var(--t) var(--ease);
 }
 .step:last-child { border-bottom: 1px solid var(--ink-line); }
-.step:hover { padding-left: 1rem; }
+/* Se desplaza el contenido y no el relleno de la fila: animar `padding`
+   recalcula la caja en cada fotograma y arrastraria tambien la linea. */
+.step__n, .step__body { transition: transform var(--t) var(--ease); }
+.step:hover .step__n, .step:hover .step__body { transform: translateX(1rem); }
 .step__n {
   font: 400 var(--fs-mono)/1.4 var(--mono);
   color: var(--lime);
@@ -469,7 +473,7 @@ h1, h2, h3 { font-weight: 500; }
   display: grid;
   place-items: center;
   width: 1.75rem; height: 1.75rem;
-  border-radius: 50%;
+  border-radius: var(--r);
   background: var(--paper-warm);
   transition: background var(--t) var(--ease), transform var(--t) var(--ease);
 }
@@ -524,7 +528,7 @@ h1, h2, h3 { font-weight: 500; }
   opacity: 0;
   transform: translateY(1.5rem);
   transition: opacity var(--t-slow) var(--ease), transform var(--t-slow) var(--ease);
-  transition-delay: calc(var(--d, 0) * 80ms);
+  transition-delay: calc(var(--d, 0) * var(--stagger));
 }
 .js [data-reveal].is-in { opacity: 1; transform: none; }
 
@@ -553,7 +557,7 @@ h1, h2, h3 { font-weight: 500; }
     opacity: 0;
     transform: translateX(1.4rem);
     transition: opacity var(--t) var(--ease), transform var(--t) var(--ease);
-    transition-delay: calc(var(--i) * 45ms);
+    transition-delay: calc(var(--i) * var(--stagger));
   }
   .nav__menu.is-open .nav__links li { opacity: 1; transform: none; }
   .nav__links a {
@@ -580,7 +584,10 @@ h1, h2, h3 { font-weight: 500; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .marquee__track { animation: none; }
-  *, *::before, *::after {
+  /* `::backdrop` no lo alcanza `*`: es un pseudo-elemento sin elemento padre
+     en el arbol, asi que se nombra aparte o el fondo de los paneles seguiria
+     fundiendose con el movimiento reducido puesto. */
+  *, *::before, *::after, ::backdrop {
     animation-duration: 0.01ms !important;
     animation-delay: 0.01ms !important;
     animation-iteration-count: 1 !important;
