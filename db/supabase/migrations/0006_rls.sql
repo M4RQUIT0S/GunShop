@@ -251,7 +251,7 @@ create policy "lineas de la cesta propia" on public.cart_item
 -- --- sales_order y order_item ----------------------------------------------
 --
 -- Lectura y nada mas. Sin insert, sin update, sin delete: un pedido se crea
--- llamando a public.reservar(), que recalcula precio, regimen y cupo. Un
+-- llamando a public.crear_pedido(), que recalcula precio, regimen y cupo. Un
 -- cliente que pudiera insertar order_item se pondria el precio que quisiera y
 -- se saltaria el cupo de la TCCM poniendo cartridges = 0.
 alter table public.sales_order enable row level security;

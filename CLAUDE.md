@@ -43,7 +43,20 @@ nombre antes de existir —el fallo número uno al partir un esquema en ficheros
 numerados—, que toda tabla de `public` tenga RLS, que toda función
 `security definer` fije `search_path`, que toda vista lleve `security_invoker`,
 que las columnas de cada `insert` existan y cuadren con sus valores, y que los
-`$$` estén pareados. No ejecuta el SQL: eso sigue haciendo falta.
+`$$` estén pareados. No ejecuta el SQL, así que no ve nada que dependa de los datos. Eso lo cubre
+la venta entera, contra una base ya aplicada y sembrada:
+
+```
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/supabase/prueba.sql
+```
+
+Abre transacción, inventa un cliente, le vende un rifle y cartuchos y hace
+`rollback`: no deja ni una fila. Dieciséis comprobaciones, y las que importan
+son que sin CLU el arma no sale y el intento fallido no deja medio pedido, que
+dos cajas del mismo calibre se suman contra el cupo de la TCCM, que las tablas
+internas devuelven `42501` y no cero filas, y que al entregar el asiento sale
+sólo para lo que se cuenta por saldo. Los dos únicos fallos reales que han
+tenido estas migraciones salieron aquí, no en `revisa.js`.
 
 El esquema anterior, `db/schema.sql`, se comprueba aparte porque necesita un
 Postgres:
@@ -197,10 +210,15 @@ Lo que hay que tener claro antes de tocarlo:
   panel, no desde la migración, para no atar el despliegue a que la extensión
   esté permitida en el proyecto.
 
+Las ocho **están aplicadas y probadas** contra un proyecto de Supabase real
+(24 tablas, 28 políticas, 8 internas en `FORCE`), con la semilla dentro y
+`prueba.sql` en verde. Los *Advisors* salen limpios de `rls_disabled_in_public`
+y de `security_definer_view`; lo que sí sale son siete avisos de «función
+`security definer` llamable por RPC», que son los cinco `grant execute`
+deliberados de `0004` y `0008`.
+
 Lo que falta está listado al final del README: facturación AFIP, pasarela de
-pago, agenda del taller, búsqueda en el servidor y —lo más importante—
-**aplicarlas contra un Postgres de verdad**. `db/schema.sql` sí está probado;
-estas migraciones sólo están revisadas.
+pago, agenda del taller y búsqueda en el servidor.
 
 ## Modelos 3D (sólo respaldo)
 

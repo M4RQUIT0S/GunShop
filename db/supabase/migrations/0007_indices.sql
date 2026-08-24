@@ -184,3 +184,27 @@ create index if not exists anmac_filing_pendientes
 -- por rango, la clave ya esta ahi y la migracion es mecanica. Particionar hoy
 -- solo compra complejidad -- claves primarias que tienen que incluir la fecha,
 -- FK que dejan de poder apuntar a la tabla padre -- a cambio de nada.
+
+
+-- ===========================================================================
+-- Lo que el linter pide y aqui no se hace
+-- ===========================================================================
+--
+-- *Advisors -> Performance* marca una docena de claves ajenas sin indice que
+-- las cubra: `cart_item.variant_id`, `family.licence_regime_id`,
+-- `order_item.unit_id`, `anmac_filing.*`... Es una regla ciega, y aqui se
+-- responde que no a proposito.
+--
+-- Un indice de clave ajena sirve para dos cosas: unir por ella, y no escanear
+-- la tabla hija al borrar el padre. Ninguna de las dos aplica todavia. Las
+-- tablas que senala son de catalogo -- regimenes son cinco filas, familias
+-- seis -- y ahi Postgres lee la tabla entera y va mas rapido que bajando por
+-- un arbol. `order_item.unit_id` se busca siempre por `order_id`, que si esta
+-- indexado. Y de la unica tabla que va a crecer, `order_item`, no se borra
+-- nada: es una factura.
+--
+-- El criterio de este fichero es un indice por consulta que existe, con la
+-- consulta escrita al lado. Un indice sin consulta que lo use es coste de
+-- escritura y de vacuum a cambio de un aviso menos en un panel. Se revisa el
+-- dia que una de esas tablas tenga volumen, y entonces con `pg_stat_user_*`
+-- delante, no con el linter.

@@ -2,7 +2,7 @@
 -- expediente de ANMaC.
 --
 -- La regla de todo el fichero: la cesta la escribe el cliente, el pedido no.
--- Un pedido se crea llamando a public.reservar() (0008), que recalcula precio,
+-- Un pedido se crea llamando a public.crear_pedido() (0008), que recalcula precio,
 -- regimen y cupo en el servidor. Aqui no hay ni una politica de insert sobre
 -- sales_order ni sobre order_item, y eso no es un olvido (ver 0006).
 

@@ -147,7 +147,7 @@ create table if not exists public.product_variant (
   -- La municion tampoco lo lleva nulo, aunque js/catalog.js no le ponga
   -- `cals`: el calibre esta escrito en la referencia y es de donde sale el
   -- cupo. Sin calibre no se puede contar, y lo que no se puede contar no se
-  -- vende (ver public.reservar en 0008).
+  -- vende (ver public.crear_pedido en 0008).
   calibre_id  smallint references public.calibre(id),
   sku         text not null unique,
   usd_cents   integer check (usd_cents > 0),   -- null = el del producto

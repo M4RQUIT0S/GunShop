@@ -212,7 +212,16 @@ begin
       join public.product_variant v  on v.id = i.variant_id
       join public.product p          on p.id = v.product_id
       join public.brand b            on b.id = p.brand_id
-      join public.licence_regime r   on r.id = p.licence_regime_id
+      -- El coalesce no es adorno: product.licence_regime_id es NULLABLE y su
+      -- null significa «el de la familia», que es el caso de casi todo el
+      -- catalogo. Con un join a secas contra p.licence_regime_id, esas lineas
+      -- no salen del bucle: el pedido se crea, se marca reservado y llega al
+      -- mostrador sin las lineas que lo componen. Sin error y sin ruido, que
+      -- es la peor forma de romperse.
+      join public.licence_regime r
+        on r.id = coalesce(p.licence_regime_id,
+                           (select f2.licence_regime_id from public.family f2
+                             where f2.id = p.family_id))
       left join public.calibre cal   on cal.id = v.calibre_id
      where c.customer_id = v_cliente
      -- Orden estable de bloqueo. Ver la cabecera.
@@ -424,11 +433,15 @@ begin
     select oi.variant_id, oi.qty, oi.unit_id
       from public.order_item oi where oi.order_id = p_order_id
   loop
-    insert into public.stock_move (variant_id, location_id, unit_id, qty, reason, ref, actor)
-         values (v_linea.variant_id, v_sitio, v_linea.unit_id,
-                 -v_linea.qty, 'sale', v_codigo, 'entrega');
     if v_linea.unit_id is not null then
+      -- Un arma NO tiene saldo: su inventario es su propia fila. Escribirle un
+      -- asiento crearia un stock_level en negativo y el check `on_hand >= 0`
+      -- reventaria la entrega entera. Los dos mundos del inventario no se
+      -- mezclan: lo serializado se cuenta por filas, lo demas por saldo.
       update public.firearm_unit set status = 'sold' where id = v_linea.unit_id;
+    else
+      insert into public.stock_move (variant_id, location_id, qty, reason, ref, actor)
+           values (v_linea.variant_id, v_sitio, -v_linea.qty, 'sale', v_codigo, 'entrega');
     end if;
   end loop;
 

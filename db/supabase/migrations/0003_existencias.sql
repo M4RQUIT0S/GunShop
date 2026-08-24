@@ -4,8 +4,8 @@
 -- firearm_unit es la lista de numeros de serie y CUIM de lo que hay en la
 -- vitrina, con su sucursal. Filtrarla no es una fuga de datos, es un
 -- inventario para quien quiera entrar a robar. Lo unico que sale de aqui es
--- un cubo -- ok / last / order -- por public.existencias() (0008), que es lo
--- unico que la ficha ensena hoy.
+-- un entero por referencia -- lo que queda para vender -- por
+-- public.disponible() (0008), que es lo unico que la ficha ensena hoy.
 
 create table if not exists public.location (
   id    smallint generated always as identity primary key,
@@ -51,10 +51,15 @@ create trigger firearm_unit_touch before update on public.firearm_unit
 -- mantenia nadie. El disparador solo tocaba on_hand, availability restaba una
 -- columna que siempre valia cero y los motivos 'reservation'/'release' bajaban
 -- el saldo como una venta. Una columna que hay que sincronizar a mano es una
--- columna que un dia miente. Aqui reservar municion mueve el saldo de verdad
--- (asiento 'sale' al reservar) y una reserva que caduca lo devuelve con un
--- asiento 'return'. Lo reservado no es un numero que guardar: son los pedidos
--- abiertos, y esos ya estan escritos en sales_order.
+-- columna que un dia miente. Aqui el saldo se mueve una sola vez, al
+-- entregar: hasta entonces lo comprometido no es un numero que guardar, son
+-- los pedidos abiertos, y esos ya estan escritos en sales_order.
+-- public.disponible() (0008) resta lo uno de lo otro al preguntar, que es
+-- una cuenta que no se puede desincronizar porque no se almacena.
+--
+-- Los dos mundos del inventario no se mezclan: un arma de fuego NO tiene
+-- saldo aqui -- su inventario es su propia fila en firearm_unit -- y por eso
+-- entregar_pedido() escribe asiento solo para lo que se cuenta por unidades.
 create table if not exists public.stock_level (
   variant_id   bigint not null references public.product_variant(id),
   location_id  smallint not null references public.location(id),
