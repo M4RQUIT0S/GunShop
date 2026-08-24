@@ -33,9 +33,8 @@ fichas y el pie.
 - [x] 1 · Espec.: tipografía, paleta, mapa de secciones, movimiento
 - [x] 2 · Portada nueva: `index.html` + capa CSS en el lenguaje medido
 - [x] 3 · Los tres paneles (cesta, cuenta, lupa) al mismo idioma
-- [ ] 4 · Base de datos para Supabase: migraciones, RLS, semilla
-      (0001–0006 escritas; faltan índices, funciones, semilla y README)
-- [ ] 5 · Comprobación (selftest, navegador, movimiento reducido) y commit
+- [x] 4 · Base de datos para Supabase: migraciones, RLS, semilla
+- [x] 5 · Comprobación (selftest, navegador, movimiento reducido) y commit
 
 ## Reglas que siguen en pie
 

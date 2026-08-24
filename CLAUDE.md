@@ -32,7 +32,21 @@ caja, y que `tools/seed.js` siga siendo determinista. Si tocas
 `js/catalog.js`, `js/scene.js`, `tools/models.py`, `tools/fotos.py` o
 `tools/seed.js`, ejecútalo.
 
-La base de datos se comprueba aparte, porque necesita un Postgres:
+Las migraciones de Supabase se leen sin necesidad de base:
+
+```
+node db/supabase/revisa.js
+```
+
+Comprueba lo que se ve en el texto y hunde el despliegue si falla: que nada se
+nombre antes de existir —el fallo número uno al partir un esquema en ficheros
+numerados—, que toda tabla de `public` tenga RLS, que toda función
+`security definer` fije `search_path`, que toda vista lleve `security_invoker`,
+que las columnas de cada `insert` existan y cuadren con sus valores, y que los
+`$$` estén pareados. No ejecuta el SQL: eso sigue haciendo falta.
+
+El esquema anterior, `db/schema.sql`, se comprueba aparte porque necesita un
+Postgres:
 
 ```
 docker run -d --name gunshop-pg -e POSTGRES_PASSWORD=demo -v "$PWD/db:/db:ro" postgres:17-alpine
@@ -47,21 +61,27 @@ docker exec gunshop-pg psql -U postgres -v ON_ERROR_STOP=1 -f /db/smoke.sql
   clásico para que funcione sobre `file://`. `js/scene.js` y `js/catalog.js`
   además exportan por `module.exports` sólo para el selftest en Node.
 - El orden de los `<script>` en `index.html` importa: meshes → scene → art →
-  catalog → cart → search → account → nav → reveal → main. Los tres paneles
-  se cargan antes que `main.js` porque es él quien los arranca, y arranca
+  catalog → cart → search → account → nav → reveal → portada → main. Los tres
+  paneles se cargan antes que `main.js` porque es él quien los arranca, y arranca
   primero `account` (la cesta le pregunta por la CLU nada más pintarse).
   `main.js` llama a `reveal.init()` al final,
   cuando las baldosas de familias ya existen: si se observan antes, nacen
-  invisibles y nadie las descubre.
+  invisibles y nadie las descubre. También arranca `portada.init()`, que es
+  el riel de láminas y el hueco que descubre el pie.
 - `js/meshes.js` e `img/` están **generados**: no se editan a mano.
 - Toda foto tiene respaldo: si `img/model/` falta, la ficha cae al esquema de
   `js/scene.js` y la página sigue abriéndose con doble clic. Al tocar esa
   cascada, compruébala renombrando `img/model/`.
-- **Contraste mínimo 4.5:1, y la lima no es texto sobre claro.** Da 1.28:1
-  sobre papel: ahí sólo vale como fondo con tinta encima, o `--lime-ink` si
-  hace falta lima legible. `--hairline` tampoco llega a 4.5:1 en ninguno de los
-  dos fondos y se queda en trazos. Los números están anotados en
-  `css/tokens.css` junto a cada gris.
+- **Contraste mínimo 4.5:1.** El sistema es blanco sobre negro, así que el
+  cuerpo va sobrado; donde se juega es en los grises. `--gris` (#8a8a8a) da
+  6.08:1 sobre el negro y 5.29:1 sobre `--pieza`, y es el más oscuro que
+  cumple en los dos. El #7c7c7c del original **no** llega —4.37:1 sobre
+  `--pieza`— y por eso aquí sólo es filete, nunca texto. Los números están
+  anotados en `css/tokens.css` junto a cada gris.
+- **Texto sobre foto exige velo.** Las láminas llevan un degradado radial más
+  uno vertical encima de la imagen (`.lamina::after`). Sin él, el contraste
+  depende de que la foto salga oscura, que no es una garantía: `img/hero.webp`
+  tiene hojas de otoño iluminadas justo detrás del titular.
 - Respetar `prefers-reduced-motion` en cualquier animación nueva.
 
 ## Cesta, cuenta y búsqueda
@@ -135,6 +155,52 @@ referencias y las mismas existencias que enseña la página —166 armas con
 número de serie de prueba y 118 unidades contadas—. Es determinista: dos
 ejecuciones dan el mismo fichero, y pasarlo dos veces por la base no duplica
 nada.
+
+### Supabase (`db/supabase/`)
+
+La mudanza a Postgres gestionado, **sin Docker en ningún paso**. Ocho
+migraciones numeradas y una semilla; el detalle de cómo se despliega está en
+`db/supabase/README.md`. Se comprueba con `node db/supabase/revisa.js`.
+
+Lo que hay que tener claro antes de tocarlo:
+
+- **Toda tabla de `public` queda expuesta por la API salvo que la RLS lo
+  impida.** Crear una tabla y olvidar la RLS no la deja «medio protegida»: la
+  deja legible y escribible con la clave `anon`, que va escrita en el HTML. Por
+  eso `0006_rls.sql` empieza revocando todo. Es el fichero al que hay que
+  volver.
+- **Tres grupos de ocho tablas**, y cabe en la cabeza a propósito: catálogo
+  público (`select` para cualquiera), del cliente (comparado con `auth.uid()`),
+  e internas —existencias, unidades con número de serie, asientos, pagos,
+  trámites— que **no las nombra ninguna política**. Se escriben con
+  `service_role` o desde las funciones de `0008_funciones.sql`.
+- **Una función `security definer` es segura cuando su resultado depende de
+  `auth.uid()` y de nada más que lo ensanche.** `crear_pedido()` trabaja sobre
+  la cesta de quien llama y no acepta un `customer_id`. En cuanto una acepte un
+  identificador ajeno, deja de ser una función y pasa a ser un agujero. Todas
+  llevan `set search_path = ''` y los nombres cualificados.
+- **`family.licence_regime_id` es `NOT NULL`, y esa es la línea más importante
+  del esquema.** En `db/schema.sql` era nullable y el régimen nulo se pintaba
+  como «Venta libre»: una familia mal dada de alta se entregaba sin pedir la
+  credencial.
+- **Los códigos de régimen son los mismos que emite `tools/seed.js`**
+  (`libre`, `uso-civil`, `uso-civil-condicional`, `aire-comprimido`,
+  `requiere-tccm`). Con otros, el volcado completo de los 76 productos no
+  encontraría ni una familia. Y `requiere-tccm` **no** exige certificación:
+  pedirla sería pedir un papel que la ley no pide.
+- **`crear_pedido()` bloquea la ficha del cliente antes de mirar nada.** Sin
+  eso, dos pestañas del mismo cliente pasan el mismo cupo de munición a la vez.
+  Y acumula por calibre dentro de la propia cesta: dos cajas del mismo calibre
+  no se cuentan por separado.
+- **Las reservas caducan solas o no caducan.** `public.vencer_reservas()` está
+  escrita pero **no** programada: `pg_cron` se activa y se programa desde el
+  panel, no desde la migración, para no atar el despliegue a que la extensión
+  esté permitida en el proyecto.
+
+Lo que falta está listado al final del README: facturación AFIP, pasarela de
+pago, agenda del taller, búsqueda en el servidor y —lo más importante—
+**aplicarlas contra un Postgres de verdad**. `db/schema.sql` sí está probado;
+estas migraciones sólo están revisadas.
 
 ## Modelos 3D (sólo respaldo)
 
@@ -291,31 +357,70 @@ use la foto de otro y que no haya dos ficheros identicos: el reparto
 automatico llego a dar la misma imagen al armero Arregui y al Ferrimax, y eso
 por nombre de fichero no se ve.
 
-## Diseno
+## Diseño
 
-El lenguaje visual esta portado de la plantilla Himon (Framer, autor Sang),
-medido de su CSS y no aproximado a ojo. Todo vive en `css/tokens.css`:
+El lenguaje visual está portado de **rolls-roycemotorcars.com**, medido con
+Chrome sin ventana y no aproximado a ojo. Es lo contrario del sistema anterior
+—la plantilla Himon, papel claro y acento lima— en casi todo, y por eso el
+cambio vive en la rama `rediseno-rr`. Todo está en `css/tokens.css`:
 
-- Pagina clara (`--paper #f2f2f2`) con bandas oscuras (`--ink #1c1c1c`), y un
-  unico acento lima `#bde74e`. Un segundo acento rompe el sistema.
-- Geist y Geist Mono, ambas OFL. **Peso maximo 500**, nunca negrita: lo que da
-  peso al titular es el tamano y el tracking, no el trazo.
-- Tracking negativo que crece con el cuerpo: -0.02em en texto, -0.05em en
-  titulares. Es la firma de la plantilla; si se quita, se cae el parecido.
-- Radio 4px en todo. Nada redondeado.
-- Separacion por color de fondo, no por bordes de 1px.
-- Una sola curva: `cubic-bezier(.44, 0, .56, 1)`, simetrica y sin rebote. No
-  metas easings nuevos, y tampoco tiempos: son tres y solo tres. `--t-slow`
-  0.7s para lo que entra en pantalla, `--t` 0.4s para lo que responde al
-  puntero, `--t-fast` 0.2s unicamente para el salto de teclado. Lo que entra
-  en fila -- fichas, bloques, enlaces del menu -- se escalona con `--stagger`,
-  el mismo para los tres.
-- Aire vertical grande (`--sp-section`, 80 a 150px) contra lateral pequeno.
+- Lienzo **negro** (`--negro #000`) con la pieza levantada a `--pieza #151515`,
+  que es también la tinta de los botones claros. **Sin acento de color.** Lo
+  que destaca, destaca por tamaño o por estar solo, no por ser de otro color.
+- **Tenor Sans** para rotular y **Jost** para el cuerpo. La fuente del original
+  es «Riviera Nights» y es propietaria; Tenor Sans es lo más cercano que se
+  puede redistribuir —humanista, misma modulación de trazo, terminales
+  acampanados— y **trae acentos y eñe**, que es donde se cae media fuente de
+  display en español. Se comprobó midiendo el glifo antes de elegirla. Jost
+  lleva la interfaz porque Tenor Sans, con un solo peso, ahí se vuelve frágil.
+- **Tracking positivo y fijo en píxeles**: 2,5 px valga lo que valga el cuerpo.
+  Al no escalar, el rótulo pequeño acaba más abierto que el titular, y esa
+  desproporción es la firma. `--tr-ancho` (0,22em) es el caso extremo, para una
+  sola palabra en una lámina. Es exactamente al revés que Himon, que cerraba el
+  tracking según subía el cuerpo.
+- **Canto vivo en todo** (`--r: 0`). La única forma redondeada es la píldora
+  del botón: 30 px de radio y 46 de alto, medidos del original.
+- **Separación por filete de un píxel**, no por cambio de fondo. `--filete`
+  sobre foto, `--filete-tenue` (#222) entre fichas, `--filete-medio` (#7c7c7c)
+  entre columnas. Ninguno es texto nunca.
+- Una sola curva, fuerte a la salida: `cubic-bezier(0.16, 1, 0.3, 1)`. Y tres
+  tiempos, no más: `--t-largo` 1,1s para lo que entra en pantalla, `--t` 0,45s
+  para lo que responde al puntero, `--t-corto` 0,2s sólo para el salto de
+  teclado. Lo que entra en fila se escalona con `--stagger`.
 
-Las animaciones que en Himon hace framer-motion aqui son `js/reveal.js`: dos
-clases y un `IntersectionObserver`. El estado oculto va bajo `.js` a proposito,
-para que si el script no llega a ejecutarse la pagina se vea entera en vez de
-en blanco.
+### Lo que la portada hereda del original
+
+- **Tres láminas de 100vh apiladas**, no un carrusel que gira solo. En el
+  original miden 804 px sobre una vista de 804: es scroll, no temporizador.
+- **La navegación entera detrás de «Menú»**, a cualquier ancho. No hay enlaces
+  sueltos en la barra ni en escritorio. Bajó como persiana desde arriba.
+- **Barra fija de 120 px con degradado por detrás**, que se encoge a 80 y pasa
+  a banda sólida al despegarse de la portada.
+- **El pie está fijo por debajo** y el contenido se desliza por encima hasta
+  descubrirlo. Por eso `.hoja` es opaca y lleva `z-index`. El hueco lo mide
+  `js/portada.js`, porque el alto del pie depende del ancho. Por debajo de
+  60rem el pie vuelve a ser normal: en una pantalla corta se comería media
+  vista.
+- **Riel de puntos** fijo a la izquierda, que dice en qué lámina estás y salta
+  a ella. Nace con `hidden` y lo enciende el JS.
+
+### Lo que no se copió, y por qué
+
+- **El original encuadra en cuadrado.** Aquí las cajas de foto se quedan en
+  8:5 porque las imágenes son 1200x750 y un cuadrado con `cover` se come la
+  boca del cañón. Manda la fotografía.
+- **Las fotos se reparten por luminancia medida**, no por gusto. La del taller
+  es la única del repositorio con fondo oscuro (media 21 frente a 113 de la
+  siguiente); las dos de estudio con fondo blanco puro (224 y 202) están fuera
+  de la portada, porque sobre negro son dos rectángulos que gritan.
+- **Familias y pie llevan columnas contadas, no `auto-fill`.** Seis familias en
+  un reparto automático caben de cinco en cinco y dejan la sexta sola estirada
+  a lo ancho.
+
+Las animaciones que en el original hace su propio motor aquí son
+`js/reveal.js`: dos clases y un `IntersectionObserver`. El estado oculto va
+bajo `.js` a propósito, para que si el script no llega a ejecutarse la página
+se vea entera en vez de en blanco.
 
 ## Precios
 
