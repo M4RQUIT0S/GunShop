@@ -39,7 +39,7 @@
     backdrop.addEventListener('click', close);
 
     menu.addEventListener('click', function (event) {
-      if (event.target.closest('a') && narrow.matches) setOpen(false);
+      if (event.target.closest('a')) setOpen(false);
     });
 
     doc.addEventListener('keydown', function (event) {

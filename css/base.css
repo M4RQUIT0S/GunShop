@@ -1,6 +1,8 @@
-/* base.css - reset, tipografia, barra, portada, secciones y pie.
-   El ritmo es el de Himon: mucho aire vertical, poco lateral, separacion por
-   color de fondo y no por lineas, y un solo acento. */
+/* base.css - armazon de la pagina en el lenguaje del original: lienzo negro,
+   laminas de pantalla entera, versalita con tracking abierto, y filetes de un
+   pixel donde el sistema anterior cambiaba el color del fondo. */
+
+/* --- cimientos --------------------------------------------------------- */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -9,12 +11,14 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font: 400 var(--fs-body)/1.5 var(--font);
-  letter-spacing: var(--tr-body);
+  background: var(--negro);
+  color: var(--tinta);
+  font-family: var(--texto);
+  font-size: var(--fs-cuerpo);
+  font-weight: 300;
+  line-height: 1.55;
+  letter-spacing: var(--tr-texto);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, p, dl, dd, figure, ul, ol { margin: 0; }
@@ -26,11 +30,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 a { color: inherit; text-decoration: none; }
 
 :focus-visible {
-  outline: 2px solid var(--lime-ink);
+  outline: 2px solid var(--tinta);
   outline-offset: 3px;
-  border-radius: var(--r);
 }
-.on-ink :focus-visible { outline-color: var(--lime); }
 
 .sr-only {
   position: absolute;
@@ -43,269 +45,128 @@ a { color: inherit; text-decoration: none; }
 
 .skip {
   position: fixed;
-  top: 0.6rem; left: 50%;
-  transform: translate(-50%, -160%);
-  z-index: 60;
-  padding: 0.7rem 1.2rem;
-  background: var(--lime);
-  color: var(--ink);
-  border-radius: var(--r);
-  font: 500 var(--fs-mono)/1 var(--mono);
+  top: 0.75rem; left: 50%;
+  z-index: 6000;
+  transform: translate(-50%, -200%);
+  background: var(--tinta);
+  color: var(--pieza);
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--r-pildora);
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
   text-transform: uppercase;
-  transition: transform var(--t-fast) var(--ease);
+  transition: transform var(--t-corto) var(--ease);
 }
 .skip:focus { transform: translate(-50%, 0); }
 
-/* --- piezas comunes ---------------------------------------------------- */
+/* --- rejilla ----------------------------------------------------------- */
 
+/* El original deja 16 px de calle y lleva el contenido casi a sangre. Solo el
+   texto largo se estrecha, y lo hace por medida de lectura, no por caja. */
 .wrap { max-width: var(--wrap); margin: 0 auto; padding-inline: var(--pad-x); }
 
 .section { padding-block: var(--sp-section); }
-.section--tight { padding-block: calc(var(--sp-section) * 0.62); }
-.section--warm { background: var(--paper-warm); }
-.section--ink { background: var(--ink); color: var(--paper); }
-
-/* Cabecera de seccion: cintillo mono, titular grande, entradilla corta. */
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  font: 400 var(--fs-mono)/1.5 var(--mono);
-  text-transform: uppercase;
-  letter-spacing: 0;
-  color: var(--grey-500);
-}
-.section--ink .eyebrow, .on-ink .eyebrow { color: var(--grey-300); }
-.eyebrow::before {
-  content: "";
-  width: 0.5rem; height: 0.5rem;
-  border-radius: 50%;
-  background: var(--lime);
-  flex: 0 0 auto;
-}
-
-h1, h2, h3 { font-weight: 500; }
-
-.h-display {
-  font-size: var(--fs-hero);
-  line-height: 1;
-  letter-spacing: var(--tr-hero);
-  text-transform: uppercase;
-}
-.h-section {
-  font-size: var(--fs-h2);
-  line-height: 1.1;
-  letter-spacing: var(--tr-h2);
-  text-wrap: balance;
-  max-width: 18ch;
-}
-.h-card {
-  font-size: var(--fs-h3);
-  line-height: 1.3;
-  letter-spacing: var(--tr-hero);
-  text-wrap: balance;
-}
-
-.lede {
-  font-size: var(--fs-lede);
-  line-height: 1.5;
-  color: var(--grey-700);
-  max-width: 46ch;
-}
-.section--ink .lede, .on-ink .lede { color: var(--grey-300); }
+.section--tight { padding-block: calc(var(--sp-section) * 0.55); }
+.section--pieza { background: var(--pieza); }
 
 .section__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1.5rem 3rem;
-  margin-bottom: 3.5rem;
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+  text-align: center;
+  margin-bottom: calc(var(--sp-section) * 0.45);
 }
-.section__head > div { display: grid; gap: 1.25rem; }
+.section__head .lede { max-width: 52ch; }
 
-/* --- botones ----------------------------------------------------------- */
+/* --- tipografia --------------------------------------------------------
+   Todo lo que rotula va en versalita con el tracking de la casa. Lo que se
+   lee de corrido -parrafos, fichas tecnicas- se queda en caja baja: el
+   original tampoco pone en versalita un parrafo entero. */
+
+.eyebrow {
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
+}
+
+.h-display, .h-section, .h-rotulo, .h-card {
+  font-family: var(--display);
+  font-weight: 400;
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+}
+
+.h-display { font-size: var(--fs-lamina); line-height: 1.14; }
+/* Una sola palabra aguanta -y pide- el tracking extremo del original. */
+.h-display--ancho { letter-spacing: var(--tr-ancho); }
+
+.h-section { font-size: var(--fs-h2); line-height: 1.2; }
+.h-rotulo { font-size: var(--fs-rotulo); line-height: 1.5; }
+.h-card { font-size: var(--fs-ficha); line-height: 1.6; }
+
+.lede { color: var(--gris-claro); max-width: var(--medida); }
+
+/* --- botones -----------------------------------------------------------
+   La pildora es la unica forma redondeada del sistema: 30 px de radio y 46
+   de alto, medidos del original. Todo lo demas es de canto vivo. */
 
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.9rem 1.5rem;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 2rem;
   border: 0;
-  border-radius: var(--r);
-  background: var(--lime);
-  color: var(--ink);
-  font: 500 var(--fs-mono)/1 var(--mono);
+  border-radius: var(--r-pildora);
+  background: var(--tinta);
+  color: var(--pieza);
+  font-family: var(--display);
+  font-size: var(--fs-ficha);
+  letter-spacing: var(--tr);
   text-transform: uppercase;
   cursor: pointer;
-  transition: background var(--t) var(--ease), color var(--t) var(--ease),
-    transform var(--t) var(--ease);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
-.btn:hover { background: var(--lime-dim); transform: translateY(-2px); }
+.btn:hover { background: var(--gris-claro); }
 
 .btn--ghost {
   background: transparent;
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--grey-300);
+  color: var(--tinta);
+  box-shadow: inset 0 0 0 1px var(--filete);
 }
-.btn--ghost:hover { background: var(--ink); color: var(--paper); box-shadow: none; }
-.on-ink .btn--ghost { color: var(--paper); box-shadow: inset 0 0 0 1px var(--ink-line); }
-.on-ink .btn--ghost:hover { background: var(--paper); color: var(--ink); }
+.btn--ghost:hover { background: var(--tinta); color: var(--pieza); box-shadow: none; }
 
 /* --- barra ------------------------------------------------------------- */
 
 .nav {
   position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 40;
-  height: var(--nav-h);
+  inset: 0 0 auto;
+  z-index: 5001;
+  height: var(--nav-h-ancha);
+  display: flex;
+  align-items: center;
   transition: height var(--t) var(--ease);
 }
-/* El desenfoque va en el pseudo-elemento: backdrop-filter en la barra la
-   convierte en bloque contenedor y encerraria al panel del movil. */
+/* Degradado por detras: sobre la lamina la barra no es una banda sino una
+   sombra que deja ver la foto. Al despegarse pasa a banda solida. */
 .nav::before {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
-  background: rgba(28, 28, 28, 0);
-  backdrop-filter: blur(6px);
-  transition: background var(--t) var(--ease);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0));
+  border-bottom: 1px solid var(--filete);
+  transition: background var(--t) var(--ease), border-color var(--t) var(--ease);
 }
-.nav.is-stuck { height: var(--nav-h-tight); }
-.nav.is-stuck::before { background: rgba(28, 28, 28, 0.92); }
+.nav.is-stuck { height: var(--nav-h); }
+.nav.is-stuck::before {
+  background: rgba(0, 0, 0, 0.94);
+  border-bottom-color: var(--filete-tenue);
+}
 
 .nav__inner {
-  height: 100%;
-  max-width: var(--wrap);
-  margin: 0 auto;
-  padding: 0 var(--pad-x);
-  display: flex;
-  align-items: center;
-  gap: 1.4rem;
-  color: var(--paper);
-}
-
-.brand { display: flex; align-items: center; gap: 0.7rem; margin-right: auto; }
-.brand__mark { color: var(--lime); display: block; width: 1.9rem; }
-.brand__mark svg { width: 100%; height: auto; transition: transform var(--t) var(--ease); }
-.brand:hover .brand__mark svg { transform: rotate(45deg); }
-.brand__name {
-  display: block;
-  font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: var(--tr-hero);
-  text-transform: uppercase;
-}
-.brand__meta {
-  display: block;
-  margin-top: 0.25rem;
-  font: 400 0.6875rem/1 var(--mono);
-  text-transform: uppercase;
-  color: var(--grey-400);
-}
-
-.nav__menu { display: flex; align-items: center; gap: 1.5rem; }
-.nav__links { display: flex; gap: 1.4rem; }
-.nav__links a {
-  font: 400 var(--fs-mono)/1 var(--mono);
-  text-transform: uppercase;
-  color: var(--grey-300);
-  padding: 0.5rem 0;
-  transition: color var(--t) var(--ease);
-}
-.nav__links a:hover, .nav__links a[aria-current="true"] { color: var(--lime); }
-
-.nav__actions { display: flex; align-items: center; gap: 0.5rem; }
-
-.icon-btn {
-  display: grid;
-  place-items: center;
-  width: 2.25rem; height: 2.25rem;
-  background: transparent;
-  border: 0;
-  border-radius: var(--r);
-  color: var(--paper);
-  cursor: pointer;
-  transition: background var(--t) var(--ease), color var(--t) var(--ease);
-}
-.icon-btn:hover { background: var(--lime); color: var(--ink); }
-.icon-btn svg { width: 1.05rem; height: 1.05rem; }
-
-.cart { position: relative; }
-.cart__count {
-  position: absolute;
-  top: -0.15rem; right: -0.15rem;
-  min-width: 1.1rem;
-  padding: 0 0.25rem;
-  background: var(--lime);
-  color: var(--ink);
-  border-radius: var(--r);
-  font: 500 0.625rem/1.1rem var(--mono);
-  text-align: center;
-  transform: scale(0);
-  transition: transform var(--t) var(--ease);
-}
-.cart__count.is-on { transform: scale(1); }
-.cart__count.is-bump { animation: bump var(--t) var(--ease); }
-@keyframes bump {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.35); }
-  100% { transform: scale(1); }
-}
-
-.nav__toggle {
-  display: none;
-  width: 2.5rem; height: 2.5rem;
-  background: transparent;
-  border: 0;
-  border-radius: var(--r);
-  color: var(--paper);
-  cursor: pointer;
-  padding: 0.7rem 0.6rem;
-}
-.nav__bars { display: grid; gap: 4px; }
-.nav__bars i {
-  display: block;
-  height: 1.5px;
-  background: currentColor;
-  transition: transform var(--t) var(--ease), opacity var(--t) var(--ease);
-}
-.nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
-.nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(2) { opacity: 0; }
-.nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
-
-/* --- portada ----------------------------------------------------------- */
-
-.hero {
-  position: relative;
-  min-height: 100svh;
-  display: flex;
-  align-items: flex-end;
-  padding: calc(var(--nav-h) + 6rem) 0 4rem;
-  background: var(--ink);
-  color: var(--paper);
-  overflow: hidden;
-}
-.hero__bg {
-  position: absolute;
-  inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  /* La foto es fondo, no contenido: el titular manda y tiene que leerse. */
-  opacity: 0.42;
-  filter: grayscale(0.35);
-}
-.hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(28, 28, 28, 0.92) 0%, rgba(28, 28, 28, 0.45) 45%, rgba(28, 28, 28, 0.96) 100%),
-    linear-gradient(90deg, rgba(28, 28, 28, 0.8) 0%, rgba(28, 28, 28, 0) 65%);
-}
-.hero__inner {
   position: relative;
   z-index: 1;
   width: 100%;
@@ -313,174 +174,435 @@ h1, h2, h3 { font-weight: 500; }
   margin: 0 auto;
   padding-inline: var(--pad-x);
   display: grid;
-  gap: 2rem;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
 }
-.hero__title { max-width: 15ch; }
-.hero__title em { font-style: normal; color: var(--lime); }
-.hero__lede { color: var(--grey-300); }
-.hero__cta { display: flex; flex-wrap: wrap; gap: 0.75rem; }
 
-.hero__legal {
-  max-width: 60ch;
-  font: 400 var(--fs-mono)/1.6 var(--mono);
-  color: var(--grey-400);
+/* --- el conmutador de menu, a la izquierda ----------------------------- */
+
+/* En movil se le cae la palabra «Menú» y se queda en tres rayas de 22 px: sin
+   el minimo, el area de toque baja a 38x29 y deja de alcanzar los 44 que pide
+   cualquier dedo. */
+.nav__toggle {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 44px;
+  min-height: 44px;
+  background: none;
+  border: 0;
+  padding: 0.5rem;
+  margin-left: -0.5rem;
+  color: inherit;
+  cursor: pointer;
 }
+.nav__bars { display: grid; gap: 5px; width: 22px; }
+.nav__bars i {
+  display: block;
+  height: 1px;
+  background: currentColor;
+  transition: transform var(--t) var(--ease), opacity var(--t) var(--ease), width var(--t) var(--ease);
+}
+.nav__bars i:nth-child(2) { width: 70%; }
+.nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(2) { opacity: 0; }
+.nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(3) { transform: translateY(-6px) rotate(-45deg); width: 100%; }
+
+.nav__palabra {
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+}
+
+/* --- la marca, centrada ------------------------------------------------ */
+
+.brand {
+  justify-self: center;
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  text-align: center;
+}
+.brand__name {
+  font-family: var(--display);
+  font-size: 1.125rem;
+  line-height: 1;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+.brand__meta {
+  font-family: var(--display);
+  font-size: 0.5625rem;
+  line-height: 1;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gris);
+}
+
+/* --- acciones, a la derecha -------------------------------------------- */
+
+.nav__actions { justify-self: end; display: flex; align-items: center; gap: 0.25rem; }
+
+.icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; height: 44px;
+  background: none;
+  border: 0;
+  border-radius: var(--r-pildora);
+  color: inherit;
+  cursor: pointer;
+  transition: background var(--t) var(--ease);
+}
+.icon-btn:hover { background: rgba(255, 255, 255, 0.12); }
+.icon-btn svg { width: 1.05rem; height: 1.05rem; }
+.icon-btn__ini {
+  font-family: var(--display);
+  font-size: 0.6875rem;
+  letter-spacing: 1px;
+}
+
+/* «Visitar la armería» hace de «Find a dealer»: la unica accion con palabras
+   de toda la barra. */
+.nav__visita {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  height: 44px;
+  padding: 0 0.75rem;
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color var(--t) var(--ease);
+}
+.nav__visita:hover { color: var(--gris-claro); }
+.nav__visita svg { width: 1.05rem; height: 1.05rem; flex: none; }
+
+.cart { position: relative; }
+.cart__count {
+  position: absolute;
+  top: 5px; right: 3px;
+  min-width: 17px; height: 17px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  background: var(--tinta);
+  color: var(--pieza);
+  border-radius: var(--r-pildora);
+  font-family: var(--texto);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  transform: scale(0);
+  transition: transform var(--t) var(--ease);
+}
+.cart__count.is-on { transform: scale(1); }
+.cart__count.is-bump { animation: bump var(--t) var(--ease); }
+@keyframes bump {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* --- menu a pantalla completa ------------------------------------------
+   El original esconde toda la navegacion detras de «MENU» a cualquier ancho,
+   y es su decision de forma mas visible. Aqui igual: no hay enlaces sueltos
+   en escritorio. Baja como una persiana desde arriba. */
+
+.nav__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4998;
+  background: rgba(0, 0, 0, 0.72);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--t) var(--ease), visibility var(--t) var(--ease);
+}
+.nav__backdrop.is-open { opacity: 1; visibility: visible; }
+
+.nav__menu {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 4999;
+  max-height: 100vh;
+  overflow-y: auto;
+  background: var(--negro);
+  border-bottom: 1px solid var(--filete);
+  padding: calc(var(--nav-h-ancha) + 1.5rem) 0 3rem;
+  transform: translateY(-101%);
+  visibility: hidden;
+  transition: transform var(--t-largo) var(--ease), visibility var(--t-largo) var(--ease);
+}
+.nav__menu.is-open { transform: none; visibility: visible; }
+
+.nav__links {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding-inline: var(--pad-x);
+}
+.nav__links li { border-top: 1px solid var(--filete-tenue); }
+.nav__links li:last-child { border-bottom: 1px solid var(--filete-tenue); }
+.nav__links a {
+  display: block;
+  padding: 1.1rem 0;
+  font-family: var(--display);
+  font-size: clamp(1.35rem, 0.9rem + 1.6vw, 2.25rem);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
+  transition: color var(--t) var(--ease), padding-left var(--t) var(--ease);
+}
+.nav__links a:hover { color: var(--tinta); padding-left: 1.25rem; }
+
+/* Los enlaces entran escalonados detras de la persiana. */
+.nav__menu.is-open .nav__links li {
+  animation: entra-menu var(--t-largo) var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+@keyframes entra-menu {
+  from { opacity: 0; transform: translateY(1.25rem); }
+}
+
+/* --- laminas de portada ------------------------------------------------
+   Tres pantallas apiladas, cada una de alto de vista completo, igual que el
+   original: no es un carrusel que gira solo, es scroll. `svh` evita que la
+   barra del navegador movil se coma la ultima linea. */
+
+.laminas { position: relative; }
+
+.lamina {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  min-height: 34rem;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.lamina__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+/* Sin este velo la tinta blanca cae sobre la parte clara de la foto y deja de
+   leerse. Es la condicion para poder poner texto encima de una imagen: el
+   contraste no puede depender de que la foto salga oscura. */
+.lamina::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 72% 58% at 50% 50%, rgba(0, 0, 0, 0.66), rgba(0, 0, 0, 0.18) 72%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.12) 38%, rgba(0, 0, 0, 0.72));
+}
+.lamina__copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 1.4rem;
+  text-align: center;
+  max-width: 58rem;
+  padding: var(--nav-h-ancha) var(--pad-x) 4rem;
+}
+.lamina__copy .lede { max-width: 46ch; }
+.lamina__pie { font-size: var(--fs-menudo); color: var(--gris-claro); max-width: 54ch; }
+
+/* --- riel de puntos ----------------------------------------------------
+   Fijo a la izquierda, dice en que lamina estas. Es el unico adorno de la
+   portada del original y de paso sirve de indice. */
+
+.riel {
+  position: fixed;
+  left: max(0.9rem, calc((100vw - var(--wrap)) / 2));
+  top: 50%;
+  z-index: 4000;
+  transform: translateY(-50%);
+  display: grid;
+  gap: 1.15rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--t) var(--ease), visibility var(--t) var(--ease);
+}
+.riel[hidden] { display: none; }
+.riel.is-on { opacity: 1; visibility: visible; }
+.riel__punto {
+  position: relative;
+  width: 22px; height: 22px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--tinta);
+  cursor: pointer;
+}
+.riel__punto::before {
+  content: "";
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+  transition: opacity var(--t) var(--ease);
+}
+.riel__punto::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  transform: scale(0.35);
+  opacity: 0;
+  transition: transform var(--t) var(--ease), opacity var(--t) var(--ease);
+}
+.riel__punto[aria-current="true"]::before { opacity: 1; }
+.riel__punto[aria-current="true"]::after { transform: none; opacity: 1; }
 
 /* --- cifras ------------------------------------------------------------ */
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: 3rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  border-top: 1px solid var(--filete-tenue);
 }
+.stats > div {
+  padding: 2.25rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid var(--filete-tenue);
+  border-right: 1px solid var(--filete-tenue);
+}
+.stats > div:last-child { border-right: 0; }
 .stats dt {
-  font: 400 var(--fs-mono)/1.5 var(--mono);
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
   text-transform: uppercase;
-  color: var(--grey-500);
+  color: var(--gris);
+  margin-bottom: 0.85rem;
 }
-.section--ink .stats dt, .on-ink .stats dt { color: var(--grey-400); }
 .stats dd {
-  margin: 0.5rem 0 0;
-  font-size: var(--fs-h2);
-  font-weight: 500;
+  font-family: var(--display);
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
   line-height: 1;
-  letter-spacing: var(--tr-h2);
+  letter-spacing: var(--tr);
 }
-.stats dd span { font-size: 0.4em; color: var(--grey-500); margin-left: 0.15em; }
-.section--ink .stats dd span { color: var(--grey-400); }
+.stats dd span { font-size: 0.45em; color: var(--gris); margin-left: 0.2em; }
 
-/* --- rejilla de familias ------------------------------------------------ */
+/* --- lamina partida: foto cuadrada y texto ----------------------------- */
 
-.tiles {
+.parte {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  align-items: center;
+  gap: clamp(2rem, 1rem + 4vw, 4.5rem);
 }
-.tile {
-  position: relative;
-  display: grid;
-  gap: 1rem;
-  padding: 1.75rem;
-  border-radius: var(--r);
-  background: var(--white);
-  color: inherit;
-  overflow: hidden;
-  transition: background var(--t) var(--ease), transform var(--t) var(--ease);
-}
-.tile:hover { background: var(--ink); color: var(--paper); transform: translateY(-4px); }
-.tile:hover .tile__n, .tile:hover .tile__spec { color: var(--grey-300); }
-.tile:hover .tile__go { background: var(--lime); color: var(--ink); }
-.tile__n {
-  font: 400 var(--fs-mono)/1 var(--mono);
-  text-transform: uppercase;
-  color: var(--grey-500);
-  transition: color var(--t) var(--ease);
-}
-.tile__name {
-  font-size: var(--fs-h3);
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: var(--tr-hero);
-}
-.tile__spec { color: var(--grey-700); transition: color var(--t) var(--ease); }
-.tile__go {
-  justify-self: start;
-  display: grid;
-  place-items: center;
-  width: 2.25rem; height: 2.25rem;
-  border-radius: var(--r);
-  background: var(--paper-warm);
-  transition: background var(--t) var(--ease), color var(--t) var(--ease);
-}
-.tile__go svg { width: 1rem; height: 1rem; }
+.parte__foto { aspect-ratio: 8 / 5; overflow: hidden; background: var(--negro); }
+.parte__foto img { width: 100%; height: 100%; object-fit: cover; }
+.parte__texto { display: grid; gap: 1.4rem; justify-items: start; }
 
-/* --- proceso ------------------------------------------------------------ */
+/* --- pasos del taller -------------------------------------------------- */
 
-.steps { display: grid; gap: 0; }
+.steps { display: grid; border-top: 1px solid var(--filete-tenue); }
 .step {
   display: grid;
   grid-template-columns: 5rem 1fr;
-  gap: 1.5rem 2rem;
+  gap: 1.5rem;
   padding: 2.25rem 0;
-  border-top: 1px solid var(--ink-line);
+  border-bottom: 1px solid var(--filete-tenue);
 }
-.step:last-child { border-bottom: 1px solid var(--ink-line); }
 /* Se desplaza el contenido y no el relleno de la fila: animar `padding`
    recalcula la caja en cada fotograma y arrastraria tambien la linea. */
 .step__n, .step__body { transition: transform var(--t) var(--ease); }
-.step:hover .step__n, .step:hover .step__body { transform: translateX(1rem); }
+.step:hover .step__n, .step:hover .step__body { transform: translateX(0.75rem); }
 .step__n {
-  font: 400 var(--fs-mono)/1.4 var(--mono);
-  color: var(--lime);
+  font-family: var(--display);
+  font-size: var(--fs-ficha);
+  letter-spacing: var(--tr);
+  color: var(--gris);
 }
-.step__body { display: grid; gap: 0.75rem; max-width: var(--measure); }
-.step__name { font-size: var(--fs-h3); font-weight: 500; line-height: 1.2; letter-spacing: var(--tr-hero); }
-.step p { color: var(--grey-300); }
+.step__body { display: grid; gap: 0.65rem; max-width: var(--medida); }
+.step__name {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: var(--fs-rotulo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+}
+.step p { color: var(--gris-claro); }
 
-/* --- marquesina de marcas ------------------------------------------------ */
+/* --- marquesina de marcas ---------------------------------------------- */
 
 .marquee {
   overflow: hidden;
-  /* Se desvanece por los lados para que no parezca que el texto se corta. */
+  padding: 1.75rem 0;
+  border-top: 1px solid var(--filete-tenue);
+  border-bottom: 1px solid var(--filete-tenue);
   mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 .marquee__track {
   display: flex;
-  width: max-content;
   gap: 3.5rem;
-  animation: slide 42s linear infinite;
+  width: max-content;
+  animation: slide 60s linear infinite;
 }
 .marquee:hover .marquee__track { animation-play-state: paused; }
 .marquee__item {
-  font-size: var(--fs-h3);
-  font-weight: 500;
-  letter-spacing: var(--tr-hero);
-  color: var(--grey-500);
+  font-family: var(--display);
+  font-size: var(--fs-ficha);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
   white-space: nowrap;
   transition: color var(--t) var(--ease);
 }
-.marquee__item:hover { color: var(--ink); }
-/* La pista lleva la lista dos veces; recorrer la mitad justa cierra el bucle. */
+.marquee__item:hover { color: var(--tinta); }
 @keyframes slide {
   from { transform: translateX(0); }
-  to { transform: translateX(calc(-50% - 1.75rem)); }
+  to { transform: translateX(-50%); }
 }
 
-/* --- preguntas ----------------------------------------------------------- */
+/* --- desplegables ------------------------------------------------------ */
 
-.faq { display: grid; max-width: var(--measure); }
-.faq__item { border-top: 1px solid var(--grey-300); }
-.faq__item:last-child { border-bottom: 1px solid var(--grey-300); }
+.faq { display: grid; max-width: var(--medida); margin-inline: auto; }
+.faq__item { border-top: 1px solid var(--filete-tenue); }
+.faq__item:last-child { border-bottom: 1px solid var(--filete-tenue); }
 .faq__q {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 1.6rem 0;
+  padding: 1.5rem 0;
   background: none;
   border: 0;
+  color: inherit;
   text-align: left;
-  font-size: var(--fs-lede);
-  font-weight: 500;
-  letter-spacing: var(--tr-body);
   cursor: pointer;
+  font-family: var(--display);
+  font-size: var(--fs-ficha);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
   transition: color var(--t) var(--ease);
 }
-.faq__q:hover { color: var(--lime-ink); }
+.faq__q:hover { color: var(--gris-claro); }
 .faq__sign {
-  flex: 0 0 auto;
+  flex: none;
+  width: 20px; height: 20px;
   display: grid;
   place-items: center;
-  width: 1.75rem; height: 1.75rem;
-  border-radius: var(--r);
-  background: var(--paper-warm);
-  transition: background var(--t) var(--ease), transform var(--t) var(--ease);
+  transition: transform var(--t) var(--ease);
 }
-.section--warm .faq__sign { background: var(--white); }
-.faq__q[aria-expanded="true"] .faq__sign { background: var(--lime); transform: rotate(45deg); }
-.faq__sign svg { width: 0.8rem; height: 0.8rem; }
-/* grid-template-rows 0fr -> 1fr anima la altura sin saber cuanto mide. */
+.faq__q[aria-expanded="true"] .faq__sign { transform: rotate(45deg); }
+.faq__sign svg { width: 100%; height: 100%; }
 .faq__a {
   display: grid;
   grid-template-rows: 0fr;
@@ -488,110 +610,150 @@ h1, h2, h3 { font-weight: 500; }
 }
 .faq__q[aria-expanded="true"] + .faq__a { grid-template-rows: 1fr; }
 .faq__a > div { overflow: hidden; }
-.faq__a p { padding-bottom: 1.6rem; color: var(--grey-700); max-width: 62ch; }
+.faq__a p { padding-bottom: 1.75rem; color: var(--gris-claro); }
 
-/* --- pie ----------------------------------------------------------------- */
+/* --- fichas de «continuar» ---------------------------------------------
+   Tres columnas separadas por un filete vertical, como en el original: la
+   linea es lo unico que las divide, no hay caja ni sombra. */
 
-.foot { background: var(--ink); color: var(--paper); padding: var(--sp-section) 0 2.5rem; }
-.foot__inner {
-  max-width: var(--wrap);
-  margin: 0 auto;
-  padding-inline: var(--pad-x);
+.sigue { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.sigue__item {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+  padding: 0 1.5rem 2rem;
+  border-left: 1px solid var(--filete-medio);
 }
-.foot__top { display: grid; gap: 3rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
-.foot h3 {
-  font: 400 var(--fs-mono)/1 var(--mono);
+.sigue__item:first-child { border-left: 0; padding-left: 0; }
+.sigue__foto { display: block; aspect-ratio: 8 / 5; overflow: hidden; background: var(--pieza); margin-bottom: 0.6rem; }
+.sigue__foto img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform var(--t) var(--ease);
+}
+.sigue__item:hover .sigue__foto img { transform: scale(1.045); }
+.sigue__item p { color: var(--gris-claro); }
+
+/* --- pie ---------------------------------------------------------------
+   El pie del original esta FIJO por debajo y el contenido se desliza por
+   encima hasta descubrirlo. Por eso `.hoja` es opaca y lleva z-index: sin
+   eso el pie se veria por detras de toda la pagina. El hueco que lo destapa
+   lo pone `js/portada.js`, que mide el pie y ajusta el margen inferior. */
+
+.hoja { position: relative; z-index: 1; background: var(--negro); }
+
+.foot {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 0;
+  background: var(--negro);
+  padding: 3.5rem 0 2rem;
+}
+.foot__inner { max-width: var(--wrap); margin: 0 auto; padding-inline: var(--pad-x); }
+.foot__marca {
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  padding-bottom: 2.25rem;
+  border-bottom: 1px solid var(--filete-tenue);
+}
+/* Seis columnas contadas, como el original. Con reparto automatico salian
+   ocho a un ancho y siete a otro, y las filas se descuadraban: los enlaces van
+   en grupos de seis -menu, tienda, normativa- y solo cuadran de seis en seis. */
+.foot__top {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem 1.5rem;
+  padding: 2rem 0;
+}
+@media (max-width: 62rem) { .foot__top { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 34rem) { .foot__top { grid-template-columns: repeat(2, 1fr); } }
+.foot__top a, .foot__top span {
+  display: block;
+  padding: 0.35rem 0;
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
   text-transform: uppercase;
-  color: var(--lime);
-  margin-bottom: 1.25rem;
+  color: var(--gris);
+  transition: color var(--t) var(--ease);
 }
-.foot p, .foot li { color: var(--grey-300); }
-.foot li + li { margin-top: 0.5rem; }
-.foot a { transition: color var(--t) var(--ease); }
-.foot a:hover { color: var(--lime); }
+.foot__top a:hover { color: var(--tinta); }
 .foot__bar {
-  margin-top: 4rem;
+  display: grid;
+  gap: 0.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--ink-line);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem 2rem;
-  justify-content: space-between;
-  font: 400 var(--fs-mono)/1.6 var(--mono);
-  color: var(--grey-400);
+  border-top: 1px solid var(--filete-tenue);
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  color: var(--gris);
 }
 
-/* --- entrada por scroll ---------------------------------------------------
+/* --- entrada por scroll ------------------------------------------------
    Sin JS no hay clase `is-in`, asi que el contenido tiene que verse igual:
    por eso el estado oculto lo pone `.js` y no la hoja a secas. */
+
 .js [data-reveal] {
   opacity: 0;
-  transform: translateY(1.5rem);
-  transition: opacity var(--t-slow) var(--ease), transform var(--t-slow) var(--ease);
+  transform: translateY(1.75rem);
+  transition: opacity var(--t-largo) var(--ease), transform var(--t-largo) var(--ease);
   transition-delay: calc(var(--d, 0) * var(--stagger));
 }
 .js [data-reveal].is-in { opacity: 1; transform: none; }
 
-/* --- responsive ------------------------------------------------------------ */
+/* --- anchos pequenos --------------------------------------------------- */
 
 @media (max-width: 60rem) {
-  .nav__toggle { display: block; position: relative; z-index: 2; }
-  .nav__menu {
-    position: fixed;
-    inset: 0 0 0 auto;
-    width: min(21rem, 84vw);
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 2.5rem;
-    padding: var(--nav-h) 2rem 2rem;
-    background: var(--ink);
-    transform: translateX(100%);
-    visibility: hidden;
-    transition: transform var(--t) var(--ease), visibility var(--t);
-  }
-  .nav__menu.is-open { transform: translateX(0); visibility: visible; }
-  .nav__menu > nav { align-self: stretch; }
-  .nav__links { flex-direction: column; gap: 0; width: 100%; }
-  .nav__links li {
-    opacity: 0;
-    transform: translateX(1.4rem);
-    transition: opacity var(--t) var(--ease), transform var(--t) var(--ease);
-    transition-delay: calc(var(--i) * var(--stagger));
-  }
-  .nav__menu.is-open .nav__links li { opacity: 1; transform: none; }
-  .nav__links a {
-    display: block;
-    padding: 0.9rem 0;
-    font-size: 1.05rem;
-    font-family: var(--font);
-    text-transform: none;
-    border-bottom: 1px solid var(--ink-line);
-  }
-  .nav__backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-    background: rgba(28, 28, 28, 0.66);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity var(--t) var(--ease), visibility var(--t);
-  }
-  .nav__backdrop.is-open { opacity: 1; visibility: visible; }
+  .nav__palabra { display: none; }
+  .nav__visita span { display: none; }
+  .nav__visita { padding-inline: 0.5rem; }
+  .riel { display: none; }
+  /* 120 px de barra sobre una pantalla de 844 es un octavo de la vista. */
+  :root { --nav-h-ancha: 4.5rem; }
   .step { grid-template-columns: 1fr; gap: 0.75rem; }
+  .sigue__item {
+    border-left: 0;
+    border-top: 1px solid var(--filete-medio);
+    padding: 1.75rem 0 2rem;
+  }
+  .sigue__item:first-child { border-top: 0; padding-top: 0; }
+  /* En pantalla corta un pie fijo se come media vista: vuelve a ser normal. */
+  .foot { position: static; }
+  .hoja { margin-bottom: 0 !important; }
 }
+
+@media (max-width: 48rem) {
+  /* «Armería · Buenos Aires» no cabe bajo el nombre en una barra de movil:
+     partia en dos lineas y empujaba la accion de la derecha fuera de la
+     pantalla. El original tambien deja solo el logotipo a este ancho. */
+  .brand__meta { display: none; }
+  .foot__marca .brand__meta { display: block; }
+  /* Y aun sin la linea de abajo no caben cuatro acciones en 390 px: la de
+     visitar se sale 22 px. Es la unica que se puede quitar sin perder nada,
+     porque lleva al pie y el pie ya trae la direccion entera. */
+  .nav__visita { display: none; }
+}
+
+@media (max-width: 30rem) {
+  .stats > div { border-right: 0; }
+}
+
+/* --- movimiento reducido -----------------------------------------------
+   `::backdrop` no lo alcanza `*`: es un pseudo-elemento sin elemento padre en
+   el arbol, asi que se nombra aparte o el fondo de los paneles seguiria
+   fundiendose con el movimiento reducido puesto. La marquesina se para de
+   verdad: a 0,01 ms no se detiene, salta. */
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .marquee__track { animation: none; }
-  /* `::backdrop` no lo alcanza `*`: es un pseudo-elemento sin elemento padre
-     en el arbol, asi que se nombra aparte o el fondo de los paneles seguiria
-     fundiendose con el movimiento reducido puesto. */
   *, *::before, *::after, ::backdrop {
     animation-duration: 0.01ms !important;
     animation-delay: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     transition-delay: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+  .js [data-reveal] { opacity: 1; transform: none; }
 }

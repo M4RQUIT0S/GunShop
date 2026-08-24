@@ -439,7 +439,7 @@
   }
 
   if (doc.readyState === 'loading') {
-    doc.addEventListener('DOMContentLoaded', function () { shop.nav.init(); init(); });
+    doc.addEventListener('DOMContentLoaded', function () { shop.nav.init(); shop.portada.init(); init(); });
   } else {
     shop.nav.init();
     init();
