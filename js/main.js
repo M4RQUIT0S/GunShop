@@ -384,9 +384,22 @@
     if (track) {
       // La lista va dos veces: la animacion recorre la mitad justa y empalma.
       var marcas = brands();
-      marcas.concat(marcas).forEach(function (name) {
-        track.appendChild(el('span', 'marquee__item', name));
+      marcas.concat(marcas).forEach(function (name, i) {
+        var item = el('span', 'marquee__item', name);
+        // La segunda copia esta ahi para que la animacion empalme, no para
+        // leerse: repetir la lista entera a un lector de pantalla es ruido.
+        if (i >= marcas.length) item.setAttribute('aria-hidden', 'true');
+        track.appendChild(item);
       });
+
+      var pausa = doc.getElementById('marqueePausa');
+      if (pausa) {
+        pausa.addEventListener('click', function () {
+          var quieta = track.parentNode.classList.toggle('is-quieta');
+          pausa.setAttribute('aria-pressed', String(quieta));
+          pausa.textContent = quieta ? 'Reanudar el desfile' : 'Pausar el desfile';
+        });
+      }
     }
 
     var faq = doc.getElementById('faq');

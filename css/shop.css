@@ -163,7 +163,6 @@
   padding: 0.35rem 0;
 }
 .panel__buscar input::placeholder { color: var(--gris); }
-.panel__buscar input:focus { outline: none; }
 .panel__buscar input::-webkit-search-cancel-button { filter: invert(1) opacity(0.6); }
 
 .sug {
@@ -241,6 +240,10 @@
 
 .linea__quita {
   margin-left: 0.4rem;
+  /* El area de toque, no la letra: 10 px de cuerpo dan 15 px de alto y el
+     minimo son 24. Cabe dentro de los 28 del boton de al lado, asi que la
+     linea no cambia de altura. */
+  padding-block: 0.35rem;
   background: none;
   font-family: var(--display);
   font-size: 0.625rem;

@@ -437,7 +437,7 @@ a { color: inherit; text-decoration: none; }
 .riel.is-on { opacity: 1; visibility: visible; }
 .riel__punto {
   position: relative;
-  width: 22px; height: 22px;
+  width: 24px; height: 24px;
   display: grid;
   place-items: center;
   background: none;
@@ -555,6 +555,10 @@ a { color: inherit; text-decoration: none; }
   animation: slide 60s linear infinite;
 }
 .marquee:hover .marquee__track { animation-play-state: paused; }
+/* El `:hover` solo sirve al puntero. Un desfile que arranca solo, dura mas de
+   cinco segundos y convive con el resto de la pagina necesita un mando para
+   pararlo: es nivel A, no una cortesia. */
+.marquee.is-quieta .marquee__track { animation-play-state: paused; }
 .marquee__item {
   font-family: var(--display);
   font-size: var(--fs-ficha);
@@ -569,6 +573,21 @@ a { color: inherit; text-decoration: none; }
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+.marquee__pausa {
+  display: block;
+  margin: 0.9rem 0 0 auto;
+  padding: 0.4rem 0;
+  background: none;
+  border: 0;
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
+  cursor: pointer;
+  transition: color var(--t) var(--ease);
+}
+.marquee__pausa:hover { color: var(--tinta); }
 
 /* --- desplegables ------------------------------------------------------ */
 
@@ -609,7 +628,17 @@ a { color: inherit; text-decoration: none; }
   transition: grid-template-rows var(--t) var(--ease);
 }
 .faq__q[aria-expanded="true"] + .faq__a { grid-template-rows: 1fr; }
-.faq__a > div { overflow: hidden; }
+/* `grid-template-rows: 0fr` deja la respuesta a cero de alto, pero dentro del
+   arbol: un lector de pantalla la lee entera mientras el boton dice
+   `aria-expanded="false"`. `visibility` la saca de verdad, y no hace falta
+   `allow-discrete` -- si uno de los dos extremos es `visible`, la transicion
+   entera se ve, que es justo lo que se quiere al cerrar. */
+.faq__a > div {
+  overflow: hidden;
+  visibility: hidden;
+  transition: visibility var(--t) var(--ease);
+}
+.faq__q[aria-expanded="true"] + .faq__a > div { visibility: visible; }
 .faq__a p { padding-bottom: 1.75rem; color: var(--gris-claro); }
 
 /* --- fichas de «continuar» ---------------------------------------------
@@ -747,6 +776,8 @@ a { color: inherit; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .marquee__track { animation: none; }
+  /* Ya esta parada: el mando no pararia nada y sobra. */
+  .marquee__pausa { display: none; }
   *, *::before, *::after, ::backdrop {
     animation-duration: 0.01ms !important;
     animation-delay: 0.01ms !important;
