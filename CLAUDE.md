@@ -74,9 +74,10 @@ docker exec gunshop-pg psql -U postgres -v ON_ERROR_STOP=1 -f /db/smoke.sql
   clásico para que funcione sobre `file://`. `js/scene.js` y `js/catalog.js`
   además exportan por `module.exports` sólo para el selftest en Node.
 - El orden de los `<script>` en `index.html` importa: meshes → scene → art →
-  catalog → cart → search → account → nav → reveal → portada → main. Los tres
-  paneles se cargan antes que `main.js` porque es él quien los arranca, y arranca
-  primero `account` (la cesta le pregunta por la CLU nada más pintarse).
+  catalog → cart → search → account → consulta → nav → reveal → portada → main.
+  Los cuatro paneles se cargan antes que `main.js` porque es él quien los
+  arranca, y arranca primero `account` (la cesta le pregunta por la CLU nada
+  más pintarse).
   `main.js` llama a `reveal.init()` al final,
   cuando las baldosas de familias ya existen: si se observan antes, nacen
   invisibles y nadie las descubre. También arranca `portada.init()`, que es
@@ -97,17 +98,19 @@ docker exec gunshop-pg psql -U postgres -v ON_ERROR_STOP=1 -f /db/smoke.sql
   tiene hojas de otoño iluminadas justo detrás del titular.
 - Respetar `prefers-reduced-motion` en cualquier animación nueva.
 
-## Cesta, cuenta y búsqueda
+## Cesta, cuenta, búsqueda y consulta
 
-Los tres botones de la barra abren un `<dialog>` modal, que ya trae fondo
-oscuro, foco atrapado y cierre con Escape: no hay nada de eso escrito a mano.
-El marcado vive al final de `index.html` y la pintura en `css/shop.css`.
+Cuatro paneles, todos `<dialog>` modal, que ya trae fondo oscuro, foco atrapado
+y cierre con Escape: no hay nada de eso escrito a mano. Tres los abren los
+botones de la barra y el cuarto las filas de «En qué podemos ayudarle». El
+marcado vive al final de `index.html` y la pintura en `css/shop.css`.
 
 | Fichero | Qué hace | Qué guarda |
 |---|---|---|
 | `js/cart.js` | cesta, cantidades, avisos de régimen y reserva | `gunshop:cesta`, `gunshop:pedidos` |
 | `js/search.js` | panel de la lupa, y «/» lo abre | nada |
 | `js/account.js` | perfil del cliente: CLU, vencimiento, TCCM | `gunshop:cuenta` |
+| `js/consulta.js` | las cuatro consultas y su formulario | nada |
 
 Cosas que no son evidentes:
 
@@ -122,6 +125,14 @@ Cosas que no son evidentes:
   los filtros exige `[data-filter]` para no tratarlo como una familia.
 - **La cuenta no tiene contraseña a propósito.** Guardar una en `localStorage`
   es peor que no tenerla. El alta de verdad es `customer` en el esquema SQL.
+- **Una sola ventana para las cuatro consultas.** El original tiene ocho
+  formularios distintos, uno por trámite. Cuatro copias del mismo formulario
+  serían cuatro sitios donde arreglar la misma errata: lo que cambia es el
+  título, el asunto del correo y un campo. Y no lleva casilla de
+  consentimiento de marketing como el original **a propósito**: no se envía
+  nada a ninguna parte, así que pedir permiso para tratar unos datos que no
+  salen del navegador sería escenografía. Mismo motivo que el aviso de
+  cookies, que tampoco está.
 - **Los tres paneles entran y salen con `@starting-style`**, no con
   `@keyframes`. Un `<dialog>` pasa de `display: none` a `block` y no hay
   desde donde animar: `@starting-style` da ese valor de partida y
@@ -406,12 +417,46 @@ cambio vive en la rama `rediseno-rr`. Todo está en `css/tokens.css`:
   para lo que responde al puntero, `--t-corto` 0,2s sólo para el salto de
   teclado. Lo que entra en fila se escalona con `--stagger`.
 
+### De dónde salen las medidas
+
+El original **no se puede abrir desde aquí**: la extensión de Chrome no conecta
+y el sitio no responde ni a `curl` ni a WebFetch. La fuente es la captura del
+**11 de agosto de 2026** en el Internet Archive más su hoja de estilos entera
+(866 KB, 6.477 reglas):
+
+```
+http://web.archive.org/web/20260811191207/https://www.rolls-roycemotorcars.com/en_GB/home.html
+.../etc.clientlibs/rrmc/clientlibs/clientlib-components.<hash>.css
+```
+
+La página propia sí se abre, con el arnés CDP del scratchpad (`cdp.js`, y
+`web.js` para una web ajena): Chrome sin ventana por el puerto de depuración.
+Es lo que se usa para comprobar cada cambio, porque `file://` la extensión no
+lo acepta.
+
 ### Lo que la portada hereda del original
 
 - **Tres láminas de 100vh apiladas**, no un carrusel que gira solo. En el
   original miden 804 px sobre una vista de 804: es scroll, no temporizador.
 - **La navegación entera detrás de «Menú»**, a cualquier ancho. No hay enlaces
-  sueltos en la barra ni en escritorio. Bajó como persiana desde arriba.
+  sueltos en la barra ni en escritorio. Bajó como persiana desde arriba, y es
+  una **rejilla de dos paneles**: enlaces a la izquierda alineados a la derecha
+  (`grid-column: 2/span 9` de 24) y foto ocupando la derecha (`11/span 15`).
+  Las secciones con segundo nivel son `<button>` y las que llevan a un sitio
+  son `<a>`, igual que allí.
+- **«MENÚ» y «CERRAR» cruzadas en el mismo hueco**, con un tercer `<span>`
+  invisible que sostiene el ancho. Sin él el botón encoge al abrir y empuja a
+  la marca del centro. El fantasma lleva la palabra **ancha**, que en
+  castellano es «Cerrar» y no «Menú» como en el original.
+- **Flecha en el botón primario**: 16×16, transparente en reposo pero con el
+  hueco ya reservado, y al señalar se enciende y se corre 4 px en 0,4 s. Esos
+  0,4 s son suyos: es el único tiempo del sistema que viene de fuera.
+- **Indicador de scroll** de 4×80 px fijo abajo al centro, que se apaga en un
+  segundo al despegarse la portada. La caja es la suya; lo que baja por dentro
+  **no está medido** —el original lo dibuja desde su JS— y es lo único
+  inventado de todo el port.
+- **Bloque de «en qué podemos ayudarle»**, su `enquire block`: filas de 76 px
+  con filete debajo, 28 px entre una y otra y 80 % de ancho centrado.
 - **Barra fija de 120 px con degradado por detrás**, que se encoge a 80 y pasa
   a banda sólida al despegarse de la portada.
 - **El pie está fijo por debajo** y el contenido se desliza por encima hasta
@@ -434,6 +479,15 @@ cambio vive en la rama `rediseno-rr`. Todo está en `css/tokens.css`:
 - **Familias y pie llevan columnas contadas, no `auto-fill`.** Seis familias en
   un reparto automático caben de cinco en cinco y dejan la sexta sola estirada
   a lo ancho.
+- **Ni aviso de cookies ni selector de idioma**, que el original sí tiene. Esta
+  tienda no pone cookies y no está traducida: un consentimiento de mentira es
+  peor que ninguno. Tampoco el buscador de concesionarios con reCAPTCHA ni sus
+  ocho formularios de captación.
+- **El velo de la foto del menú sí, y es suyo** (`rgba(0,0,0,.5)`): de las ocho
+  fotos de modelo, cinco vienen de estudio con fondo claro —`pistol` y `reddot`
+  miden 255 y 254 de luminancia en el borde— y sobre negro entran como un
+  rectángulo que grita. Ahí el panel sí recorta a `cover`, porque es un fondo
+  entero como las láminas y no una caja de ficha.
 
 Las animaciones que en el original hace su propio motor aquí son
 `js/reveal.js`: dos clases y un `IntersectionObserver`. El estado oculto va

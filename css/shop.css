@@ -336,7 +336,10 @@
 }
 .campo input[type="text"],
 .campo input[type="email"],
-.campo input[type="date"] {
+.campo input[type="date"],
+.campo input[type="tel"],
+.campo select,
+.campo textarea {
   min-width: 0;
   background: transparent;
   border: 1px solid var(--filete-tenue);
@@ -346,8 +349,19 @@
   padding: 0.7rem 0.75rem;
   transition: border-color var(--t) var(--ease);
 }
-.campo input:focus-visible { border-color: var(--tinta); outline: none; }
-.campo input:user-invalid { border-color: var(--alerta); }
+.campo input:focus-visible,
+.campo select:focus-visible,
+.campo textarea:focus-visible { border-color: var(--tinta); outline: none; }
+.campo input:user-invalid,
+.campo textarea:user-invalid { border-color: var(--alerta); }
+/* Que no se pueda estirar a lo ancho: solo a lo alto. Arrastrandolo de la
+   esquina se sale del cajon del panel. */
+.campo textarea { resize: vertical; }
+
+/* Cuando el «hecho» cuelga del cajon y no del pie del panel -- que es el caso
+   de la consulta, donde sustituye al formulario entero -- se queda sin la
+   calle que traia el sitio de antes. */
+.panel__box > .hecho { padding: 1.25rem 1.5rem; }
 /* El icono del selector de fecha nace negro sobre fondo negro. */
 .campo input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.85); }
 

@@ -445,6 +445,7 @@
       perfil: shop.account.perfil
     });
     shop.search.init({ items: items, aplicar: setQuery });
+    shop.consulta.init();
     shop.account.on(function () { shop.cart.pinta(); });
 
     pump();
@@ -455,6 +456,7 @@
     doc.addEventListener('DOMContentLoaded', function () { shop.nav.init(); shop.portada.init(); init(); });
   } else {
     shop.nav.init();
+    shop.portada.init();
     init();
   }
 })(window);

@@ -255,10 +255,15 @@ a { color: inherit; text-decoration: none; }
 
 /* --- la marca, centrada ------------------------------------------------ */
 
+/* `min-height` y no alto libre: en estrecho se le cae el subtitulo y el
+   enlace se queda en los 18 px de la palabra, por debajo del minimo de toque.
+   Va centrado dentro de la barra, asi que a la vista no cambia nada. */
 .brand {
   justify-self: center;
   display: grid;
+  align-content: center;
   justify-items: center;
+  min-height: 44px;
   gap: 0.2rem;
   text-align: center;
 }
@@ -835,6 +840,54 @@ a { color: inherit; text-decoration: none; }
 }
 .faq__q[aria-expanded="true"] + .faq__a > div { visibility: visible; }
 .faq__a p { padding-bottom: 1.75rem; color: var(--gris-claro); }
+
+/* --- «en que podemos ayudarle» -----------------------------------------
+   El `enquire block` del original con sus medidas: filas de 76 px, filete
+   debajo, 28 px entre una y otra y 80 % de ancho centrado -- entero en
+   estrecho --. Lo que no se copia es su filete: alli es blanco puro y aqui
+   es `--filete`, porque la regla escrita de esta hoja es que la separacion
+   la marcan los tokens de filete y no un blanco suelto. */
+
+.consulta { display: flex; flex-direction: column; width: 80%; margin-inline: auto; }
+.consulta__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  min-height: 76px;
+  margin-bottom: 28px;
+  padding: 0.5rem 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--filete);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.consulta__item:last-child { margin-bottom: 0; }
+.consulta__izq {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-width: 0;
+  transition: opacity var(--t) var(--ease);
+}
+.consulta__item:hover .consulta__izq { opacity: 0.8; }
+.consulta__izq > svg { width: 22px; height: 22px; flex: none; }
+.consulta__texto { display: grid; gap: 0.3rem; min-width: 0; }
+.consulta__rotulo {
+  font-family: var(--display);
+  font-size: var(--fs-ficha);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+}
+.consulta__pie { font-size: 0.875rem; color: var(--gris); }
+.consulta__der { flex: none; display: inline-flex; transition: transform var(--t) var(--ease); }
+.consulta__der svg { width: 20px; height: 20px; }
+.consulta__item:hover .consulta__der { transform: translateX(0.4rem); }
+
+@media (max-width: 60rem) { .consulta { width: 100%; } }
 
 /* --- fichas de «continuar» ---------------------------------------------
    Tres columnas separadas por un filete vertical, como en el original: la
