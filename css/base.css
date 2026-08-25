@@ -368,29 +368,139 @@ a { color: inherit; text-decoration: none; }
   position: fixed;
   inset: 0 0 auto;
   z-index: 4999;
-  max-height: 100vh;
+  /* El menu del original ocupa la pantalla entera, no lo que midan sus
+     enlaces. `dvh` y no `vh`: en un movil la barra del navegador se retira al
+     bajar y con `vh` el panel se queda corto justo cuando aparece. */
+  height: 100dvh;
   overflow-y: auto;
   /* Los enlaces entran desde -100%: sin esto el navegador cuenta ese ancho y
      saca una barra horizontal mientras dura la entrada. */
   overflow-x: hidden;
   background: var(--negro);
   border-bottom: 1px solid var(--filete);
-  padding: calc(var(--nav-h-ancha) + 1.5rem) 0 3rem;
+  /* Sin calle: el hueco de la barra lo pone ahora la columna de enlaces, para
+     que la foto llegue de verdad al borde de arriba y al de abajo. En ancho
+     los enlaces van centrados en la altura -- que es lo que hace el original
+     con `top: 50%` -- y ahi el hueco sobra. */
+  padding: 0;
   transform: translateY(-101%);
   visibility: hidden;
   transition: transform var(--t-largo) var(--ease), visibility var(--t-largo) var(--ease);
 }
-.nav__menu.is-open { transform: none; visibility: visible; }
-
-.nav__links {
-  max-width: var(--wrap);
-  margin: 0 auto;
-  padding-inline: var(--pad-x);
+/* `visibility` se transiciona al CERRAR y no al abrir, y la diferencia no es
+   estetica: mientras la transicion no ha avanzado, `visibility` sigue
+   valiendo `hidden` y a un elemento invisible el navegador no le da el foco.
+   Con `visibility` en esta lista, `focus()` sobre el primer enlace no hacia
+   nada y quien abria el menu con el teclado se quedaba detras del panel.
+   Fuera de la lista salta a `visible` en el acto. Al cerrar sigue estando,
+   que es cuando hace falta: el panel tiene que verse mientras se retira. */
+.nav__menu.is-open {
+  transform: none;
+  visibility: visible;
+  transition: transform var(--t-largo) var(--ease);
 }
+
+/* Dos paneles, como el original, y en su mismo orden: los enlaces a la
+   izquierda alineados a la derecha (`grid-column: 2/span 9` de 24) y la foto
+   ocupando la derecha (`11/span 15`). Aqui 40/60, que cae dentro de lo que
+   ellos reparten segun el ancho. Va a sangre por la derecha porque la foto
+   es un fondo, no una lamina metida en una caja. */
+.menu__rejilla {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  gap: clamp(1.5rem, 4vw, 4rem);
+}
+/* La columna ocupa el alto entero y centra su contenido por dentro, que es lo
+   que hace el original con `top: 50%`. Centrar la columna en si -- con
+   `align-items: center` en la rejilla -- parecia lo mismo y no lo era: el
+   segundo nivel es mas alto que el primero y su fila de «volver» se metia
+   debajo de la barra. La calle de arriba la reserva la columna. */
+.menu__nav {
+  min-width: 0;
+  max-width: calc(var(--wrap) * 0.4);
+  margin-left: auto;
+  padding-left: var(--pad-x);
+  padding-block: calc(var(--nav-h-ancha) + 1rem) 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+/* `cover` aqui si: esto es un fondo de panel entero, como las laminas de la
+   portada, no una caja de ficha. Lo que no se recorta a `cover` es el
+   catalogo, que es donde el recorte se come la boca del canon.
+
+   El velo es el suyo, `rgba(0,0,0,.5)`, y no es decoracion: de las ocho fotos
+   de modelo, cinco vienen de estudio con fondo claro -- `pistol` y `reddot`
+   miden 255 y 254 de borde -- y sobre negro entran como un rectangulo que
+   grita. Es el mismo motivo por el que esas dos estan fuera de la portada. */
+.menu__foto { position: relative; height: 100%; overflow: hidden; }
+.menu__foto img { width: 100%; height: 100%; object-fit: cover; }
+.menu__foto::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 60rem) {
+  .menu__rejilla { grid-template-columns: 1fr; }
+  .menu__nav {
+    max-width: none;
+    margin-left: 0;
+    padding-inline: var(--pad-x);
+    /* En estrecho la lista empieza arriba, no centrada: no sobra alto. */
+    justify-content: flex-start;
+  }
+  /* En estrecho no hay sitio para las dos cosas: manda la lista. */
+  .menu__foto { display: none; }
+}
+
+.menu__nav { min-width: 0; }
+
+/* El segundo nivel tapa al primero, no se abre debajo. */
+.menu__seccion[hidden] { display: none; }
+.nav__menu.is-nivel2 #navNivel1 { display: none; }
+
+.menu__volver {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1.25rem;
+}
+.menu__atras,
+.menu__todo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
+  cursor: pointer;
+  transition: color var(--t) var(--ease);
+}
+.menu__atras svg { width: 16px; height: 16px; transition: transform var(--t) var(--ease); }
+.menu__atras:hover, .menu__todo:hover { color: var(--tinta); }
+.menu__atras:hover svg { transform: translateX(-30%); }
+
 .nav__links li { border-top: 1px solid var(--filete-tenue); }
 .nav__links li:last-child { border-bottom: 1px solid var(--filete-tenue); }
-.nav__links a {
+.nav__links a,
+.nav__links button {
   display: block;
+  width: 100%;
+  background: none;
+  border: 0;
+  cursor: pointer;
   padding: 1.1rem 0;
   font-family: var(--display);
   font-size: clamp(1.35rem, 0.9rem + 1.6vw, 2.25rem);
@@ -402,7 +512,8 @@ a { color: inherit; text-decoration: none; }
   color: var(--gris);
   transition: color var(--t) var(--ease), padding-right var(--t) var(--ease);
 }
-.nav__links a:hover { color: var(--tinta); padding-right: 1.25rem; }
+.nav__links a:hover,
+.nav__links button:hover { color: var(--tinta); padding-right: 1.25rem; }
 
 /* Los enlaces entran escalonados detras de la persiana. */
 .nav__menu.is-open .nav__links li {

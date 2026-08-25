@@ -71,18 +71,55 @@
 </header>
 
 <!-- La navegación entera vive detrás de «Menú», como en el original: no hay
-     enlaces sueltos en la barra a ningún ancho. -->
+     enlaces sueltos en la barra a ningún ancho. Y como en el original son dos
+     paneles: la foto a un lado, los enlaces al otro, y las secciones que
+     tienen segundo nivel se abren dentro del propio menú.
+
+     Los que llevan `data-seccion` son <button>, no <a>: no llevan a ninguna
+     parte, abren un nivel. Los que sí llevan a un sitio siguen siendo enlaces.
+     Es el mismo reparto que hace el original. -->
 <div class="nav__menu" id="navMenu">
-  <nav aria-label="Principal">
-    <ul class="nav__links">
-      <li style="--i:0"><a href="#familias">Familias</a></li>
-      <li style="--i:1"><a href="#catalogo">Catálogo</a></li>
-      <li style="--i:2"><a href="#taller">Taller</a></li>
-      <li style="--i:3"><a href="#marcas">Marcas</a></li>
-      <li style="--i:4"><a href="#preguntas">Requisitos</a></li>
-      <li style="--i:5"><a href="#contacto">Contacto</a></li>
-    </ul>
-  </nav>
+  <div class="menu__rejilla">
+
+    <nav class="menu__nav" aria-label="Principal">
+      <ul class="nav__links" id="navNivel1">
+        <li style="--i:0"><button type="button" data-seccion="familias"
+          data-foto="img/model/rifle.webp" aria-expanded="false">Familias</button></li>
+        <li style="--i:1"><a href="#catalogo" data-foto="img/model/pistol.webp">Catálogo</a></li>
+        <li style="--i:2"><button type="button" data-seccion="taller"
+          data-foto="img/model/optic.webp" aria-expanded="false">Taller</button></li>
+        <li style="--i:3"><a href="#marcas" data-foto="img/model/shotgun.webp">Marcas</a></li>
+        <li style="--i:4"><a href="#preguntas" data-foto="img/model/cartridge.webp">Requisitos</a></li>
+        <li style="--i:5"><a href="#contacto" data-foto="img/model/gcase.webp">Contacto</a></li>
+      </ul>
+
+      <!-- El segundo nivel de «Familias» lo escribe nav.js desde el catálogo,
+           como las baldosas y la marquesina: una familia nueva aparece sola. -->
+      <div class="menu__seccion" data-seccion="taller" hidden>
+        <div class="menu__volver">
+          <button class="menu__atras" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+              <path d="M19 12H6M12 5l-7 7 7 7"></path>
+            </svg>
+            Taller
+          </button>
+          <a class="menu__todo" href="#taller">Ver todo</a>
+        </div>
+        <ul class="nav__links">
+          <li style="--i:0"><a href="#paso-1" data-foto="img/model/binocular.webp">Cita y elección</a></li>
+          <li style="--i:1"><a href="#paso-2" data-foto="img/model/gcase.webp">Papeles</a></li>
+          <li style="--i:2"><a href="#paso-3" data-foto="img/model/optic.webp">Taller</a></li>
+          <li style="--i:3"><a href="#paso-4" data-foto="img/model/reddot.webp">Entrega y revisión</a></li>
+        </ul>
+      </div>
+
+    </nav>
+
+    <div class="menu__foto" aria-hidden="true">
+      <img id="menuFoto" src="img/model/rifle.webp" alt="" width="1200" height="750">
+    </div>
+
+  </div>
 </div>
 
 <!-- Riel de láminas: dice en cuál de las tres está y salta a ella. -->
@@ -216,7 +253,7 @@
       </div>
 
       <ol class="steps" style="margin-top: var(--sp-section)">
-        <li class="step" data-reveal>
+        <li class="step" id="paso-1" data-reveal>
           <span class="step__n">01</span>
           <div class="step__body">
             <h3 class="step__name">Cita y elección</h3>
@@ -224,7 +261,7 @@
               previa no hay vitrina abierta: cada prueba lleva su media hora.</p>
           </div>
         </li>
-        <li class="step" data-reveal style="--d:1">
+        <li class="step" id="paso-2" data-reveal style="--d:1">
           <span class="step__n">02</span>
           <div class="step__body">
             <h3 class="step__name">Papeles</h3>
@@ -233,7 +270,7 @@
               no después de cobrar.</p>
           </div>
         </li>
-        <li class="step" data-reveal style="--d:2">
+        <li class="step" id="paso-3" data-reveal style="--d:2">
           <span class="step__n">03</span>
           <div class="step__body">
             <h3 class="step__name">Taller</h3>
@@ -242,7 +279,7 @@
               con la diana firmada.</p>
           </div>
         </li>
-        <li class="step" data-reveal style="--d:3">
+        <li class="step" id="paso-4" data-reveal style="--d:3">
           <span class="step__n">04</span>
           <div class="step__body">
             <h3 class="step__name">Entrega y revisión</h3>
