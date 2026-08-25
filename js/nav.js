@@ -53,12 +53,18 @@
     if (narrow.addEventListener) narrow.addEventListener('change', onBreakpoint);
     else if (narrow.addListener) narrow.addListener(onBreakpoint);
 
+    // El indicador de scroll se apaga en el mismo umbral en que la barra se
+    // despega: es el mismo hecho -- «ya no estamos arriba» -- y con dos
+    // manejadores acabarian discrepando.
+    var icono = doc.getElementById('scrollicono');
+
     var stuck = false;
     function onScroll() {
       var now = global.scrollY > 40;
       if (now !== stuck) {
         stuck = now;
         nav.classList.toggle('is-stuck', stuck);
+        if (icono) icono.classList.toggle('is-off', stuck);
       }
     }
     global.addEventListener('scroll', onScroll, { passive: true });

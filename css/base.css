@@ -127,10 +127,29 @@ a { color: inherit; text-decoration: none; }
   font-size: var(--fs-ficha);
   letter-spacing: var(--tr);
   text-transform: uppercase;
+  gap: 0.75rem;
   cursor: pointer;
   transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
 .btn:hover { background: var(--gris-claro); }
+
+/* La flecha del original: 16x16, transparente en reposo pero ocupando ya su
+   sitio -- por eso el `gap` de arriba y no un margen que aparezca -- y al
+   señalar se enciende y se corre 4 px. Los 0,4 s son los suyos, no los
+   nuestros; es el unico tiempo del sistema que viene de fuera. */
+.btn::after {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: var(--flecha) center / 16px 16px no-repeat;
+  mask: var(--flecha) center / 16px 16px no-repeat;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+}
+.btn:hover::after,
+.btn:focus-visible::after { opacity: 1; transform: translate3d(4px, 0, 0); }
 
 .btn--ghost {
   background: transparent;
@@ -210,12 +229,29 @@ a { color: inherit; text-decoration: none; }
 .nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(2) { opacity: 0; }
 .nav__toggle[aria-expanded="true"] .nav__bars i:nth-child(3) { transform: translateY(-6px) rotate(-45deg); width: 100%; }
 
+/* El original cruza las dos palabras en el mismo hueco -- las dos absolutas --
+   y deja debajo una tercera invisible que sostiene el ancho. Sin ella el boton
+   encoge al abrir y empuja a la marca del centro. La palabra ancha en
+   castellano es CERRAR, no MENU, asi que el fantasma es esa: el fantasma tiene
+   que ser siempre la mas larga de las dos. */
 .nav__palabra {
+  position: relative;
+  display: block;
   font-family: var(--display);
   font-size: var(--fs-menudo);
   letter-spacing: var(--tr);
   text-transform: uppercase;
 }
+.nav__palabra-abre,
+.nav__palabra-cierra {
+  position: absolute;
+  inset: 0 0 auto;
+  transition: opacity var(--t) var(--ease);
+}
+.nav__palabra-cierra { opacity: 0; }
+.nav__palabra-ancha { visibility: hidden; word-break: keep-all; }
+.nav__toggle[aria-expanded="true"] .nav__palabra-abre { opacity: 0; }
+.nav__toggle[aria-expanded="true"] .nav__palabra-cierra { opacity: 1; }
 
 /* --- la marca, centrada ------------------------------------------------ */
 
@@ -334,6 +370,9 @@ a { color: inherit; text-decoration: none; }
   z-index: 4999;
   max-height: 100vh;
   overflow-y: auto;
+  /* Los enlaces entran desde -100%: sin esto el navegador cuenta ese ancho y
+     saca una barra horizontal mientras dura la entrada. */
+  overflow-x: hidden;
   background: var(--negro);
   border-bottom: 1px solid var(--filete);
   padding: calc(var(--nav-h-ancha) + 1.5rem) 0 3rem;
@@ -357,10 +396,13 @@ a { color: inherit; text-decoration: none; }
   font-size: clamp(1.35rem, 0.9rem + 1.6vw, 2.25rem);
   letter-spacing: var(--tr);
   text-transform: uppercase;
+  /* A la derecha, como el original. Al señalar se separa del borde, que es el
+     mismo gesto de antes leido en espejo. */
+  text-align: right;
   color: var(--gris);
-  transition: color var(--t) var(--ease), padding-left var(--t) var(--ease);
+  transition: color var(--t) var(--ease), padding-right var(--t) var(--ease);
 }
-.nav__links a:hover { color: var(--tinta); padding-left: 1.25rem; }
+.nav__links a:hover { color: var(--tinta); padding-right: 1.25rem; }
 
 /* Los enlaces entran escalonados detras de la persiana. */
 .nav__menu.is-open .nav__links li {
@@ -368,7 +410,8 @@ a { color: inherit; text-decoration: none; }
   animation-delay: calc(var(--i, 0) * var(--stagger));
 }
 @keyframes entra-menu {
-  from { opacity: 0; transform: translateY(1.25rem); }
+  /* El original los trae de fuera por la izquierda, no de abajo. */
+  from { opacity: 0; transform: translateX(-100%); }
 }
 
 /* --- laminas de portada ------------------------------------------------
@@ -466,6 +509,47 @@ a { color: inherit; text-decoration: none; }
 }
 .riel__punto[aria-current="true"]::before { opacity: 1; }
 .riel__punto[aria-current="true"]::after { transform: none; opacity: 1; }
+
+/* --- indicador de scroll ------------------------------------------------
+   Del original salen la caja y el apagado: 4x80 px, fijo abajo al centro,
+   `z-index: 100`, y un segundo entero para desvanecerse. Su `left` es
+   `calc(50% - 4px)` con `width: 4px`, que lo deja 2 px corrido a la
+   izquierda; aqui va centrado.
+
+   Lo que baja por dentro NO esta medido: el original lo dibuja desde su JS y
+   en la hoja no queda rastro. Es lo unico inventado de todo el port. */
+
+.scrollicono {
+  position: fixed;
+  bottom: 0;
+  left: calc(50% - 2px);
+  z-index: 100;
+  width: 4px;
+  height: 80px;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 1s var(--ease);
+}
+.scrollicono::before,
+.scrollicono::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 0.5px);
+  width: 1px;
+}
+.scrollicono::before { top: 0; bottom: 0; background: var(--filete-tenue); }
+.scrollicono::after {
+  top: 0;
+  height: 26px;
+  background: var(--tinta);
+  animation: baja 2.4s var(--ease) infinite;
+}
+@keyframes baja {
+  0% { transform: translateY(-100%); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(80px); opacity: 0; }
+}
+.scrollicono.is-off { opacity: 0; }
 
 /* --- cifras ------------------------------------------------------------ */
 
@@ -708,6 +792,29 @@ a { color: inherit; text-decoration: none; }
   transition: color var(--t) var(--ease);
 }
 .foot__top a:hover { color: var(--tinta); }
+/* Del original: 18 px de icono y 24 de separacion. Lo que no se copia es su
+   area de toque -- el enlace mide alli lo que el icono--, porque 18 px se
+   queda por debajo del minimo. El icono sigue midiendo 18; lo que crece es la
+   caja que lo rodea. */
+.foot__social {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.25rem;
+}
+.foot__social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-left: 24px;
+  color: var(--gris);
+  transition: color var(--t) var(--ease);
+}
+.foot__social a:first-child { margin-left: 0; }
+.foot__social a:hover { color: var(--tinta); }
+.foot__social svg { width: 18px; height: 18px; }
+
 .foot__bar {
   display: grid;
   gap: 0.5rem;
@@ -778,6 +885,8 @@ a { color: inherit; text-decoration: none; }
   .marquee__track { animation: none; }
   /* Ya esta parada: el mando no pararia nada y sobra. */
   .marquee__pausa { display: none; }
+  /* Igual que la marquesina: a 0,01 ms no se detiene, salta. */
+  .scrollicono::after { animation: none; }
   *, *::before, *::after, ::backdrop {
     animation-duration: 0.01ms !important;
     animation-delay: 0.01ms !important;

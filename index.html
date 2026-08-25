@@ -26,7 +26,11 @@
 
     <button class="nav__toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="navMenu">
       <span class="nav__bars" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="nav__palabra" aria-hidden="true">Menú</span>
+      <span class="nav__palabra" aria-hidden="true">
+        <span class="nav__palabra-abre">Menú</span>
+        <span class="nav__palabra-cierra">Cerrar</span>
+        <span class="nav__palabra-ancha">Cerrar</span>
+      </span>
       <span class="sr-only nav__label">Abrir menú</span>
     </button>
 
@@ -90,6 +94,10 @@
   <button class="riel__punto" type="button" data-lamina="2"
     aria-label="Ir a la tercera lámina"></button>
 </div>
+
+<!-- Indicador de scroll del original: una barra de 4x80 px fija abajo al
+     centro que se apaga en cuanto la portada se despega. -->
+<span class="scrollicono" id="scrollicono" aria-hidden="true"></span>
 
 <div class="hoja" id="hoja">
 <main>
@@ -415,6 +423,30 @@
       <span>Res. 14/2025</span>
       <span>Semiautomáticas</span>
       <span>Res. 37/2025</span>
+    </div>
+
+    <!-- Los destinos son de mentira a proposito, con el mismo `.example` que
+         el correo y el telefono de aqui arriba: es un dominio reservado que
+         no resuelve, asi que nadie acaba en la cuenta de un tercero. -->
+    <div class="foot__social">
+      <a href="https://instagram.example/armeria.alcantara" aria-label="Alcántara en Instagram">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+          <circle cx="12" cy="12" r="4"></circle>
+          <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none"></circle>
+        </svg>
+      </a>
+      <a href="https://facebook.example/armeria.alcantara" aria-label="Alcántara en Facebook">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <path d="M14.8 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H18V3.6A21 21 0 0 0 15.6 3.5c-2.4 0-4 1.45-4 4.12V9.9H9V13h2.6v8Z"></path>
+        </svg>
+      </a>
+      <a href="https://youtube.example/@armeria.alcantara" aria-label="Alcántara en YouTube">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <rect x="2.5" y="5.5" width="19" height="13" rx="4"></rect>
+          <path d="M10.4 9.4v5.2l4.4-2.6Z"></path>
+        </svg>
+      </a>
     </div>
 
     <div class="foot__bar">

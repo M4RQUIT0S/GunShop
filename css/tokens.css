@@ -55,6 +55,9 @@
      a sangre: el original deja 16 px de calle y nada mas. */
   --r: 0;
   --r-pildora: 30px;
+  /* La misma flecha que llevan las baldosas de familias, aqui como mascara
+     para poder tenirla con `currentColor`. */
+  --flecha: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23000" stroke-width="2"><path d="M5 12h13M12 5l7 7-7 7"/></svg>');
   --pad-x: clamp(1rem, 0.4rem + 1.4vw, 1.5rem);
   --medida: 62ch;
   --wrap: 90rem;
