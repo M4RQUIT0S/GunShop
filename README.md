@@ -1,30 +1,70 @@
 # Armería Alcántara
 
-Armería argentina para tiro deportivo y caza: catálogo con scroll infinito,
-fondo 3D que gira con el scroll y navegación responsive. Cada ficha lleva su
-régimen ANMaC y el precio en pesos o dólares.
+Armería argentina para tiro deportivo y caza. Catálogo servido desde Supabase,
+con el régimen ANMaC de cada producto y el precio en pesos al cambio del día.
 
-Sitio estático sin build ni dependencias: abre `index.html` en el navegador.
+En migración a e-commerce; el estado y lo que falta están en `PLAN.md`.
+
+## Arrancar en local
 
 ```
-node test/selftest.js   # catálogo, paginación, geometría 3D e imágenes
+npm install
+cp .env.example .env.local     # y rellenar las dos NEXT_PUBLIC_
+npm run dev
 ```
 
-- `index.html` · estructura y orden de carga de los scripts
-- `css/tokens.css` · paleta y escala tipográfica
-- `js/scene.js` · motor 3D: dibuja el esquema cuando no hay imagen
-- `js/meshes.js` · las 7 mallas horneadas en Blender (generado, no editar)
-- `img/` · renders de Cycles: 4 por ficha y 24 de fondo por pieza (generado)
-- `tools/models.py` · las modela y las exporta
-- `tools/fotos.py` · baja las fotos libres de `img/model/` y comprueba la licencia
-- `tools/render.py` · el horno de Cycles del 3D apartado; la página ya no lo usa
-- `js/catalog.js` · 102 referencias reales, precios en USD y cambio a pesos
-- `js/main.js` · rejilla infinita, filtros y cesta
+## Desplegar en Vercel
 
-Marcas, modelos y fichas técnicas son reales. Los precios son de referencia
-del mercado argentino y se muestran en pesos o en dólares. Página de
-demostración.
+Las variables **no viajan en el repositorio**: `.env.local` está en
+`.gitignore` a propósito. Hay que darlas de alta en el proyecto de Vercel,
+en *Settings → Environment Variables*, para **Production, Preview y
+Development**:
 
-Las imágenes de producto son renders propios, no fotos de fabricante: esas
-tienen derechos y no se pueden redistribuir. Si se dispone de fotos con
-licencia, entran por el campo `photo:` de cada producto.
+| Variable | Valor |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://<proyecto>.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` |
+
+O por línea de órdenes, desde el directorio del proyecto:
+
+```
+vercel link
+vercel env add NEXT_PUBLIC_SUPABASE_URL
+vercel env add NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+```
+
+Dos cosas que no son evidentes:
+
+- **Sin ellas el build falla, no el arranque.** Las `NEXT_PUBLIC_` se
+  incrustan al compilar, así que si faltan no hay manera de arreglarlo
+  después sin volver a construir. `lib/supabase.ts` corta ahí a propósito:
+  vale más un despliegue en rojo que uno verde sirviendo una tienda vacía.
+- **La clave publicable va al navegador y está bien que vaya.** Lo que
+  protege los datos es la RLS de `0006_rls.sql`, que revoca todo y luego
+  concede `select` sólo sobre el catálogo. La `service_role` es otra cosa:
+  se salta la RLS entera y nunca lleva prefijo `NEXT_PUBLIC_`.
+
+## Comprobaciones
+
+```
+npx next build                      # compila y comprueba tipos
+node --test test/modoventa.test.ts  # ningun producto regulado se paga sin validar
+node db/supabase/revisa.js          # lee las migraciones sin necesitar base
+node test/selftest.js               # catalogo e imagenes del sitio anterior
+```
+
+`db/supabase/prueba.sql` prueba una venta entera contra una base ya aplicada
+y sembrada, y hace `rollback`: no deja ni una fila.
+
+## Dónde está cada cosa
+
+- `app/` · páginas (App Router). `tokens.css` es la paleta y la escala.
+- `lib/regimen.ts` · régimen ANMaC y modo de venta. Sin importaciones: es lo
+  que decide si un arma puede pagarse sin que nadie mire una credencial.
+- `lib/catalogo.ts` · consultas al catálogo.
+- `db/supabase/` · las nueve migraciones y su comprobador.
+- `public/img/product/` · una foto por producto. **Ninguna aclarada para
+  redistribuir**; la procedencia está en su `CREDITS.md`.
+- `js/`, `css/`, `index.html` · el sitio estático anterior. Ya no se sirve,
+  pero `js/catalog.js` sigue siendo la única fuente de los 76 productos
+  mientras la base tenga sólo los 18 de la muestra. No borrar hasta cargarlos.

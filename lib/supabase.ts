@@ -15,9 +15,17 @@ const clave = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 if (!url || !clave) {
   // Fallar aqui y no en la primera consulta: un cliente a medio configurar
   // devuelve un catalogo vacio, que parece una tienda sin stock.
+  //
+  // Esto revienta el BUILD, no el arranque, y es a proposito: las variables
+  // NEXT_PUBLIC_ se incrustan al compilar, asi que si faltan no hay forma de
+  // arreglarlo despues sin volver a construir. Mas vale un despliegue que
+  // falla que uno que sale verde y sirve una tienda vacia.
   throw new Error(
-    'Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. ' +
-      'Copia .env.example a .env.local.'
+    'Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.\n' +
+      '  · En local: copia .env.example a .env.local.\n' +
+      '  · En Vercel: Project → Settings → Environment Variables, en los tres\n' +
+      '    entornos, y vuelve a desplegar. No basta con tenerlas en .env.local:\n' +
+      '    ese fichero esta en .gitignore y no viaja al repositorio.'
   )
 }
 

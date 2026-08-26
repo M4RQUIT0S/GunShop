@@ -19,8 +19,21 @@ const texto = Montserrat({
   display: 'swap',
 })
 
+/* De donde cuelgan las URL absolutas de Open Graph. Escrito a mano se queda
+   apuntando al dominio de otro en cuanto cambia el proyecto, y el fallo es
+   invisible: la pagina se ve bien y lo unico roto es la miniatura al
+   compartirla por WhatsApp, que es justo el canal que el documento de alcance
+   pone como principal. Vercel publica el dominio en el entorno. */
+const dominio =
+  process.env.NEXT_PUBLIC_SITIO ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000')
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://armeria-alcantara.vercel.app'),
+  metadataBase: new URL(dominio),
   title: {
     default: 'Alcántara · Armería de tiro deportivo y caza',
     template: '%s · Alcántara',
