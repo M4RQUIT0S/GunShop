@@ -64,7 +64,7 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
         hoja de estilos y las fuentes listas.
       - Commit: `feat: porta tokens.css/base.css/catalog.css/shop.css del rediseño a la app Next`.
 
-- [ ] **2. Layout raíz + cabecera + paneles — el "chrome" compartido.**
+- [x] **2. Layout raíz + cabecera + paneles — el "chrome" compartido.**
       - `app/layout.tsx` monta `<Nav/>` (Server Component vía `familias()`),
         `<Footer/>` y los cuatro `<dialog>` (`CartPanel`, `SearchPanel`,
         `AccountPanel`, `ConsultaPanel`), portando `index.html` líneas
@@ -80,6 +80,35 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
         estado compartido.
       - Comprobación: menú abre/cierra, atrapa foco, Tab no se escapa.
       - Commit: `feat: cabecera, menu de dos niveles y los cuatro paneles modales`.
+      - Diferencias con lo planeado:
+        - `Nav` no solo monta el header: envuelve TODO lo demás (`children`
+          de `layout.tsx`) porque es quien pone `inert` sobre el resto de la
+          página mientras el menú está abierto — `.nav__menu` no es un
+          `<dialog>` (no puede serlo, tapa la página entera con un `<div>`
+          normal como el original) y por tanto no atrapa foco solo; sin
+          `inert` Tab se escapaba hacia el contenido tapado detrás. Los 4
+          paneles sí son `<dialog>` reales y no lo necesitan.
+        - `familias()` en `lib/catalogo.ts` ahora también trae `model_key`
+          (columna que ya existía en el esquema) para poder cambiar la foto
+          del menú al pasar por cada familia, igual que el original.
+        - Confirmado en el CSS portado (fase 1): `.foot { position: fixed }`
+          es sitewide, no solo portada. `app/layout.tsx` ya envuelve
+          `children` en `<div class="hoja">` por eso — pero el
+          `margin-bottom` que lo destapa (`js/portada.js` `pie()`) sigue
+          pendiente, se porta en la fase 3.
+        - `riel` y `scrollicono` (decoración de scroll de la portada) NO se
+          tocan acá: vistos en `js/nav.js` pero pertenecen a la portada de
+          la fase 3.
+        - Los tres botones de acción del header (buscar/cuenta/cesta) y los
+          4 `data-cierra` de los paneles quedan sin `onClick`: abrir/cerrar
+          los `<dialog>` es la "lógica completa" que la fase 6 porta junto
+          con `cart.js`/`account.js`/`search.js`/`consulta.js`. Lo único
+          interactivo ya cableado es el contador de la cesta (`CartCount`,
+          vía `CartContext`), que es la prueba de que header/panel comparten
+          estado.
+        - Corregido de paso: el enlace "saltar al contenido" en `layout.tsx`
+          tenía `className="saltar"`, una clase que no existe en ninguna
+          hoja portada (la real es `.skip`); se veía sin estilo.
 
 - [ ] **3. Portada (`app/page.tsx`).**
       - Server Component: `familias()` + cifras (`#statTotal`, `#statBrands`

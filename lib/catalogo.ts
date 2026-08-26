@@ -79,7 +79,7 @@ export async function listaProductos(familia?: string): Promise<Producto[]> {
 export async function familias() {
   const { data, error } = await supabase
     .from('family')
-    .select('slug, name, position')
+    .select('slug, name, position, model_key')
     .order('position')
   if (error) throw new Error(`No se pudieron leer las familias: ${error.message}`)
   return data ?? []

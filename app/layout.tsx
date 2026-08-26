@@ -1,6 +1,13 @@
 import type { Metadata } from 'next'
 import { Tenor_Sans, Jost } from 'next/font/google'
 import Script from 'next/script'
+import Nav from './components/Nav'
+import Footer from './components/Footer'
+import { CartProvider } from './components/CartContext'
+import CartPanel from './components/CartPanel'
+import SearchPanel from './components/SearchPanel'
+import AccountPanel from './components/AccountPanel'
+import ConsultaPanel from './components/ConsultaPanel'
 import '../css/tokens.css'
 import '../css/base.css'
 import '../css/catalog.css'
@@ -62,8 +69,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="clase-js" strategy="beforeInteractive">
           {"document.documentElement.className += ' js';"}
         </Script>
-        <a className="saltar" href="#contenido">Saltar al contenido</a>
-        {children}
+        {/* La clase real es `.skip` (css/base.css); `.saltar` no existia en
+            ninguna hoja y el enlace se veia sin estilo. */}
+        <a className="skip" href="#contenido">Saltar al contenido</a>
+
+        <CartProvider>
+          {/* Nav (Server Component) envuelve el resto de la pagina: es quien
+              decide `inert` sobre `children` mientras el menu esta abierto,
+              ver app/components/NavMenu.tsx. `.hoja` es sitewide -- el pie
+              va con `position: fixed` en css/base.css para toda la app, no
+              solo la portada -- pero el `margin-bottom` que lo destapa
+              (js/portada.js `pie()`) se porta recien en la fase 3. */}
+          <Nav>
+            <div className="hoja" id="hoja">
+              {children}
+            </div>
+            <Footer />
+          </Nav>
+
+          <SearchPanel />
+          <CartPanel />
+          <AccountPanel />
+          <ConsultaPanel />
+        </CartProvider>
       </body>
     </html>
   )
