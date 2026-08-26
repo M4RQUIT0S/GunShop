@@ -100,16 +100,20 @@
   top: var(--nav-h);
   z-index: 20;
   display: flex;
+  /* Envuelven en vez de recortarse. Antes era una fila con `overflow-x: auto`
+     y la barra escondida: los chips que no cabian desaparecian sin ninguna
+     pista de que estaban ahi, y con las subcategorias son mas y mas largos.
+     El chip suelto si sigue entero en una linea -- lo parte es la coleccion,
+     no la etiqueta. */
+  flex-wrap: wrap;
   gap: 1.75rem;
+  row-gap: 0.9rem;
   padding: 1.1rem 0;
   margin-bottom: 2.5rem;
-  overflow-x: auto;
-  scrollbar-width: none;
   border-bottom: 1px solid var(--filete-tenue);
   /* Opaco de verdad: las fichas pasan por debajo y no se transparentan. */
   background: var(--negro);
 }
-.filters::-webkit-scrollbar { display: none; }
 
 /* El chip del original no es una pastilla: es texto en versalita que se
    subraya al estar activo. */
@@ -128,6 +132,46 @@
   white-space: nowrap;
   transition: color var(--t) var(--ease), border-color var(--t) var(--ease);
 }
+/* Segundo nivel: cuelga del primero y hereda de `.filters` el filete y el
+   hueco de abajo, que ahora cierran las dos filas. No se pega arriba porque
+   dos filas pegajosas se taparian entre si. */
+.filters--sub { position: static; padding-top: 0; }
+
+/* `.filters` es `display: flex`, y eso gana a `[hidden]`: sin esta linea la
+   fila vacia seguiria ocupando sitio en «Todo». */
+.filters--sub[hidden] { display: none; }
+
+.filters:has(+ .filters--sub:not([hidden])) { margin-bottom: 0; border-bottom: 0; }
+
+/* El calibre corta de traves, asi que no se pinta como un chip mas: es un
+   <select> nativo con la etiqueta delante. Canto vivo y filete de un pixel,
+   como todo lo demas. */
+.calibre {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: -1.4rem 0 2.5rem;
+}
+.calibre[hidden] { display: none; }
+.calibre__et {
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
+}
+.calibre__sel {
+  padding: 0.5rem 0.7rem;
+  background: var(--negro);
+  color: var(--tinta);
+  border: 1px solid var(--filete-medio);
+  border-radius: var(--r);
+  font-family: var(--texto);
+  font-size: var(--fs-menudo);
+  cursor: pointer;
+}
+.calibre__sel:hover { border-color: var(--tinta); }
+
 .chip:hover { color: var(--tinta); }
 .chip[aria-pressed="true"] { color: var(--tinta); border-bottom-color: var(--tinta); }
 .chip__n { margin-left: 0.5rem; color: var(--filete-medio); }
@@ -290,4 +334,8 @@
 @media (max-width: 40rem) {
   .grid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
   .filters { gap: 1.25rem; }
+  /* Aqui los chips envuelven a tres lineas: pegada arriba, la fila de
+     familias se comeria 169 px de una vista de 844. Se despega y se va con
+     el resto -- vale mas ver fichas que tener el filtro siempre a mano. */
+  .filters { position: static; }
 }

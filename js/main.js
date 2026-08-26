@@ -37,6 +37,10 @@
 
   function labelOf(id) {
     if (id === 'todo') return 'todo el catálogo';
+    // «familia/subcategoria»: manda la subcategoria, que es lo que se esta
+    // viendo. Ya viene escrita para leerse.
+    var corte = id.indexOf('/');
+    if (corte > -1) return id.slice(corte + 1).toLowerCase();
     var line = lineOf(id);
     return line ? line.label.toLowerCase() : id;
   }
@@ -48,12 +52,16 @@
     var status = doc.getElementById('status');
     var sentinel = doc.getElementById('sentinel');
     var filters = doc.getElementById('filters');
+    var subfilters = doc.getElementById('subfilters');
+    var calibreCaja = doc.getElementById('calibreCaja');
+    var calibreSel = doc.getElementById('calibre');
     var cartCount = doc.getElementById('cartCount');
 
     var moneyBox = doc.getElementById('money');
     var money = readMoney();
 
     var filter = 'todo';
+    var cal = '';
     var query = '';
     var offset = 0;
     var done = false;
@@ -169,7 +177,13 @@
     // De donde salen las fichas: el catalogo entero, o lo que haya dejado la
     // busqueda. Los filtros de familia siguen aplicandose encima.
     function fuente() {
-      return query ? shop.catalog.buscar(items, query) : items;
+      var base = query ? shop.catalog.buscar(items, query) : items;
+      // El calibre se cruza con lo que haya: familia, subcategoria o busqueda.
+      // Se saca con `catalog.calibre()`, que es la misma funcion con la que la
+      // cesta cuenta el cupo de la TCCM -- si aqui se leyera el calibre de otra
+      // manera, un dia el filtro y el cupo dirian cosas distintas.
+      if (!cal) return base;
+      return base.filter(function (p) { return shop.catalog.calibre(p.name) === cal; });
     }
 
     function loadMore() {
@@ -180,7 +194,7 @@
       grid.appendChild(frag);
       offset = res.offset;
       done = res.done;
-      var donde = query ? '«' + query + '»' : labelOf(filter);
+      var donde = (query ? '«' + query + '»' : labelOf(filter)) + (cal ? ' · ' + cal : '');
       var refs = res.total + (res.total === 1 ? ' referencia' : ' referencias');
       status.textContent = done
         ? 'Fin del listado · ' + refs + ' en ' + donde
@@ -238,13 +252,76 @@
                              // siguiente scroll
       saltando = 0;          // tocar un filtro cancela el salto: la rejilla
       grid.textContent = ''; // se acaba de vaciar y hay que rellenarla ya
+      // Con una subcategoria puesta la familia sigue activa, asi que el chip
+      // de arriba se compara contra la familia, no contra el filtro entero.
+      var cat = filter.split('/')[0];
       Array.prototype.forEach.call(filters.querySelectorAll('[data-filter]'),
         function (chip) {
-          chip.setAttribute('aria-pressed', String(chip.dataset.filter === filter));
+          chip.setAttribute('aria-pressed', String(chip.dataset.filter === cat));
         });
+      pintaSub();
+      pintaCal();
       marcaBusqueda();
       pump();
     }
+
+    // Los calibres que hay en lo que se esta viendo. Se miran ANTES de aplicar
+    // el propio filtro de calibre: si se mirasen despues, al elegir uno la
+    // lista se quedaria con ese solo y no habria manera de cambiar.
+    function pintaCal() {
+      var base = shop.catalog.filtered(
+        query ? shop.catalog.buscar(items, query) : items, filter);
+      var vistos = [];
+      base.forEach(function (p) {
+        var c = shop.catalog.calibre(p.name);
+        if (c && vistos.indexOf(c) < 0) vistos.push(c);
+      });
+      vistos.sort(function (a, b) { return a.localeCompare(b, 'es'); });
+      // Al cambiar de familia el calibre elegido puede no existir aqui: se
+      // suelta en vez de dejar la rejilla vacia sin explicacion.
+      if (cal && vistos.indexOf(cal) < 0) cal = '';
+      calibreCaja.hidden = vistos.length < 2;
+      calibreSel.textContent = '';
+      [''].concat(vistos).forEach(function (c) {
+        var o = doc.createElement('option');
+        o.value = c;
+        o.textContent = c || 'Todos';
+        o.selected = c === cal;
+        calibreSel.appendChild(o);
+      });
+    }
+
+    calibreSel.addEventListener('change', function () {
+      cal = calibreSel.value;
+      repinta();
+    });
+
+    // Segundo nivel: las subcategorias de la familia activa. No sale en «Todo»
+    // -- serian 33 chips sin jerarquia -- ni con una busqueda puesta, que vive
+    // por encima de los filtros. Con una sola subcategoria tampoco: no hay
+    // nada que elegir.
+    function pintaSub() {
+      var cat = filter.split('/')[0];
+      subfilters.textContent = '';
+      var lista = cat === 'todo' || query ? [] : shop.catalog.kinds(items, cat);
+      subfilters.hidden = lista.length < 2;
+      if (subfilters.hidden) return;
+      [{ kind: null, n: counts[cat] || 0 }].concat(lista).forEach(function (sub) {
+        var id = sub.kind ? cat + '/' + sub.kind : cat;
+        var chip = el('button', 'chip');
+        chip.type = 'button';
+        chip.dataset.filter = id;
+        chip.setAttribute('aria-pressed', String(id === filter));
+        chip.appendChild(doc.createTextNode(sub.kind || 'Todo'));
+        chip.appendChild(el('span', 'chip__n', sub.n));
+        subfilters.appendChild(chip);
+      });
+    }
+
+    subfilters.addEventListener('click', function (event) {
+      var chip = event.target.closest('.chip[data-filter]');
+      if (chip) setFilter(chip.dataset.filter);
+    });
 
     function setFilter(next) {
       if (next === filter && !query) return;
@@ -447,6 +524,11 @@
     shop.search.init({ items: items, aplicar: setQuery });
     shop.consulta.init();
     shop.account.on(function () { shop.cart.pinta(); });
+
+    // El primer pintado no pasa por `repinta()`, asi que la caja del calibre
+    // se quedaria con lo que trae el HTML -- vacia y oculta -- hasta que se
+    // tocara un filtro. En «Todo» hay calibres que ofrecer desde el principio.
+    pintaCal();
 
     pump();
     shop.reveal.init();

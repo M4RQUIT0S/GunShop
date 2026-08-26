@@ -46,9 +46,49 @@ var totals = catalog.counts(a);
 var sum = catalog.LINES.reduce(function (n, line) { return n + totals[line.id]; }, 0);
 assert.strictEqual(sum, a.length, 'los recuentos por familia no suman el total');
 
+/* --- subcategorias: reparten la familia, no la recortan ---------------- */
+
+// Los chips del segundo nivel salen de `kind`, no de una lista aparte. Si una
+// ficha se quedase sin subcategoria, o cayese en dos, habria productos que no
+// se alcanzan desde ningun chip: el listado ensena menos de lo que hay y no
+// se nota mirando.
+var subfiltros = [];
+catalog.LINES.forEach(function (line) {
+  var subs = catalog.kinds(a, line.id);
+  assert.ok(subs.length > 0, 'familia sin subcategorias: ' + line.id);
+  var suma = subs.reduce(function (n, s) { return n + s.n; }, 0);
+  assert.strictEqual(suma, totals[line.id],
+    'las subcategorias no reparten la familia ' + line.id);
+  subs.forEach(function (s) {
+    assert.ok(s.kind.indexOf('/') < 0,
+      'una subcategoria con barra rompe el filtro de dos niveles: ' + s.kind);
+    assert.strictEqual(catalog.filtered(a, line.id + '/' + s.kind).length, s.n,
+      'el filtro no devuelve lo que dice el chip: ' + line.id + '/' + s.kind);
+    subfiltros.push(line.id + '/' + s.kind);
+  });
+});
+
+/* --- calibre: se le saca a toda referencia que lo tenga ---------------- */
+
+// El filtro de calibre del catalogo saca el calibre del nombre con
+// `catalog.calibre()`, la misma funcion con la que la cesta cuenta el cupo de
+// la TCCM. Un calibre nuevo que la expresion no conozca no da error: deja la
+// referencia fuera del desplegable, donde no se la puede encontrar, y sin
+// contar para el cupo. Las dos cosas son invisibles mirando la pagina.
+catalog.LINES.forEach(function (line) {
+  line.items.forEach(function (item) {
+    (item.cals || []).forEach(function (c) {
+      var nombre = item.brand + ' ' + item.ref + ' ' + c;
+      assert.strictEqual(catalog.calibre(nombre), c,
+        nombre + ': no se le saca el calibre «' + c + '»');
+    });
+  });
+});
+
 /* --- paginacion: cada ficha una vez y solo una ------------------------ */
 
-['todo'].concat(catalog.LINES.map(function (l) { return l.id; })).forEach(function (filter) {
+['todo'].concat(catalog.LINES.map(function (l) { return l.id; }))
+  .concat(subfiltros).forEach(function (filter) {
   var seen = [], offset = 0, res, guard = 0;
   do {
     res = catalog.page(a, filter, offset, catalog.PAGE);

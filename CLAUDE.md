@@ -123,6 +123,34 @@ Cosas que no son evidentes:
 - **La búsqueda vive por encima de los filtros**: entra en «Todo» y deja un
   chip para deshacerla. Ese chip también es `.chip`, así que el manejador de
   los filtros exige `[data-filter]` para no tratarlo como una familia.
+- **Los filtros son de dos niveles y el segundo no tiene datos propios.** El
+  filtro es `familia` o `familia/subcategoría`, y la subcategoría es el `kind`
+  que cada ficha ya llevaba escrito para pintarse: 6 familias dan 33
+  subcategorías sin una tabla que mantener aparte, y una familia nueva trae
+  las suyas sola. Ningún id de familia lleva barra, que es lo que permite
+  meter los dos niveles en la misma cadena sin tocar `page()` ni `counts()`.
+  El selftest comprueba que las subcategorías **reparten** la familia —si una
+  ficha se quedara sin `kind`, no se alcanzaría desde ningún chip y el
+  listado enseñaría menos de lo que hay sin que se note—. La fila del segundo
+  nivel no sale en «Todo» ni con una búsqueda puesta, y `.filters--sub[hidden]`
+  necesita su propia regla porque `display: flex` le gana a `[hidden]`.
+- **El calibre no es un chip, es un `<select>`.** Corta de través: cruza con
+  familia, subcategoría y búsqueda a la vez, así que no cabe en una fila de
+  chips que son excluyentes entre sí. El nativo trae rueda del sistema en el
+  móvil, teclado y lector de pantalla sin escribir nada. Saca el calibre con
+  `catalog.calibre()`, que es la misma función con la que la cesta cuenta el
+  cupo de la TCCM: si el filtro leyera el calibre por su cuenta, un día el
+  desplegable y el cupo dirían cosas distintas. El selftest comprueba que a
+  toda referencia con `cals` se le saque el suyo —un calibre que la expresión
+  no conozca no da error: deja la ficha fuera del desplegable y fuera del
+  cupo, y las dos cosas son invisibles mirando la página—. Al cambiar de
+  familia, un calibre que allí no exista se suelta solo en vez de dejar la
+  rejilla vacía.
+- **Los chips envuelven, no se recortan.** Eran una fila con `overflow-x:
+  auto` y la barra escondida, así que lo que no cabía desaparecía sin ninguna
+  pista; con las subcategorías son más y más largos. Por debajo de 40rem
+  envuelven a tres líneas y ahí `.filters` deja de ser `sticky`: pegada se
+  comía 169 px de una vista de 844.
 - **La cuenta no tiene contraseña a propósito.** Guardar una en `localStorage`
   es peor que no tenerla. El alta de verdad es `customer` en el esquema SQL.
 - **Una sola ventana para las cuatro consultas.** El original tiene ocho

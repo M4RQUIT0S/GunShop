@@ -339,8 +339,33 @@
     return out.sort(function (a, b) { return b.score - a.score; });
   }
 
+  /* --- filtro de dos niveles -------------------------------------------
+     El filtro es «familia» o «familia/subcategoria». La subcategoria es el
+     `kind` que cada ficha ya llevaba escrito para pintarse, asi que el
+     segundo nivel no anade un dato que mantener aparte: sale del que hay, y
+     una familia nueva trae sus subcategorias sola. Ningun id de familia
+     lleva barra, asi que los filtros de un solo nivel siguen valiendo. */
+
   function filtered(items, filter) {
-    return filter === 'todo' ? items : items.filter(function (p) { return p.cat === filter; });
+    if (filter === 'todo') return items;
+    var corte = String(filter).indexOf('/');
+    if (corte < 0) return items.filter(function (p) { return p.cat === filter; });
+    var cat = filter.slice(0, corte);
+    var kind = filter.slice(corte + 1);
+    return items.filter(function (p) { return p.cat === cat && p.kind === kind; });
+  }
+
+  // Las subcategorias de una familia con lo que hay de cada una, alfabeticas:
+  // `items` viene ordenado por relevancia y el orden de aparicion ahi no le
+  // dice nada a quien lee la fila de chips.
+  function kinds(items, cat) {
+    var n = {};
+    items.forEach(function (p) {
+      if (p.cat === cat) n[p.kind] = (n[p.kind] || 0) + 1;
+    });
+    return Object.keys(n).sort(function (a, b) {
+      return a.localeCompare(b, 'es');
+    }).map(function (k) { return { kind: k, n: n[k] }; });
   }
 
   // Busqueda del panel de la lupa: todas las palabras tienen que aparecer,
@@ -391,6 +416,7 @@
     LINES: LINES, PAGE: PAGE,
     MONEDAS: MONEDAS, ARS_POR_USD: ARS_POR_USD,
     rng: rng, build: build, page: page, filtered: filtered, counts: counts,
+    kinds: kinds,
     format: format, money: money,
     REGIMEN: REGIMEN, regimen: regimen,
     calibre: calibre, porCaja: porCaja, topeTccm: topeTccm, buscar: buscar
