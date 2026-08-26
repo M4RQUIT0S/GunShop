@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_X6fJ4bapZSPHWyiW0mnAhFpbo5JA",
+  "orgId": "team_VOOTROHq7eK24B0NWSTejtr3",
+  "projectName": "gun-shop",
+  "settings": {
+    "createdAt": 1786533057999,
+    "framework": null,
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}
