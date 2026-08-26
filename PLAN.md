@@ -1,98 +1,204 @@
-# Migración a e-commerce (Next.js + Supabase)
+# Migración a e-commerce (Next.js + Supabase) — retomando el rediseño
 
-Fuente: `alcance-ecommerce-armeria.md` (2026-08-26). Rama `ecommerce-next`,
-partiendo de `main`.
+Fuente: contexto de esta sesión (2026-08-26). Sigue en la rama `ecommerce-next`.
+No se parte de cero: se corrige el rumbo de las fases 1-3 ya cerradas ahí.
 
-## Las tres decisiones tomadas
+## Decisión que esto revierte
 
-1. **El backend se extiende, no se rehace.** Las 24 tablas con RLS ya están
-   aplicadas y probadas contra el proyecto real. De las 16 tablas del «modelo
-   sugerido» del documento, 15 ya existen; falta `inquiries`.
-2. **Diseño nuevo de e-commerce.** Se abandona el port de Rolls-Royce.
-3. **Se parte de `main`.** `rediseno-rr` queda atrás; de allí sólo se rescató
-   `db/supabase/`, que es el backend que sí se conserva.
+`ecommerce-next/PLAN.md` (fases 0-3 ya cerradas) dice: *"Diseño nuevo de
+e-commerce. Se abandona el port de Rolls-Royce"* y monta Minimalism & Swiss
+Style (Cormorant + Montserrat, negro cálido/hueso/oro, `app/tokens.css`).
+Esa decisión queda **revertida**: `main` fijó el rediseño rolls-royce
+("Alcántara", Tenor Sans + Jost, lienzo negro, `css/tokens.css`) como diseño
+oficial en producción, y es ese el que hay que portar. Lo que SÍ se conserva
+de las fases 0-3 cerradas: todo `lib/`, `db/supabase/`, el andamiaje de
+Next.js/Supabase y el patrón de `app/catalogo/page.tsx` leyendo
+`listaProductos()`. Lo que se tira: `app/tokens.css`, `app/globals.css`,
+`app/catalogo.module.css` y las fuentes Cormorant/Montserrat de
+`app/layout.tsx`.
 
-## Lo que NO se toca del documento, y por qué
+## Punto de partida
 
-- **`is_regulated` como booleano: no.** Ya existe `licence_regime` con los
-  cinco regímenes del decreto 395/75 (CLU, TCCM, certificación). Un booleano
-  no distingue «uso civil» de «uso civil condicional», y esa diferencia es la
-  que decide si se pide credencial. Se mapea `purchase_mode` **desde** el
-  régimen, no en su lugar.
-- **Checkout automático para productos regulados: no.** Lo dice el propio
-  documento en su § 15: los requisitos legales «deben validarse con normativa
-  vigente y asesoramiento legal antes de implementar checkout automatico».
-  Regulado ⇒ `inquiry_only` o `reservation` hasta que haya esa validación.
+**Se sigue en `ecommerce-next`, no se abre rama nueva desde `main`.**
+Repetir el andamiaje (Next 16 + React 19 + `@supabase/supabase-js`,
+`vercel.json`, `lib/supabase.ts`, `lib/regimen.ts` ya escrito y con
+`test/modoventa.test.ts` en verde, `db/supabase/` con 9 migraciones ya
+aplicadas y probadas contra el proyecto real) sería rehacer trabajo ya hecho
+y verificado. Lo único que cambia es la piel visual y las páginas.
 
-## Sistema de diseño
-
-De `ui-ux-pro-max`, segunda consulta. La primera («firearms hunting sport
-shooting ecommerce») devolvió *Vibrant & Block-based*: verde menta, naranja,
-«playful, gaming, youth-focused», y riesgo de accesibilidad *conditional*.
-Descartada por no encajar con material regulado. La buena:
-
-- **Minimalism & Swiss Style**, riesgo de accesibilidad *bajo*.
-- Negro cálido `#1C1917` sobre hueso `#FAFAF9`, acento oro `#A16207`.
-- Cormorant (títulos) + Montserrat (interfaz).
+Verificado: `db/supabase/migrations/0001..0008` son **idénticas** entre
+`main` y `ecommerce-next` (`git diff main ecommerce-next -- db/supabase/migrations/000{1..8}_*.sql`
+sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
+`main` cuando esta rama lo reemplace (fase 11).
 
 ## Fases
 
-- [x] **0. Rama y backend.** `db/supabase/` traído de `rediseno-rr`;
-      `revisa.js` en verde.
-- [x] **1. Andamiaje.** Next.js + React + `@supabase/supabase-js`. Sin
-      Tailwind: el diseño es de tokens y CSS Modules viene de serie.
-- [x] **2. Tokens y capa base.** Paleta, tipografía, contraste comprobado.
-- [~] **3. Catálogo público.** Listado y familias hechos, leyendo Supabase.
-      Faltan filtros de marca/precio, orden y paginación.
-- [ ] **4. Ficha de producto.** URL por `slug`, galería, SEO, Open Graph.
-- [ ] **5. Consultas.** Tabla `inquiries` + formulario + WhatsApp prearmado.
-- [ ] **6. Admin mínimo.** Productos y consultas.
+- [x] **0. Reconciliación y registro de la decisión.**
+      Migraciones 0001-0008 confirmadas idénticas entre `main` y
+      `ecommerce-next`. Este `PLAN.md` reemplaza al anterior; queda
+      constancia de que la fase "2. Tokens y capa base" previa se revierte.
 
-Fases 2-4 del documento (pagos, webhooks, carrito completo, roles) quedan
-fuera de este cuaderno: son otra tanda.
+- [ ] **1. Tokens y CSS base — puerto literal desde `main`.**
+      - Copiar bytes de `D:\GunShop\css\tokens.css`, `css\base.css`,
+        `css\catalog.css`, `css\shop.css` a `D:\GunShop-ecommerce-next\css\`
+        (pisando las versiones viejas pre-rediseño que hay ahí).
+      - Importarlas como CSS **global clásico** desde `app/layout.tsx`
+        (`import '../css/tokens.css'`, etc.), no CSS Modules: son ~4 hojas
+        BEM ya pensadas como sistema único.
+      - Borrar `app/tokens.css`, `app/globals.css`, `app/catalogo.module.css`
+        **al final de la fase 4**, no ahora.
+      - Tipografía: cambiar `next/font/google` de Cormorant+Montserrat a
+        `Tenor_Sans` (400) + `Jost` (300/400/500), mismo mecanismo ya
+        escrito.
+      - Portar `document.documentElement.className += ' js'` con
+        `next/script` `strategy="beforeInteractive"`.
+      - Comprobación: `/` y `/catalogo` en dev vs `index.html` de `main`
+        abierto con doble clic.
+      - Commit: `feat: porta tokens.css/base.css/catalog.css/shop.css del rediseño a la app Next`.
 
-## Cuidado con
+- [ ] **2. Layout raíz + cabecera + paneles — el "chrome" compartido.**
+      - `app/layout.tsx` monta `<Nav/>` (Server Component vía `familias()`),
+        `<Footer/>` y los cuatro `<dialog>` (`CartPanel`, `SearchPanel`,
+        `AccountPanel`, `ConsultaPanel`), portando `index.html` líneas
+        568-719 estructura por estructura.
+      - `app/components/NavMenu.tsx` ('use client') — porta `js/nav.js`:
+        menú de dos niveles, `aria-expanded`, precarga de `data-foto`,
+        `matchMedia('(max-width: 60rem)')`, Escape. El segundo nivel de
+        «Familias» se arma con las `familias()` del Server Component padre,
+        no con `LINES` (no existe en Next).
+      - `app/components/CartContext.tsx` — Context + estado con persistencia
+        en `localStorage['gunshop:cesta']`, reemplaza el singleton
+        `window.GunShop.cart` porque header/ficha/panel necesitan el mismo
+        estado compartido.
+      - Comprobación: menú abre/cierra, atrapa foco, Tab no se escapa.
+      - Commit: `feat: cabecera, menu de dos niveles y los cuatro paneles modales`.
 
-- **`.env.local` nunca al repo.** La clave `service_role` no puede tocar el
-  frontend; sólo va en funciones de servidor.
-- Las 77 fotos de `img/product/` siguen sin licencia aclarada para
-  redistribuir. El documento no lo cambia.
+- [ ] **3. Portada (`app/page.tsx`).**
+      - Server Component: `familias()` + cifras (`#statTotal`, `#statBrands`
+        — añadir a `lib/catalogo.ts`).
+      - Tres láminas con el copy fijo de `index.html` líneas 143-182.
+      - `RielLaminas.tsx` ('use client') — porta el `IntersectionObserver`
+        de `js/portada.js` función `riel()`.
+      - Antes de portar `pie()` (el `ResizeObserver` del pie "descubierto"):
+        verificar en el CSS ya portado (fase 1) si `.foot{position:fixed}`
+        es sólo de portada o sitewide, y ubicar el efecto en consecuencia.
+      - Familias (`#tiles`) y marquesina de marcas (`#marquee`).
+      - Commit: `feat: portada con rieles de laminas, cifras y familias`.
 
+- [ ] **4. Catálogo (`app/catalogo/page.tsx`) — filtros de dos niveles y calibre sobre Supabase.**
+      - Extender `lib/catalogo.ts`: sumar al `SELECT` de `listaProductos()`
+        `spec`, `cartridges_per_box` y
+        `product_variant(calibre:calibre_id(name, annual_quota))`. Con esto
+        `REGIMEN`/`calibre()`/`porCaja()`/`topeTccm()` de `js/catalog.js`
+        quedan obsoletos para lo sembrado en Supabase — no se portan a
+        TypeScript, ya están mejor resueltos en columnas reales.
+      - `filtrarPorSub(kind)` y `filtrarPorCalibre(nombre)` como parámetros
+        opcionales de `listaProductos()`.
+      - Chips de familia/subcategoría y `<select>` de calibre como
+        `<Link href="/catalogo?familia=x&sub=y&calibre=z">`, sin JS de
+        cliente.
+      - **Sin paginación**: se renderiza toda la lista filtrada de una vez
+        (~76-100 productos, revalida cada 10 min). *Hecho X (sin scroll
+        infinito); si hace falta, decirlo.*
+      - Reskin con clases de `css/catalog.css` en vez de `catalogo.module.css`.
+      - Commit: `feat: catalogo con filtros de dos niveles y calibre sobre Supabase`.
 
-## Estado al cerrar la sesión
+- [ ] **5. Ficha de producto — `app/producto/[slug]/page.tsx`.**
+      - `app/catalogo/page.tsx` ya enlaza a `/producto/${slugDe(p)}` y hoy
+        da 404 — se mantiene esa ruta.
+      - `lib/catalogo.ts`: `productoPorSlug(slug)` resolviendo contra
+        `listaProductos()` completo filtrando por `slugDe(p) === slug`
+        (mismo `slugDe()` que genera los enlaces, no puede desincronizarse).
+      - Extender `aProducto()` para devolver el array completo de
+        `product_photo` (hoy sólo `portada`), para la galería.
+      - CTA por `modoVenta(p.regimen)`: `direct_checkout` → «Añadir»;
+        si no → «Consultar» abriendo `ConsultaPanel` prerellenado.
+      - `generateMetadata()` con Open Graph por producto.
+      - Verificar antes: si `product.spec` está poblado para los 18
+        productos sembrados.
+      - Commit: `feat: ficha de producto en /producto/[slug]`.
 
-Funciona y está verificado en navegador: `npx next build` compila, el catálogo
-sirve **18 productos reales de Supabase** con precio en pesos al cambio del
-día, familia, régimen y 16 fotografías.
+- [ ] **6. Cesta, cuenta, búsqueda, consulta — Client Components.**
+      - `CartPanel.tsx`: mismo modelo que `js/cart.js` (`{id: unidades}` en
+        `localStorage`, precio resuelto siempre contra catálogo fresco).
+      - **Sin wiring a `crear_pedido()` todavía** (exige `auth.uid()`, no
+        hay login/signup en esta tanda). El botón «Reservar en armería»
+        queda como aviso, igual que hoy en `main`.
+      - `AccountPanel.tsx`: puerto casi literal de `js/account.js`.
+      - `SearchPanel.tsx`: `lib/buscar.ts` con `llano()`/`buscar()`
+        portados literalmente de `js/catalog.js` (~15 líneas); filtra en
+        cliente sobre `listaProductos()` pedido una vez al abrir.
+      - `ConsultaPanel.tsx`: puerto literal de `js/consulta.js` (un
+        formulario para las 4 consultas, arma `mailto:`, sin backend).
+      - Commit: `feat: cesta, cuenta, busqueda y consulta como client components`.
 
-Comprobaciones, las tres en verde:
+- [ ] **7. Respaldo 3D — se deja fuera, a propósito.**
+      - `js/meshes.js`/`scene.js`/`art.js` no se portan: código muerto
+        incluso en el sitio estático (los 76 productos tienen foto real).
+      - El fallback "sin foto" ya existe en `app/catalogo/page.tsx`
+        (`.foto.sinFoto`), sólo se reskinea en la fase 1.
+      - Sin commit propio.
 
-    npx next build
-    node --test test/modoventa.test.ts     # 5 casos
-    node db/supabase/revisa.js             # 10 ficheros, 24 tablas
-    node test/selftest.js                  # sigue guardando js/catalog.js
+- [ ] **8. Testing.**
+      - `test/modoventa.test.ts` sigue igual.
+      - Nuevo `test/buscar.test.ts` para `llano()`/`buscar()`.
+      - Nuevo test chico: cada `slugDe()` de `listaProductos()` resuelve vía
+        `productoPorSlug()`.
+      - `test/selftest.js` se mantiene mientras `js/catalog.js` siga siendo
+        fuente de los 76 productos (fase 9); se borra junto con él.
+      - `node db/supabase/revisa.js` y `npx next build` siguen siendo las
+        comprobaciones bloqueantes.
+      - Commit: `test: cubre buscar() y el redondeo slug↔producto`.
 
-Dos cosas que salieron de medir y no de mirar:
+- [ ] **9. Cargar los 76 productos en Supabase (puede ir en paralelo con 4-6).**
+      - Hoy Supabase sólo tiene 18. Generador análogo a `tools/seed.js` pero
+        apuntando al esquema Supabase (`brand`, `family`, `product.spec[]`,
+        `cartridges_per_box`, `product_variant.calibre_id`).
+      - Ojo con `0009_fotos.sql`: las rutas de foto no se derivan del
+        nombre, se listan a mano y se comprueban contra disco.
+      - Commit: `feat: genera el seed de Supabase con los 76 productos de js/catalog.js`.
 
-- **La caja de la foto medía 292x750 en vez de 292x183.** El `height="750"`
-  del `<img>` entra como valor usado y `aspect-ratio` sólo rellena
-  dimensiones automáticas. Hace falta `height: auto`.
-- **Las rutas de foto no se pueden derivar del nombre.** De 18 productos, 3
-  no casaban, y uno de ellos habría colgado la foto de OTRO producto de la
-  misma marca (un .308 de 150 gr donde el catálogo pide un .22 de 40).
+- [ ] **10. Limpieza.**
+      - Borrar `app/globals.css`, `app/tokens.css`, `app/catalogo.module.css`
+        (sólo tras verificar fases 1-6 en navegador).
+      - Borrar `index.html` y los `js/*.js`/`css/*.css` sueltos en la raíz
+        de `ecommerce-next` (foto vieja pre-rediseño). Confirmar que
+        `public/img/` es superset de `img/` antes de borrar `img/`.
+      - Conservar `tools/seed.js`, `tools/models.py`, `tools/render.py`,
+        `tools/fotos.py`.
+      - Reescribir `CLAUDE.md` de `ecommerce-next` (hoy describe Himon /
+        papel claro / lima, no la app real).
+      - Commit: `chore: retira el sitio estatico viejo y pone CLAUDE.md al dia`.
 
-## Lo siguiente, en orden
+- [ ] **11. Despliegue.**
+      - Confirmar `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+        siguen dadas de alta en Vercel (Production+Preview+Development).
+      - Cuando 0-10 estén verdes: fast-forward de `main` a la punta de
+        `ecommerce-next` (o merge) y cambiar el Production Branch en
+        Vercel, probando `npx next build` limpio justo antes — `main` hoy
+        no tiene build, así que este paso lo activa por primera vez en
+        producción.
+      - Sin commit propio.
 
-1. **Cargar los 76 productos en Supabase.** Hoy la base tiene 18: el
-   `seed.sql` de Supabase es una muestra de 3 por familia escrita a mano, y
-   los 76 siguen sólo en `js/catalog.js`. Hace falta un generador como
-   `tools/seed.js` pero para el esquema de Supabase. **Hasta que eso ocurra
-   no se puede borrar `js/`**, que es la única fuente del catálogo.
-2. Ficha de producto en `/producto/[slug]` — los enlaces ya apuntan ahí y hoy
-   dan 404.
-3. Tabla `inquiries` + formulario + WhatsApp.
-4. Filtros de marca y precio, orden y paginación.
-5. Admin mínimo.
+## Riesgos
 
-El sitio estático viejo (`index.html`, `css/`, `js/`) sigue en el árbol y ya
-no se sirve. Se borra cuando (1) esté hecho.
+- **`crear_pedido()` sin auth**: la fase 6 deja la reserva como aviso, no
+  venta real. Cablearla de verdad arrastra login/signup — fuera de esta
+  tanda salvo que se pida.
+- **`product.spec`/`cartridges_per_box`** de los 18 sembrados puede estar
+  incompleto. Verificar antes de la fase 4/5.
+- **Fast-forward de main (fase 11)** activa build en un proyecto Vercel hoy
+  estático puro. Probar `npx next build` limpio justo antes de mover el
+  Production Branch.
+
+## Criterios de cierre
+
+- [ ] `npx next build` en verde con el diseño rolls-royce servido desde `/`.
+- [ ] `/catalogo` filtra por familia, subcategoría y calibre, ninguna ficha
+      regulada aparece con `direct_checkout`.
+- [ ] `/producto/[slug]` existe y no da 404 para ningún enlace del listado.
+- [ ] Los cuatro paneles abren, atrapan foco y cierran con Escape.
+- [ ] `node --test test/`, `node db/supabase/revisa.js`, `npx next build`
+      en verde.
+- [ ] `js/catalog.js` sigue vivo mientras la fase 9 no cierre; el día que
+      cierre, se borra junto con `test/selftest.js`.
