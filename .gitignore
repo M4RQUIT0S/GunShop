@@ -8,3 +8,9 @@ node_modules/
 Thumbs.db
 __pycache__/
 *.pyc
+
+# Config de agentes: apunta a proyectos reales y es de cada maquina.
+# El ejemplo con marcador de posicion si va al repo.
+.codex/*
+!.codex/config.example.toml
+.claude/settings.local.json

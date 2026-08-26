@@ -1,0 +1,4 @@
+# Copiar a .codex/config.toml y poner el project_ref propio.
+# El fichero real esta ignorado: ata el checkout a un proyecto concreto.
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp?project_ref=TU_PROJECT_REF&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"
