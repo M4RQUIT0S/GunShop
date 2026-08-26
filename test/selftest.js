@@ -219,7 +219,11 @@ assert.ok(worst < 1.35,
 // mismo hay que comprobarlo aqui: no se ve mirando, se ve contando.
 var fs = require('fs');
 var path = require('path');
-var IMG = path.join(__dirname, '..', 'img', 'model');
+// Las fotos las sirve Next desde public/. El `photo:` de la ficha sigue
+// siendo 'img/product/...' porque es la ruta publica, no la del disco.
+var RAIZ_IMG = path.join(__dirname, '..', 'public', 'img');
+
+var IMG = path.join(RAIZ_IMG, 'model');
 
 assert.ok(fs.existsSync(IMG),
   'falta img/model/: bajalas con tools/fotos.py. Sin ellas la pagina sigue ' +
@@ -235,7 +239,7 @@ assert.strictEqual(faltan.length, 0,
 // rompe la pagina -- cae a la foto del modelo -- y por eso hay que mirarla
 // aqui: el fallo es invisible salvo que se cuente.
 var rotas = a.filter(function (p) {
-  return p.photo && !fs.existsSync(path.join(__dirname, '..', p.photo));
+  return p.photo && !fs.existsSync(path.join(__dirname, '..', 'public', p.photo));
 });
 assert.strictEqual(rotas.length, 0,
   'hay ' + rotas.length + ' rutas photo: rotas, la primera ' +
@@ -265,11 +269,11 @@ assert.strictEqual(ajenas.length, 0,
 // reparto automatico daba la misma imagen al armero Arregui y al Ferrimax.
 var crypto = require('crypto');
 var porHash = {};
-fs.readdirSync(path.join(__dirname, '..', 'img', 'product'))
+fs.readdirSync(path.join(RAIZ_IMG, 'product'))
   .filter(function (f) { return /\.webp$/.test(f); })
   .forEach(function (f) {
     var h = crypto.createHash('sha1')
-      .update(fs.readFileSync(path.join(__dirname, '..', 'img', 'product', f)))
+      .update(fs.readFileSync(path.join(RAIZ_IMG, 'product', f)))
       .digest('hex');
     (porHash[h] = porHash[h] || []).push(f);
   });
@@ -278,7 +282,7 @@ assert.strictEqual(repes.length, 0,
   'hay ' + repes.length + ' fotos repetidas, la primera en ' +
   (repes[0] && porHash[repes[0]].join(' = ')));
 
-assert.ok(fs.existsSync(path.join(__dirname, '..', 'img', 'product', 'CREDITS.md')),
+assert.ok(fs.existsSync(path.join(RAIZ_IMG, 'product', 'CREDITS.md')),
   'falta img/product/CREDITS.md: las fotos CC BY y CC BY-SA exigen atribucion');
 
 // Media de las ocho son CC BY o CC BY-SA, que exigen citar al autor. Si el

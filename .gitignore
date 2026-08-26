@@ -8,3 +8,18 @@ node_modules/
 Thumbs.db
 __pycache__/
 *.pyc
+
+# Next.js
+.next/
+next-env.d.ts
+.vercel/
+
+# Entorno: la URL y la clave publicable van en .env.example con marcador de
+# posicion; el fichero real no entra nunca, y la service_role menos.
+.env
+.env*.local
+
+# Config de agentes: apunta a proyectos reales y es de cada maquina.
+.codex/*
+!.codex/config.example.toml
+.claude/settings.local.json
