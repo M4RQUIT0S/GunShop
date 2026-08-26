@@ -1,8 +1,63 @@
-/* catalog.css - barra de filtros, rejilla infinita y ficha de producto.
-   La ficha es blanca sobre papel y no lleva borde: la separa el color, como
-   en el resto de la pagina. Al pasar por encima se vuelve tinta. */
+/* catalog.css - familias, barra de filtros, rejilla infinita y ficha.
+   Aqui no hay cajas: lo que separa una ficha de la siguiente es un filete de
+   un pixel, como en la fila de tres del original. La ficha no tiene fondo
+   propio; al pasar por encima se levanta a `--pieza`. */
 
-/* --- cabecera ----------------------------------------------------------- */
+/* --- familias -----------------------------------------------------------
+   La rejilla de seis con enlucido de filetes. Cada baldosa lleva borde
+   arriba y a la izquierda: con `gap: 0` eso forma un enrejado completo sin
+   tener que saber cuantas columnas caben, que es lo que `auto-fill` no
+   permite averiguar desde CSS. */
+
+/* Columnas contadas, no `auto-fill`: las familias son seis y con un reparto
+   automatico caben cinco, asi que la sexta se quedaba sola estirada a lo ancho
+   de la fila. Seis se divide por tres y por dos; por cinco, no. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--filete-tenue);
+  border-right: 1px solid var(--filete-tenue);
+}
+@media (max-width: 62rem) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 34rem) { .tiles { grid-template-columns: 1fr; } }
+.tile {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  padding: 2rem 1.5rem 3.5rem;
+  border-top: 1px solid var(--filete-tenue);
+  border-left: 1px solid var(--filete-tenue);
+  transition: background var(--t) var(--ease);
+}
+.tile:hover { background: var(--pieza); }
+.tile__n {
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
+}
+.tile__name {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: var(--fs-rotulo);
+  line-height: 1.3;
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+}
+.tile__spec { font-size: 0.875rem; color: var(--gris); }
+.tile__go {
+  position: absolute;
+  left: 1.5rem; bottom: 1.75rem;
+  width: 1.1rem; height: 1.1rem;
+  color: var(--gris);
+  transition: transform var(--t) var(--ease), color var(--t) var(--ease);
+}
+.tile:hover .tile__go { transform: translateX(0.4rem); color: var(--tinta); }
+.tile__go svg { width: 100%; height: 100%; }
+
+/* --- cabecera del catalogo ---------------------------------------------- */
 
 .catalog__head {
   display: flex;
@@ -12,107 +67,156 @@
   gap: 1.5rem 3rem;
   margin-bottom: 2rem;
 }
-.catalog__head > div:not(.money) { display: grid; gap: 1.25rem; }
+.catalog__head > div:not(.money) { display: grid; gap: 1rem; }
 
-/* Control segmentado: vive en la cabecera y no en la barra de filtros
-   porque esa barra desplaza en horizontal y el selector quedaria fuera. */
+/* Control segmentado: vive en la cabecera y no en la barra de filtros porque
+   esa barra desplaza en horizontal y el selector quedaria fuera. */
 .money {
   display: flex;
   flex: 0 0 auto;
-  padding: 3px;
-  gap: 3px;
-  background: var(--white);
-  border-radius: var(--r);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pildora);
+  overflow: hidden;
 }
 .money__opt {
-  padding: 0.55rem 0.9rem;
+  padding: 0.6rem 1.1rem;
   background: transparent;
   border: 0;
-  border-radius: var(--r);
-  font: 400 var(--fs-mono)/1 var(--mono);
-  color: var(--grey-500);
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
   cursor: pointer;
   transition: color var(--t) var(--ease), background var(--t) var(--ease);
 }
-.money__opt:hover { color: var(--ink); }
-.money__opt[aria-pressed="true"] { background: var(--lime); color: var(--ink); }
+.money__opt:hover { color: var(--tinta); }
+.money__opt[aria-pressed="true"] { background: var(--tinta); color: var(--pieza); }
 
 /* --- filtros ------------------------------------------------------------ */
 
 .filters {
   position: sticky;
-  top: var(--nav-h-tight);
+  top: var(--nav-h);
   z-index: 20;
   display: flex;
-  gap: 0.4rem;
-  padding: 1rem 0;
-  margin-bottom: 2rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  /* Degradado al color de la seccion para que las fichas pasen por debajo
-     sin cortarse de golpe. */
-  background: linear-gradient(var(--paper) 74%, rgba(242, 242, 242, 0));
+  /* Envuelven en vez de recortarse. Antes era una fila con `overflow-x: auto`
+     y la barra escondida: los chips que no cabian desaparecian sin ninguna
+     pista de que estaban ahi, y con las subcategorias son mas y mas largos.
+     El chip suelto si sigue entero en una linea -- lo parte es la coleccion,
+     no la etiqueta. */
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  row-gap: 0.9rem;
+  padding: 1.1rem 0;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--filete-tenue);
+  /* Opaco de verdad: las fichas pasan por debajo y no se transparentan. */
+  background: var(--negro);
 }
-.filters::-webkit-scrollbar { display: none; }
 
+/* El chip del original no es una pastilla: es texto en versalita que se
+   subraya al estar activo. */
 .chip {
   flex: 0 0 auto;
-  padding: 0.6rem 1rem;
-  background: var(--white);
+  padding: 0.35rem 0;
+  background: none;
   border: 0;
-  border-radius: var(--r);
-  font: 400 var(--fs-mono)/1 var(--mono);
+  border-bottom: 1px solid transparent;
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
   text-transform: uppercase;
-  color: var(--grey-500);
+  color: var(--gris);
   cursor: pointer;
   white-space: nowrap;
-  transition: color var(--t) var(--ease), background var(--t) var(--ease);
+  transition: color var(--t) var(--ease), border-color var(--t) var(--ease);
 }
-.chip:hover { color: var(--ink); }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.chip__n { margin-left: 0.45rem; color: var(--grey-400); }
-.chip[aria-pressed="true"] .chip__n { color: var(--lime); }
+/* Segundo nivel: cuelga del primero y hereda de `.filters` el filete y el
+   hueco de abajo, que ahora cierran las dos filas. No se pega arriba porque
+   dos filas pegajosas se taparian entre si. */
+.filters--sub { position: static; padding-top: 0; }
+
+/* `.filters` es `display: flex`, y eso gana a `[hidden]`: sin esta linea la
+   fila vacia seguiria ocupando sitio en «Todo». */
+.filters--sub[hidden] { display: none; }
+
+.filters:has(+ .filters--sub:not([hidden])) { margin-bottom: 0; border-bottom: 0; }
+
+/* El calibre corta de traves, asi que no se pinta como un chip mas: es un
+   <select> nativo con la etiqueta delante. Canto vivo y filete de un pixel,
+   como todo lo demas. */
+.calibre {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: -1.4rem 0 2.5rem;
+}
+.calibre[hidden] { display: none; }
+.calibre__et {
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
+}
+.calibre__sel {
+  padding: 0.5rem 0.7rem;
+  background: var(--negro);
+  color: var(--tinta);
+  border: 1px solid var(--filete-medio);
+  border-radius: var(--r);
+  font-family: var(--texto);
+  font-size: var(--fs-menudo);
+  cursor: pointer;
+}
+.calibre__sel:hover { border-color: var(--tinta); }
+
+.chip:hover { color: var(--tinta); }
+.chip[aria-pressed="true"] { color: var(--tinta); border-bottom-color: var(--tinta); }
+.chip__n { margin-left: 0.5rem; color: var(--filete-medio); }
+.chip[aria-pressed="true"] .chip__n { color: var(--gris); }
 
 /* --- rejilla ------------------------------------------------------------ */
 
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
-  gap: 1.25rem;
+  border-bottom: 1px solid var(--filete-tenue);
+  border-right: 1px solid var(--filete-tenue);
 }
 
 .card {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--white);
-  border-radius: var(--r);
-  overflow: hidden;
-  transition: background var(--t) var(--ease), transform var(--t) var(--ease);
+  padding: 0 0 1.25rem;
+  border-top: 1px solid var(--filete-tenue);
+  border-left: 1px solid var(--filete-tenue);
+  transition: background var(--t) var(--ease);
   /* La ficha entra al insertarse, no al cruzar el borde de la pantalla: asi
      no depende de ningun observador para llegar a verse. */
-  animation: card-in var(--t-slow) var(--ease) both;
+  animation: card-in var(--t-largo) var(--ease) both;
   animation-delay: calc(var(--i, 0) * var(--stagger));
 }
 @keyframes card-in {
   from { opacity: 0; transform: translateY(1.25rem); }
   to { opacity: 1; transform: none; }
 }
-.card:hover { background: var(--ink); color: var(--paper); transform: translateY(-4px); }
-.card:hover .card__cat, .card:hover .card__spec { color: var(--grey-300); }
+.card:hover { background: var(--pieza); }
 .card:hover .card__rule { transform: scaleX(1); }
-.card:hover .card__art { background: var(--ink-soft); }
 
+/* Las fotos del catalogo son 1200x750: la caja se queda en 8:5 y `cover` no
+   recorta nada. Un encuadre cuadrado, que es lo que usa el original, se
+   comeria la boca del canon. Aqui manda la fotografia. */
 .card__art {
   position: relative;
   aspect-ratio: 8 / 5;
-  background: var(--paper-warm);
+  background: var(--pieza);
   overflow: hidden;
-  transition: background var(--t) var(--ease);
 }
 .card__art img {
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   object-fit: cover;
   transition: transform var(--t) var(--ease);
 }
@@ -131,44 +235,45 @@
 }
 .tag {
   max-width: 100%;
-  padding: 0.3rem 0.55rem;
-  border-radius: var(--r);
-  background: rgba(28, 28, 28, 0.86);
+  padding: 0.3rem 0.6rem;
+  background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(6px);
-  font: 400 0.6875rem/1.3 var(--mono);
+  font-family: var(--display);
+  font-size: 0.625rem;
+  line-height: 1.4;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--grey-300);
+  color: var(--gris-claro);
 }
-.tag--licence { color: var(--lime); }
-.tag--last { color: var(--alert); }
+.tag--licence { color: var(--tinta); }
+.tag--last { color: var(--alerta); }
 
 .card__body {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  padding: 1.25rem;
+  gap: 0.55rem;
+  padding: 1.25rem 1.25rem 0;
   flex: 1;
 }
 .card__cat {
-  font: 400 0.6875rem/1 var(--mono);
+  font-family: var(--display);
+  font-size: 0.625rem;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--grey-500);
-  transition: color var(--t) var(--ease);
+  color: var(--gris);
 }
 .card__name {
-  font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: var(--tr-hero);
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: var(--fs-ficha);
+  line-height: 1.45;
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
 }
-.card__spec {
-  font-size: 0.875rem;
-  color: var(--grey-700);
-  transition: color var(--t) var(--ease);
-}
+.card__spec { font-size: 0.875rem; color: var(--gris); }
 .card__rule {
   height: 1px;
-  background: var(--lime);
+  background: var(--filete);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform var(--t) var(--ease);
@@ -178,52 +283,59 @@
   /* Un importe en pesos son ocho cifras: si aun asi no entra junto al boton,
      que baje de linea antes que desbordar la ficha. */
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   margin-top: auto;
-  padding-top: 0.5rem;
+  padding-top: 0.85rem;
 }
 .card__price {
   /* En movil la ficha se estrecha pero el numero no encoge solo. */
-  font-size: clamp(1.15rem, 0.9rem + 0.8vw, 1.4rem);
-  font-weight: 500;
+  font-family: var(--display);
+  font-size: clamp(1.05rem, 0.9rem + 0.6vw, 1.25rem);
   line-height: 1;
-  letter-spacing: var(--tr-h2);
+  letter-spacing: 0.5px;
+  font-variant-numeric: tabular-nums;
 }
-.card__price span { font-size: 0.6em; color: var(--grey-500); margin-right: 0.2em; }
-.card:hover .card__price span { color: var(--grey-400); }
+.card__price span { font-size: 0.65em; color: var(--gris); margin-right: 0.25em; }
 
 .card__add {
-  padding: 0.55rem 0.9rem;
-  background: var(--paper-warm);
-  border: 0;
-  border-radius: var(--r);
-  font: 400 var(--fs-mono)/1 var(--mono);
+  padding: 0.55rem 1.1rem;
+  background: transparent;
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pildora);
+  font-family: var(--display);
+  font-size: 0.625rem;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--tinta);
   cursor: pointer;
-  transition: background var(--t) var(--ease), color var(--t) var(--ease);
+  white-space: nowrap;
+  transition: background var(--t) var(--ease), color var(--t) var(--ease), border-color var(--t) var(--ease);
 }
-.card__add:hover { background: var(--lime); }
-.card:hover .card__add { background: var(--ink-soft); color: var(--paper); }
-.card:hover .card__add:hover { background: var(--lime); color: var(--ink); }
-.card__add.is-added,
-.card:hover .card__add.is-added { background: transparent; color: var(--lime-ink); }
-.card:hover .card__add.is-added { color: var(--lime); }
+.card__add:hover { background: var(--tinta); color: var(--pieza); border-color: var(--tinta); }
+.card__add.is-added { background: var(--tinta); color: var(--pieza); border-color: var(--tinta); }
+.card__add.is-added:hover { background: transparent; color: var(--tinta); border-color: var(--filete); }
 
 /* --- pie de la rejilla --------------------------------------------------- */
 
 .grid__status {
-  margin-top: 3rem;
+  margin-top: 2.5rem;
   text-align: center;
-  font: 400 var(--fs-mono)/1.6 var(--mono);
+  font-family: var(--display);
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
   text-transform: uppercase;
-  color: var(--grey-500);
+  color: var(--gris);
 }
 
 .sentinel { height: 1px; }
 
 @media (max-width: 40rem) {
-  .grid { grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
+  .filters { gap: 1.25rem; }
+  /* Aqui los chips envuelven a tres lineas: pegada arriba, la fila de
+     familias se comeria 169 px de una vista de 844. Se despega y se va con
+     el resto -- vale mas ver fichas que tener el filtro siempre a mano. */
+  .filters { position: static; }
 }

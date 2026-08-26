@@ -38,22 +38,30 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
       `ecommerce-next`. Este `PLAN.md` reemplaza al anterior; queda
       constancia de que la fase "2. Tokens y capa base" previa se revierte.
 
-- [ ] **1. Tokens y CSS base — puerto literal desde `main`.**
-      - Copiar bytes de `D:\GunShop\css\tokens.css`, `css\base.css`,
-        `css\catalog.css`, `css\shop.css` a `D:\GunShop-ecommerce-next\css\`
-        (pisando las versiones viejas pre-rediseño que hay ahí).
-      - Importarlas como CSS **global clásico** desde `app/layout.tsx`
-        (`import '../css/tokens.css'`, etc.), no CSS Modules: son ~4 hojas
-        BEM ya pensadas como sistema único.
-      - Borrar `app/tokens.css`, `app/globals.css`, `app/catalogo.module.css`
-        **al final de la fase 4**, no ahora.
-      - Tipografía: cambiar `next/font/google` de Cormorant+Montserrat a
-        `Tenor_Sans` (400) + `Jost` (300/400/500), mismo mecanismo ya
-        escrito.
-      - Portar `document.documentElement.className += ' js'` con
-        `next/script` `strategy="beforeInteractive"`.
-      - Comprobación: `/` y `/catalogo` en dev vs `index.html` de `main`
-        abierto con doble clic.
+- [x] **1. Tokens y CSS base — puerto literal desde `main`.**
+      - Copiados bytes de `D:\GunShop\css\{tokens,base,catalog,shop}.css` a
+        `D:\GunShop-ecommerce-next\css\` (`cmp` confirma idénticos).
+      - Importadas como CSS global clásico desde `app/layout.tsx`, en el
+        mismo orden que `index.html` (tokens → base → catalog → shop). Se
+        dejó de importar `./globals.css` ahí mismo para que no choque;
+        `app/tokens.css`, `app/globals.css` y `app/catalogo.module.css`
+        siguen en disco sin tocar (los sigue usando `catalogo.module.css`
+        vía `app/page.tsx` y `app/catalogo/page.tsx` hasta la fase 4).
+      - Tipografía: `Tenor_Sans` (400) + `Jost` (300/400/500) con
+        `variable`, mismo mecanismo que Cormorant/Montserrat. Verificado en
+        el CSS generado por el build que next/font conserva el nombre
+        literal ("Tenor Sans", "Jost") en el `@font-face`, que es como
+        `css/tokens.css` los referencia (no por variable CSS) — aplicar
+        `.variable` en `<html>` basta para que la hoja se incluya.
+      - `document.documentElement.className += ' js'` portado con
+        `next/script` `strategy="beforeInteractive"`; confirmado en el HTML
+        servido.
+      - Comprobación: `npx next build` en verde, `npm run start` sirve `/` y
+        `/catalogo` con 200 y el `<html>` con las clases `.variable` de
+        Tenor Sans/Jost. Nota: `/` y `/catalogo` aún se ven con el layout
+        viejo (Minimalism & Swiss vía `catalogo.module.css`) porque esas
+        páginas se rehacen recién en las fases 3-4; esta fase sólo deja la
+        hoja de estilos y las fuentes listas.
       - Commit: `feat: porta tokens.css/base.css/catalog.css/shop.css del rediseño a la app Next`.
 
 - [ ] **2. Layout raíz + cabecera + paneles — el "chrome" compartido.**

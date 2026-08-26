@@ -1,69 +1,76 @@
-/* tokens.css - el sistema medido de la plantilla Himon, no aproximado a ojo.
-   Paleta neutra con un unico acento lima, Geist a peso 500 como maximo y
-   tracking negativo que crece con el tamano. */
+/* tokens.css - el sistema medido de rolls-roycemotorcars.com, no aproximado a
+   ojo. Lienzo negro, versalita fina con tracking positivo fijo y una unica
+   forma redondeada: la pildora del boton. Todo lo demas es de canto vivo.
+
+   Es lo contrario del sistema anterior (papel claro, acento lima, radio 4px,
+   tracking negativo). Por eso vive en rama aparte. */
 :root {
-  /* --- superficies ---------------------------------------------------- */
-  --ink: #1c1c1c;          /* fondo oscuro, y texto sobre papel */
-  --ink-soft: #262629;     /* pieza levantada sobre fondo oscuro */
-  --ink-line: #313135;     /* separacion dentro de lo oscuro */
-  --paper: #f2f2f2;        /* fondo claro */
-  --paper-warm: #f0f0eb;   /* banda alterna */
-  --white: #fff;           /* ficha sobre papel */
+  /* --- superficies ------------------------------------------------------
+     El original pinta el lienzo en negro puro y levanta las piezas con
+     #151515, que es tambien la tinta de los botones claros. */
+  --negro: #000;
+  --pieza: #151515;
+  --pieza-alta: #1e1e1e;
+  --tinta: #fff;
 
-  /* --- grises ----------------------------------------------------------
-     El numero es el contraste real contra su fondo. `--hairline` es el
-     unico que no lo cumple: se queda en trazos y nunca lleva texto. */
-  --grey-700: #4a4f59;     /* cuerpo sobre papel      7.35:1 */
-  --grey-500: #696a6d;     /* apagado sobre papel     4.83:1 */
-  --grey-400: #969aa1;     /* apagado sobre tinta     6.03:1 */
-  --grey-300: #c6c7cc;     /* claro sobre tinta      10.10:1 */
-  --grey-200: #bdbdc2;     /* claro sobre tinta       9.11:1 */
-  --hairline: #7e7f85;
+  /* --- grises -----------------------------------------------------------
+     El numero es el contraste real contra su fondo. El #7c7c7c del original
+     se queda en filete: sobre #151515 da 4.37:1 y no llega a texto. */
+  --gris: #8a8a8a;         /* apagado   6.08:1 sobre negro · 5.29:1 sobre pieza */
+  --gris-claro: #c9c9c9;   /* cuerpo   12.55:1 sobre negro · 10.9:1 sobre pieza */
+  --filete: rgba(255, 255, 255, 0.32);
+  --filete-tenue: #222;    /* separador de ficha, solo trazo */
+  --filete-medio: #7c7c7c; /* solo trazo, nunca texto */
 
-  /* --- acento ----------------------------------------------------------
-     Lima solo sobre tinta (11.93:1) o de fondo con tinta encima. Sobre
-     papel da 1.28:1, asi que ahi no puede ser texto de ninguna manera. */
-  --lime: #bde74e;
-  --lime-dim: #b4db46;
-  --lime-ink: #5a6b1f;     /* la unica lima legible sobre papel  5.27:1 */
+  --alerta: #e2571e;
 
-  --alert: #e2571e;
+  /* --- tipografia -------------------------------------------------------
+     El original usa «Riviera Nights», que es propietaria. Tenor Sans es lo
+     mas cercano que se puede redistribuir: humanista, con la misma
+     modulacion de trazo y los terminales acampanados, y trae los acentos y
+     la ene, que es donde se cae media fuente de display en espanol.
+     Jost lleva el cuerpo y la interfaz, que es donde Tenor Sans -un solo
+     peso, pensada para titulares- se vuelve fragil. */
+  --display: "Tenor Sans", Optima, "Palatino Linotype", "Segoe UI", serif;
+  --texto: "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* --- tipografia ----------------------------------------------------- */
-  --font: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "Geist Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --fs-lamina: clamp(2.25rem, 0.6rem + 5.2vw, 4.375rem);   /* 36 -> 70 */
+  --fs-h2: clamp(1.75rem, 1.15rem + 1.9vw, 2.75rem);       /* 28 -> 44 */
+  --fs-rotulo: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);       /* 16 -> 20 */
+  --fs-ficha: 1rem;                                        /* 16 */
+  --fs-cuerpo: 1rem;
+  --fs-menudo: 0.75rem;                                    /* 12 */
 
-  --fs-hero: clamp(2.75rem, -0.4rem + 7.9vw, 5.5rem);      /* 44 -> 88 */
-  --fs-display: clamp(4.875rem, 1.9rem + 7.4vw, 7.5rem);   /* 78 -> 120 */
-  --fs-h2: clamp(2.5rem, 0.9rem + 4vw, 4rem);              /* 40 -> 64 */
-  --fs-h3: clamp(2rem, 1.55rem + 1.1vw, 2.5rem);           /* 32 -> 40 */
-  --fs-lede: clamp(1.0625rem, 0.95rem + 0.3vw, 1.25rem);   /* 17 -> 20 */
-  --fs-body: clamp(0.9375rem, 0.87rem + 0.2vw, 1.125rem);  /* 15 -> 18 */
-  --fs-mono: clamp(0.75rem, 0.71rem + 0.18vw, 0.875rem);   /* 12 -> 14 */
+  /* El tracking es POSITIVO y FIJO EN PIXELES, como en el original: 2,5 px
+     valgan lo que valgan las letras. Al no escalar con el cuerpo, el rotulo
+     pequeno acaba mas abierto que el titular, y esa desproporcion es
+     justamente la firma. `--tr-ancho` es el caso extremo, para una sola
+     palabra en una lamina. */
+  --tr: 2.5px;
+  --tr-ancho: 0.22em;
+  --tr-texto: 0.01em;
 
-  /* El tracking se cierra segun sube el cuerpo: es lo que hace que un peso
-     500 se lea como titular sin llegar a negrita. */
-  --tr-hero: -0.04em;
-  --tr-h2: -0.05em;
-  --tr-body: -0.02em;
+  /* --- geometria --------------------------------------------------------
+     Canto vivo en todo; la unica curva es la pildora. El contenido va casi
+     a sangre: el original deja 16 px de calle y nada mas. */
+  --r: 0;
+  --r-pildora: 30px;
+  /* La misma flecha que llevan las baldosas de familias, aqui como mascara
+     para poder tenirla con `currentColor`. */
+  --flecha: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23000" stroke-width="2"><path d="M5 12h13M12 5l7 7-7 7"/></svg>');
+  --pad-x: clamp(1rem, 0.4rem + 1.4vw, 1.5rem);
+  --medida: 62ch;
+  --wrap: 90rem;
+  --sp-section: clamp(4.5rem, 2.5rem + 5.5vw, 8rem);
+  --nav-h: 5rem;
+  --nav-h-ancha: 7.5rem;   /* 120 px, lo que mide sobre la portada */
 
-  /* --- geometria -------------------------------------------------------- */
-  --wrap: 75rem;                                    /* 1200 */
-  --measure: 53rem;                                 /* 850, medida de lectura */
-  --pad-x: clamp(1.25rem, 0.5rem + 3vw, 2.5rem);    /* 20 -> 40 */
-  --sp-section: clamp(5rem, 3rem + 6vw, 9.375rem);  /* 80 -> 150 */
-  --nav-h: 4.5rem;
-  --nav-h-tight: 3.75rem;
-  --r: 4px;
-
-  /* --- movimiento ------------------------------------------------------
-     Sinusoidal simetrica: entra y sale igual, sin rebote. */
-  --ease: cubic-bezier(0.44, 0, 0.56, 1);
-  /* Tres tiempos y no mas: 0.7 para lo que entra, 0.4 para lo que responde
-     al puntero, 0.2 solo para lo que no puede esperar (el salto de teclado).
-     El escalon es el mismo retraso para cualquier cosa que entre en fila. */
-  --t: 0.4s;
-  --t-fast: 0.2s;
-  --t-slow: 0.7s;
-  --stagger: 55ms;
+  /* --- movimiento -------------------------------------------------------
+     Una sola curva, fuerte a la salida: entra deprisa y se posa. Tres
+     tiempos y no mas. */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --t: 0.45s;        /* responde al puntero */
+  --t-corto: 0.2s;   /* solo el salto de teclado */
+  --t-largo: 1.1s;   /* lo que entra en pantalla */
+  --stagger: 90ms;
 }

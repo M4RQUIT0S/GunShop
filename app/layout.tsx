@@ -1,20 +1,27 @@
 import type { Metadata } from 'next'
-import { Cormorant, Montserrat } from 'next/font/google'
-import './globals.css'
+import { Tenor_Sans, Jost } from 'next/font/google'
+import Script from 'next/script'
+import '../css/tokens.css'
+import '../css/base.css'
+import '../css/catalog.css'
+import '../css/shop.css'
 
 // next/font descarga y auto-aloja: no hay peticion a Google en tiempo de
 // ejecucion ni salto de linea al cargar la fuente. `latin-ext` es lo que trae
-// los acentos y la ene.
-const display = Cormorant({
+// los acentos y la ene. css/tokens.css referencia "Tenor Sans" y "Jost" por
+// nombre literal (no por variable CSS): next/font conserva ese nombre en el
+// @font-face que genera, asi que basta con aplicar `.variable` en <html>
+// para que la hoja se incluya y ese nombre resuelva solo.
+const display = Tenor_Sans({
   subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600', '700'],
+  weight: '400',
   variable: '--fuente-display',
   display: 'swap',
 })
 
-const texto = Montserrat({
+const texto = Jost({
   subsets: ['latin', 'latin-ext'],
-  weight: ['300', '400', '500', '600'],
+  weight: ['300', '400', '500'],
   variable: '--fuente-texto',
   display: 'swap',
 })
@@ -52,6 +59,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es-AR" className={`${display.variable} ${texto.variable}`}>
       <body>
+        <Script id="clase-js" strategy="beforeInteractive">
+          {"document.documentElement.className += ' js';"}
+        </Script>
         <a className="saltar" href="#contenido">Saltar al contenido</a>
         {children}
       </body>
