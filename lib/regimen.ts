@@ -53,3 +53,22 @@ export function modoVenta(regimen: Regimen): ModoVenta {
 export function comprableDirecto(regimen: Regimen): boolean {
   return modoVenta(regimen) === 'direct_checkout'
 }
+
+/* Lo que ANMaC pide para LLEVARSE cada cosa (no para poder pagarla sola, que
+ * es lo que decide modoVenta). La cesta pregunta esto por cada línea para
+ * saber qué credencial exigir antes de reservar: equivalente tipado de
+ * REGIMEN en js/cart.js, indexado por el mismo campo que ya resuelve la
+ * base (`product.regimen`) en vez de por la etiqueta en español. */
+export type Requisitos = { clu: boolean; tccm: boolean; certificado: boolean }
+
+const REQUISITOS: Record<Regimen, Requisitos> = {
+  libre: { clu: false, tccm: false, certificado: false },
+  'aire-comprimido': { clu: false, tccm: false, certificado: false },
+  'uso-civil': { clu: true, tccm: false, certificado: false },
+  'uso-civil-condicional': { clu: true, tccm: false, certificado: true },
+  'requiere-tccm': { clu: true, tccm: true, certificado: false },
+}
+
+export function requisitos(regimen: Regimen): Requisitos {
+  return REQUISITOS[regimen]
+}

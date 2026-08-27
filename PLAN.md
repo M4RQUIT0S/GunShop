@@ -226,18 +226,69 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
         aparecen en munición.
       - Commit: `feat: ficha de producto con CTA por regimen y consulta prellenada`.
 
-- [ ] **6. Cesta, cuenta, búsqueda, consulta — Client Components.**
-      - `CartPanel.tsx`: mismo modelo que `js/cart.js` (`{id: unidades}` en
-        `localStorage`, precio resuelto siempre contra catálogo fresco).
-      - **Sin wiring a `crear_pedido()` todavía** (exige `auth.uid()`, no
-        hay login/signup en esta tanda). El botón «Reservar en armería»
-        queda como aviso, igual que hoy en `main`.
-      - `AccountPanel.tsx`: puerto casi literal de `js/account.js`.
-      - `SearchPanel.tsx`: `lib/buscar.ts` con `llano()`/`buscar()`
-        portados literalmente de `js/catalog.js` (~15 líneas); filtra en
-        cliente sobre `listaProductos()` pedido una vez al abrir.
-      - `ConsultaPanel.tsx`: puerto literal de `js/consulta.js` (un
-        formulario para las 4 consultas, arma `mailto:`, sin backend).
+- [x] **6. Cesta, cuenta, búsqueda, consulta — Client Components.**
+      - `lib/regimen.ts` gana `requisitos(regimen)`: equivalente tipado de
+        `REGIMEN` (js/cart.js), indexado por `Producto.regimen` en vez de
+        por la etiqueta en español. `calibre()`/`porCaja()`/`topeTccm()` NO
+        se portan (confirmado lo que decía fase 4): ya son
+        `calibres[0].name`, `cartridgesPerBox` y `calibres[0].annualQuota`.
+      - `lib/cesta.ts` (nuevo): `exige()`/`faltas()`/`notas()`/`cupos()`/
+        `reserva()` puros, equivalentes a la mitad de `js/cart.js` que no
+        toca el DOM — reciben `Linea[]` (`{producto, n}`) y `Perfil | null`,
+        se prueban solos. `lib/cuenta.ts` (nuevo) sólo define el tipo
+        `Perfil`, para que `lib/cesta.ts` no dependa de un componente de
+        React (`AccountContext` lo reexporta).
+      - `CartContext.tsx`: ahora además pide `listaProductos()`/`cambio()`
+        una sola vez (al montar) y expone `lineas`/`totalUsdCents` ya
+        resueltos contra catálogo fresco, más `abrir()/abrirTick` (mismo
+        mecanismo de tick que `ConsultaContext`) para que `HeaderActions`
+        pueda decirle a `CartPanel` que se muestre. `CartPanel.tsx` pinta
+        líneas, avisos (`aviso`/`aviso--falta`) y hace la reserva:
+        **sin wiring a `crear_pedido()`** (exige `auth.uid()`, no hay
+        login/signup en esta tanda) — pseudo-reserva 100% cliente en
+        `localStorage['gunshop:pedidos']` + `mailto:`, igual que hacía
+        `js/cart.js` en `main` (ninguno de los dos llamaba nunca a un
+        backend real).
+      - `AccountContext.tsx` (nuevo) + `AccountPanel.tsx`: puerto casi
+        literal de `js/account.js`. Formulario no controlado, remontado con
+        `key={abrirTick}` en cada apertura (equivalente a que `pinta()`
+        reescribiera los valores del form cada vez que `abrir()` mostraba
+        el panel).
+      - `SearchContext.tsx` (nuevo, sólo el tick de abrir) + `lib/buscar.ts`
+        con `llano()`/`buscar()` portados de `js/catalog.js` sobre
+        `Producto` (no hay campo `name` propio: se arma con `marca`+`ref`).
+        `SearchPanel.tsx` pide `listaProductos()` una vez al abrirse y
+        filtra en cliente.
+      - `HeaderActions.tsx` (nuevo, client): los tres botones de la barra
+        (buscar/cuenta/cesta) — vive aparte porque `Nav.tsx` es Server
+        Component y no puede llevar `onClick`; antes esos botones eran
+        marcado muerto dentro de `acciones`.
+      - **Sumado sobre lo planeado**: `SearchPanel`/`ConsultaPanel` ya
+        cerraban la mitad del ciclo de búsqueda pero no tenían a dónde
+        mandar los resultados (no hay `LINES` ni rejilla compartida en esta
+        app). `app/catalogo/page.tsx` gana `?q=` — busca por encima de
+        familia/sub/calibre igual que `fuente()`/`setQuery()` en
+        `js/main.js` (entra en «Todo», cruza sólo con calibre, chip
+        `.chip--busqueda` para deshacerla — esa clase ya estaba en
+        `css/shop.css` sin que nadie la usara desde la fase 1). Sin esto
+        «Ver en el catálogo» no tenía función real.
+      - `ConsultaPanel.tsx` NO gana las cuatro TEMAS ni el `<select>` de
+        familia: eso vive detrás del bloque «en qué podemos ayudarle» de la
+        portada, que ninguna fase cerrada todavía porta (fase 3 no lo
+        incluyó). Sólo se le sumó el mismo bloqueo de scroll de fondo que
+        ya tenían Cart/Account/Search (`js/consulta.js` lo hacía y el
+        scaffold de la fase 5 no).
+      - Comprobado: `npx next build` en verde; `npm run start` contra la
+        base real — `/catalogo?q=glock` da 1 referencia con el chip de
+        deshacer, `/catalogo` sin `q` sigue en 18; los cuatro `<dialog>`
+        siguen sirviendo su marcado inicial (cesta vacía, sin datos de
+        cuenta) en el HTML servido antes de hidratar. `node --test
+        test/modoventa.test.ts` y `test/selftest.js` en verde, `node
+        db/supabase/revisa.js` en verde (ninguno de los dos lo toca esta
+        fase). `node --test test/` (sin fichero) falla en este entorno
+        (Node 24 no resuelve el directorio) tanto en bash como en
+        PowerShell — no es una regresión de esta fase, ya fallaba igual
+        antes de tocar nada.
       - Commit: `feat: cesta, cuenta, busqueda y consulta como client components`.
 
 - [ ] **7. Respaldo 3D — se deja fuera, a propósito.**

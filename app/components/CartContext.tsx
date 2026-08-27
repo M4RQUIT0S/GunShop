@@ -6,13 +6,16 @@
  *
  * Guarda solo `{id: unidades}`, igual que el original: el producto (precio,
  * nombre, regimen) se vuelve a resolver contra el catalogo al pintar, nunca
- * se guarda la ficha entera. La logica de lineas, avisos de regimen y reserva
- * -- lo que en js/cart.js vive despues de "--- panel ---" -- se porta en la
- * fase 6, cuando el panel deja de ser un scaffold. */
+ * se guarda la ficha entera. Ese catalogo fresco lo trae este mismo Context
+ * (una vez, al montar) para que CartPanel no tenga que pedirlo por su cuenta:
+ * `lineas` ya llega resuelta, y una referencia que desaparece del catalogo
+ * simplemente no aparece en `lineas` aunque su id siga en `unidades`. */
 
 import {
   createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode,
 } from 'react'
+import { listaProductos, cambio, type Producto } from '@/lib/catalogo'
+import type { Linea } from '@/lib/cesta'
 
 const LLAVE = 'gunshop:cesta'
 const MAX_UNIDADES = 99
@@ -22,8 +25,16 @@ type Unidades = Record<number, number>
 type CartContextValue = {
   unidades: Unidades
   piezas: number
+  productos: Producto[]
+  arsPorUsd: number
+  catalogoListo: boolean
+  lineas: Linea[]
+  totalUsdCents: number
   pon: (id: number, n: number) => void
   add: (id: number) => void
+  vaciar: () => void
+  abrirTick: number
+  abrir: () => void
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
@@ -48,6 +59,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // con la hidratacion; localStorage solo existe en el navegador, asi que la
   // cesta real se lee recien montado.
   const [listo, setListo] = useState(false)
+  const [productos, setProductos] = useState<Producto[]>([])
+  const [arsPorUsd, setArsPorUsd] = useState(0)
+  const [catalogoListo, setCatalogoListo] = useState(false)
+  const [abrirTick, setAbrirTick] = useState(0)
 
   useEffect(() => {
     setUnidades(leer())
@@ -65,6 +80,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Sin almacen la cesta no sobrevive a la recarga; no es un fallo.
     }
   }, [unidades, listo])
+
+  // El catalogo fresco, pedido una sola vez: es contra esto que se resuelve
+  // el precio de cada linea, nunca contra lo guardado en localStorage.
+  useEffect(() => {
+    let cancelado = false
+    Promise.all([listaProductos(), cambio()]).then(([p, tc]) => {
+      if (cancelado) return
+      setProductos(p)
+      setArsPorUsd(tc)
+      setCatalogoListo(true)
+    })
+    return () => {
+      cancelado = true
+    }
+  }, [])
 
   const pon = useCallback((id: number, n: number) => {
     const cant = Math.max(0, Math.min(MAX_UNIDADES, Math.floor(n)))
@@ -84,14 +114,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }))
   }, [])
 
-  const piezas = useMemo(
-    () => Object.values(unidades).reduce((s, n) => s + n, 0),
-    [unidades],
+  const vaciar = useCallback(() => setUnidades({}), [])
+
+  const abrir = useCallback(() => setAbrirTick((t) => t + 1), [])
+
+  // El badge de la cabecera cuenta todo lo guardado hasta que el catalogo
+  // confirma que existe; una vez listo, una referencia que desaparecio ya no
+  // suma ("se cae sola", CLAUDE.md).
+  const piezas = useMemo(() => {
+    if (!catalogoListo) return Object.values(unidades).reduce((s, n) => s + n, 0)
+    const validos = new Set(productos.map((p) => p.id))
+    return Object.entries(unidades).reduce((s, [id, n]) => (validos.has(Number(id)) ? s + n : s), 0)
+  }, [unidades, productos, catalogoListo])
+
+  const lineas = useMemo<Linea[]>(() => {
+    const porId = new Map(productos.map((p) => [p.id, p]))
+    return Object.entries(unidades)
+      .map(([id, n]) => ({ producto: porId.get(Number(id)), n }))
+      .filter((l): l is Linea => !!l.producto)
+  }, [unidades, productos])
+
+  const totalUsdCents = useMemo(
+    () => lineas.reduce((s, l) => s + l.producto.usdCents * l.n, 0),
+    [lineas],
   )
 
   const value = useMemo(
-    () => ({ unidades, piezas, pon, add }),
-    [unidades, piezas, pon, add],
+    () => ({
+      unidades,
+      piezas,
+      productos,
+      arsPorUsd,
+      catalogoListo,
+      lineas,
+      totalUsdCents,
+      pon,
+      add,
+      vaciar,
+      abrirTick,
+      abrir,
+    }),
+    [
+      unidades, piezas, productos, arsPorUsd, catalogoListo, lineas, totalUsdCents,
+      pon, add, vaciar, abrirTick, abrir,
+    ],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>

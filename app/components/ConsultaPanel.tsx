@@ -1,13 +1,17 @@
 'use client'
 
-/* Puerto PARCIAL de js/consulta.js: solo abrir y prellenar desde la ficha de
- * producto (fase 5), con el mismo cierre en mailto: que el original (sin
- * servidor, no hay otro sitio honesto donde mandar esto). Lo que falta para
- * ser el puerto literal -- las cuatro TEMAS (compra/taller/tramites/visita)
- * que hoy abren este mismo panel desde el bloque "en que podemos ayudarle" de
- * la portada, y el <select> de familia que solo "compra" usa -- se porta en
- * la fase 6 junto con ese bloque, que tampoco esta portado todavia. abrir()
- * ya acepta lo que esas cuatro necesitan (ver ConsultaContext.tsx). */
+/* Puerto PARCIAL de js/consulta.js: abrir y prellenar desde donde sea que
+ * llame a `abrir({titulo, rotulo, mensaje})` -- hoy solo la ficha de producto
+ * (fase 5) -- con el mismo cierre en mailto: que el original (sin servidor,
+ * no hay otro sitio honesto donde mandar esto). El PLAN.md de la fase 6
+ * describe esto como "un formulario para las 4 consultas"; lo que falta para
+ * serlo del todo -- las cuatro TEMAS (compra/taller/tramites/visita) y el
+ * <select> de familia que solo "compra" usa -- vive detras del bloque "en
+ * que podemos ayudarle" de la portada, que esta fase no toca (no esta en el
+ * alcance que dio la fase 6, y ese bloque tampoco esta portado todavia).
+ * `abrir()` ya acepta lo que esas cuatro necesitaran (ver
+ * ConsultaContext.tsx): la proxima fase que porte ese bloque solo tiene que
+ * llamarlo con su propio titulo/rotulo/mensaje. */
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useConsulta } from './ConsultaContext'
@@ -29,12 +33,16 @@ function correo(asunto: string, datos: {
 export default function ConsultaPanel() {
   const { datos, cerrar } = useConsulta()
   const ref = useRef<HTMLDialogElement>(null)
+  const scrollPrevio = useRef('')
   // href del mailto: tras enviar; null mientras se esta rellenando el form.
   const [enviado, setEnviado] = useState<string | null>(null)
 
   useEffect(() => {
     if (datos) {
       setEnviado(null)
+      // Un <dialog> modal atrapa el foco pero no frena el scroll de detras.
+      scrollPrevio.current = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
       ref.current?.showModal()
     }
   }, [datos])
@@ -59,7 +67,7 @@ export default function ConsultaPanel() {
       className="panel panel--side"
       id="consultaPanel"
       aria-labelledby="consultaTitulo"
-      onClose={cerrar}
+      onClose={() => { document.body.style.overflow = scrollPrevio.current; cerrar() }}
       onClick={(event) => { if (event.target === event.currentTarget) ref.current?.close() }}
     >
       <div className="panel__box">
