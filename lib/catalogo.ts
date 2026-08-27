@@ -22,6 +22,9 @@ export type Producto = {
   regimenEtiqueta: string
   usdCents: number
   foto: string | null
+  // Todas las fotos del producto, portada primero, para la galeria de la
+  // ficha. Vacio en los dos productos de 0009_fotos.sql que no tienen fila.
+  fotos: string[]
   variantes: number
   spec: string[]
   cartridgesPerBox: number
@@ -71,6 +74,8 @@ function aProducto(fila: any): Producto {
   const reg = fila.licence_regime ?? fila.family.licence_regime
   const fotos = fila.product_photo ?? []
   const portada = fotos.find((f: any) => f.is_primary) ?? fotos[0]
+  // Portada primero, el resto en el orden que llego: es el orden de galeria.
+  const enOrden = portada ? [portada, ...fotos.filter((f: any) => f !== portada)] : fotos
   const variantes = fila.product_variant ?? []
   return {
     id: fila.id,
@@ -84,6 +89,7 @@ function aProducto(fila: any): Producto {
     regimenEtiqueta: reg.label,
     usdCents: fila.usd_cents,
     foto: portada ? '/' + portada.path : null,
+    fotos: enOrden.map((f: any) => '/' + f.path),
     variantes: variantes.length,
     spec: fila.spec ?? [],
     cartridgesPerBox: fila.cartridges_per_box ?? 0,
@@ -142,6 +148,14 @@ export async function listaProductos(
   if (sub) productos = filtrarPorSub(productos, sub)
   if (calibre) productos = filtrarPorCalibre(productos, calibre)
   return productos
+}
+
+// Misma clave que arma los enlaces del listado (slugDe), asi que un producto
+// nuevo o renombrado nunca puede desincronizar listado y ficha entre si: los
+// dos leen del mismo listaProductos() y aplican la misma funcion.
+export async function productoPorSlug(slug: string): Promise<Producto | null> {
+  const productos = await listaProductos()
+  return productos.find((p) => slugDe(p) === slug) ?? null
 }
 
 export type Familia = {

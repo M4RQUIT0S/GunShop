@@ -5,6 +5,7 @@ import Nav from './components/Nav'
 import Footer from './components/Footer'
 import Pie from './components/Pie'
 import { CartProvider } from './components/CartContext'
+import { ConsultaProvider } from './components/ConsultaContext'
 import CartPanel from './components/CartPanel'
 import SearchPanel from './components/SearchPanel'
 import AccountPanel from './components/AccountPanel'
@@ -75,25 +76,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a className="skip" href="#contenido">Saltar al contenido</a>
 
         <CartProvider>
-          {/* Nav (Server Component) envuelve el resto de la pagina: es quien
-              decide `inert` sobre `children` mientras el menu esta abierto,
-              ver app/components/NavMenu.tsx. `.hoja` es sitewide -- el pie
-              va con `position: fixed` en css/base.css para toda la app, no
-              solo la portada -- y por eso `<Pie/>` (js/portada.js `pie()`)
-              vive aqui y no en app/page.tsx: mide #foot y le pone el
-              margin-bottom a #hoja que lo destapa, en cualquier pagina. */}
-          <Nav>
-            <div className="hoja" id="hoja">
-              {children}
-            </div>
-            <Footer />
-          </Nav>
-          <Pie />
+          <ConsultaProvider>
+            {/* Nav (Server Component) envuelve el resto de la pagina: es quien
+                decide `inert` sobre `children` mientras el menu esta abierto,
+                ver app/components/NavMenu.tsx. `.hoja` es sitewide -- el pie
+                va con `position: fixed` en css/base.css para toda la app, no
+                solo la portada -- y por eso `<Pie/>` (js/portada.js `pie()`)
+                vive aqui y no en app/page.tsx: mide #foot y le pone el
+                margin-bottom a #hoja que lo destapa, en cualquier pagina. */}
+            <Nav>
+              <div className="hoja" id="hoja">
+                {children}
+              </div>
+              <Footer />
+            </Nav>
+            <Pie />
 
-          <SearchPanel />
-          <CartPanel />
-          <AccountPanel />
-          <ConsultaPanel />
+            <SearchPanel />
+            <CartPanel />
+            <AccountPanel />
+            <ConsultaPanel />
+          </ConsultaProvider>
         </CartProvider>
       </body>
     </html>

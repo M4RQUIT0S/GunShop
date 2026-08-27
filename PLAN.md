@@ -175,20 +175,56 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
         porque ya no servían para nada desde esta misma fase).
       - Commit: `feat: catalogo con filtros de dos niveles y calibre sobre Supabase`.
 
-- [ ] **5. Ficha de producto — `app/producto/[slug]/page.tsx`.**
-      - `app/catalogo/page.tsx` ya enlaza a `/producto/${slugDe(p)}` y hoy
-        da 404 — se mantiene esa ruta.
-      - `lib/catalogo.ts`: `productoPorSlug(slug)` resolviendo contra
-        `listaProductos()` completo filtrando por `slugDe(p) === slug`
-        (mismo `slugDe()` que genera los enlaces, no puede desincronizarse).
-      - Extender `aProducto()` para devolver el array completo de
-        `product_photo` (hoy sólo `portada`), para la galería.
-      - CTA por `modoVenta(p.regimen)`: `direct_checkout` → «Añadir»;
-        si no → «Consultar» abriendo `ConsultaPanel` prerellenado.
-      - `generateMetadata()` con Open Graph por producto.
-      - Verificar antes: si `product.spec` está poblado para los 18
-        productos sembrados.
-      - Commit: `feat: ficha de producto en /producto/[slug]`.
+- [x] **5. Ficha de producto — `app/producto/[slug]/page.tsx`.**
+      - Verificado antes de maquetar: `product.spec` está poblado en los 18
+        productos sembrados (siempre 2 elementos) y `cartridges_per_box` en
+        los 3 de munición. El render sigue siendo condicional (`spec.length`,
+        `cartridgesPerBox > 0`, `calibres.length`) para no depender de que
+        siga así.
+      - `lib/catalogo.ts`: `productoPorSlug(slug)` sobre `listaProductos()`
+        completo filtrando por `slugDe(p) === slug`, como estaba previsto.
+        `Producto` gana `fotos: string[]` (portada primero, el resto en el
+        orden que llegó); `foto` queda intacto para no tocar
+        `app/catalogo/page.tsx`.
+      - CTA por `modoVenta(p.regimen)` vía `ProductoCTA.tsx` (client):
+        `direct_checkout` → «Añadir a la cesta» usando el mismo
+        `CartContext` que el header (el botón pregunta `unidades[id]`, no
+        guarda estado propio — mismo patrón que la ficha del sitio
+        estático); el resto → «Consultar».
+      - `generateMetadata()` con Open Graph por producto (título, kind +
+        régimen, foto de portada si hay).
+      - Sumado sobre lo planeado, porque «abre ConsultaPanel prerellenado»
+        no se podía cumplir con el panel tal como estaba (scaffold sin
+        `showModal()` ni estado — nada lo abría todavía, ni siquiera los
+        tres botones del header):
+        - `ConsultaContext.tsx` (nuevo) — mismo rol que `CartContext` pero
+          para «qué consulta abrir»: `abrir({titulo, rotulo, mensaje})` /
+          `cerrar()`. `ConsultaPanel` ahora es `'use client'`, lee el
+          contexto, hace `showModal()`/`close()` por `ref` y trae también el
+          envío por `mailto:` (puerto de `correo()`/`enviar()` de
+          `js/consulta.js`) — dejarlo sólo entreabierto sin envío real dejaba
+          un `<form>` sin `onSubmit` que recargaba la página al enviar, peor
+          que como estaba.
+        - Lo que NO se portó todavía, a propósito: las cuatro TEMAS
+          (compra/taller/trámites/visita) y el `<select>` de familia que sólo
+          usa «compra» — ese bloque de la portada («en qué podemos
+          ayudarle») tampoco está portado aún. `abrir()` ya acepta
+          `{titulo, rotulo, mensaje}`, que es lo que esas cuatro necesitan;
+          fase 6 sólo tiene que llamarlo con su propio texto.
+        - `app/layout.tsx` envuelve con `<ConsultaProvider>` igual que con
+          `<CartProvider>`.
+      - Reskin con clases existentes (`card__art`, `chip`, `tag`, `card__add`
+        — éste último ya tenía `.is-added` en `css/catalog.css` sin que nada
+        lo usara todavía); CSS nuevo mínimo al final de `catalog.css` bajo
+        `--- ficha de producto ---` (maqueta de dos columnas + un par de
+        rótulos, nada que no exista ya como token).
+      - Comprobado con `npx next start` contra la base real: 200 en ficha
+        con foto y sin foto (Federal/Pelican, los dos sin fila en
+        `0009_fotos.sql`), 404 en un slug inventado, CTA «Añadir a la cesta»
+        en venta libre / aire comprimido, «Consultar» en condicional,
+        TCCM y régimen desconocido; calibre y cartuchos por caja sólo
+        aparecen en munición.
+      - Commit: `feat: ficha de producto con CTA por regimen y consulta prellenada`.
 
 - [ ] **6. Cesta, cuenta, búsqueda, consulta — Client Components.**
       - `CartPanel.tsx`: mismo modelo que `js/cart.js` (`{id: unidades}` en
