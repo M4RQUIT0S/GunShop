@@ -574,7 +574,6 @@ a { color: inherit; text-decoration: none; }
   padding: var(--nav-h-ancha) var(--pad-x) 4rem;
 }
 .lamina__copy .lede { max-width: 46ch; }
-.lamina__pie { font-size: var(--fs-menudo); color: var(--gris-claro); max-width: 54ch; }
 
 /* --- riel de puntos ----------------------------------------------------
    Fijo a la izquierda, dice en que lamina estas. Es el unico adorno de la
