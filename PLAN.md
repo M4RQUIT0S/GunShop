@@ -331,12 +331,42 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
         compila y tipa sin errores.
       - Commit: `test: cubre buscar() y el redondeo slug↔producto`.
 
-- [ ] **9. Cargar los 76 productos en Supabase (puede ir en paralelo con 4-6).**
-      - Hoy Supabase sólo tiene 18. Generador análogo a `tools/seed.js` pero
-        apuntando al esquema Supabase (`brand`, `family`, `product.spec[]`,
-        `cartridges_per_box`, `product_variant.calibre_id`).
-      - Ojo con `0009_fotos.sql`: las rutas de foto no se derivan del
-        nombre, se listan a mano y se comprueban contra disco.
+- [x] **9. Cargar los 76 productos en Supabase (puede ir en paralelo con 4-6).**
+      - `tools/seed-supabase.js` (nuevo): lee `D:\GunShop\js\catalog.js` (no
+        el `js/catalog.js` viejo suelto en la raíz de `ecommerce-next`, que
+        es resto pre-rediseño y se borra en la fase 10) y genera
+        `db/supabase/seed-productos.sql`. Antes de escribir una sola línea,
+        `comprobarFotos()` lee `public/img/product/` de disco y aborta si
+        falta un fichero, si dos productos apuntan al mismo o si dos SKUs
+        calculados colisionan — el gotcha de `0009_fotos.sql` no se repitió.
+      - Idempotente por diseño: `brand`/`calibre` con
+        `on conflict (slug|name) do nothing`; `product` con
+        `on conflict (brand_id, ref) do update set` (corrige los 13
+        productos que ya traía la semilla de 18 de muestra si `catalog.js`
+        cambió precio/spec/régimen — nunca toca `brand_id`/`family_id`/`ref`,
+        que son la clave); `product_variant` con dos ramas (`on conflict
+        (product_id, calibre_id) do nothing` para las que llevan calibre,
+        `on conflict (sku) do nothing` para las que no, porque un
+        `unique(product_id, calibre_id)` no distingue dos NULL entre sí);
+        `product_photo` con `on conflict (product_id, path) do nothing`.
+      - Encontré el trabajo ya hecho pero sin commitear (`tools/seed-supabase.js`
+        y `db/supabase/seed-productos.sql` en disco, untracked, de una sesión
+        cortada a mitad) y **ya aplicado** contra el proyecto Supabase real
+        vía `mcp__supabase__execute_sql`. Verificado en vez de repetido a
+        ciegas: regeneré el SQL desde `catalog.js` (idéntico byte a byte al
+        que ya estaba en disco), lo re-ejecuté entero contra la base real
+        para probar la idempotencia de verdad (no sólo leerla en el texto) y
+        confirmé conteos antes/después iguales: 79 `product` (76 del
+        catálogo + 3 que ya traía a mano `db/supabase/seed.sql` con ref
+        propia que no pisa ninguna de las 76 — `Sellier & Bellot "Practica
+        .308 Win 147 gr"`, `Federal "Champion .22 LR 40 gr"`, `Pelican
+        "Vault V730"` bajo brand `pelican`, distinta de `peli`), 105
+        `product_variant` (102 + esas 3), 77 `product_photo` (76 + la de
+        Sellier "Practica"; Federal "Champion" y Pelican "Vault" ya venían
+        sin foto desde la fase 5, no es cosa de esta fase). Ninguna fila de
+        `cart`/`sales_order`/`customer` tocada — el SQL ni las nombra.
+      - `node db/supabase/revisa.js`, `node --test test/` (13/13, contra la
+        base real ya con 79 productos) y `npx next build` en verde.
       - Commit: `feat: genera el seed de Supabase con los 76 productos de js/catalog.js`.
 
 - [ ] **10. Limpieza.**
