@@ -48,7 +48,7 @@ export function slugDe(p: { marcaSlug: string; ref: string }): string {
 const SELECT = `
   id, ref, kind, usd_cents, spec, cartridges_per_box,
   brand:brand_id ( slug, name ),
-  family:family_id ( slug, name, licence_regime:licence_regime_id ( code, label ) ),
+  family:family_id!inner ( slug, name, licence_regime:licence_regime_id ( code, label ) ),
   licence_regime:licence_regime_id ( code, label ),
   product_photo ( path, is_primary ),
   product_variant ( calibre:calibre_id ( name, annual_quota ) )
