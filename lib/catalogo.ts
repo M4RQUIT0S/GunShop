@@ -76,13 +76,29 @@ export async function listaProductos(familia?: string): Promise<Producto[]> {
   return (data ?? []).map(aProducto)
 }
 
-export async function familias() {
+export type Familia = {
+  slug: string
+  name: string
+  model_key: string | null
+  // Etiqueta por defecto de la familia (art. 5 decreto 395/75 o "Venta
+  // libre"), para la baldosa de #tiles. La ficha puede pisarla con
+  // `licence:`, pero la familia siempre tiene una -- NOT NULL en el esquema.
+  licencia: string
+}
+
+export async function familias(): Promise<Familia[]> {
   const { data, error } = await supabase
     .from('family')
-    .select('slug, name, position, model_key')
+    .select('slug, name, position, model_key, licence_regime:licence_regime_id ( label )')
     .order('position')
   if (error) throw new Error(`No se pudieron leer las familias: ${error.message}`)
-  return data ?? []
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  return (data ?? []).map((f: any) => ({
+    slug: f.slug,
+    name: f.name,
+    model_key: f.model_key,
+    licencia: f.licence_regime.label,
+  }))
 }
 
 /* Cambio del dia. La base guarda dolares en centavos enteros y los pesos se

@@ -3,6 +3,7 @@ import { Tenor_Sans, Jost } from 'next/font/google'
 import Script from 'next/script'
 import Nav from './components/Nav'
 import Footer from './components/Footer'
+import Pie from './components/Pie'
 import { CartProvider } from './components/CartContext'
 import CartPanel from './components/CartPanel'
 import SearchPanel from './components/SearchPanel'
@@ -78,14 +79,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               decide `inert` sobre `children` mientras el menu esta abierto,
               ver app/components/NavMenu.tsx. `.hoja` es sitewide -- el pie
               va con `position: fixed` en css/base.css para toda la app, no
-              solo la portada -- pero el `margin-bottom` que lo destapa
-              (js/portada.js `pie()`) se porta recien en la fase 3. */}
+              solo la portada -- y por eso `<Pie/>` (js/portada.js `pie()`)
+              vive aqui y no en app/page.tsx: mide #foot y le pone el
+              margin-bottom a #hoja que lo destapa, en cualquier pagina. */}
           <Nav>
             <div className="hoja" id="hoja">
               {children}
             </div>
             <Footer />
           </Nav>
+          <Pie />
 
           <SearchPanel />
           <CartPanel />

@@ -110,16 +110,34 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
           tenía `className="saltar"`, una clase que no existe en ninguna
           hoja portada (la real es `.skip`); se veía sin estilo.
 
-- [ ] **3. Portada (`app/page.tsx`).**
-      - Server Component: `familias()` + cifras (`#statTotal`, `#statBrands`
-        — añadir a `lib/catalogo.ts`).
-      - Tres láminas con el copy fijo de `index.html` líneas 143-182.
-      - `RielLaminas.tsx` ('use client') — porta el `IntersectionObserver`
-        de `js/portada.js` función `riel()`.
-      - Antes de portar `pie()` (el `ResizeObserver` del pie "descubierto"):
-        verificar en el CSS ya portado (fase 1) si `.foot{position:fixed}`
-        es sólo de portada o sitewide, y ubicar el efecto en consecuencia.
-      - Familias (`#tiles`) y marquesina de marcas (`#marquee`).
+- [x] **3. Portada (`app/page.tsx`).**
+      - Server Component: `familias()` (ahora devuelve tambien `licencia`,
+        la etiqueta del regimen para la baldosa) + cifras, contadas sobre
+        `listaProductos()` en vez de escribirse a mano (`total`, `porFamilia`,
+        `marcas` unicas por `marcaSlug`).
+      - Tres laminas con el copy fijo de `index.html` lineas 143-182 (el
+        primer CTA pasa de `#catalogo` a `/catalogo`: esa seccion no vive en
+        esta pagina, es la ruta real).
+      - `RielLaminas.tsx` ('use client') — porta `riel()` de `js/portada.js`.
+      - Verificado en `css/base.css`: `.foot{position:fixed}` (linea 922) no
+        esta dentro de ninguna media query — es sitewide — y solo vuelve a
+        `static` en angosto (linea 1021). Por eso `pie()` se porto como
+        `<Pie/>` viviendo en `app/layout.tsx`, no aqui: mide `#foot` y le
+        pone el margin-bottom a `#hoja` (que si es sitewide) para cualquier
+        pagina, no solo la portada.
+      - Familias (`#tiles`) y marquesina de marcas (`#marquee`, `Marquee.tsx`
+        cliente por el boton de pausa).
+      - Sumado sobre lo planeado: `Scrollicono.tsx` — la nota de la fase 2
+        dejaba dicho que `scrollicono` (la barra de 4x80 que se apaga al
+        bajar, hoy en `js/nav.js`) pertenecia a esta fase y no estaba portada
+        todavia; se agrego como componente propio en la portada, con su
+        propio listener de scroll al mismo umbral (`scrollY > 40`) que usa
+        `NavMenu.tsx` para `is-stuck`.
+      - Comprobacion: `npx next build` en verde — `/` se prerenderiza
+        estatica, lo que ademas confirmo en build real el join nuevo de
+        `familias()` contra Supabase. `node --test test/modoventa.test.ts` y
+        `node db/supabase/revisa.js` en verde (no tocan esta fase, pero
+        nada roto).
       - Commit: `feat: portada con rieles de laminas, cifras y familias`.
 
 - [ ] **4. Catálogo (`app/catalogo/page.tsx`) — filtros de dos niveles y calibre sobre Supabase.**
