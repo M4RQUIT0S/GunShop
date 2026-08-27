@@ -8,7 +8,6 @@
  * AccountPanel/SearchPanel), igual que en el sitio estatico cada modulo
  * (cart.js/account.js/search.js) escuchaba su propio boton por id. */
 
-import Link from 'next/link'
 import { useCart } from './CartContext'
 import { useAccount } from './AccountContext'
 import { useSearch } from './SearchContext'
@@ -60,13 +59,6 @@ export default function HeaderActions() {
         </svg>
         <CartCount />
       </button>
-      <Link className="nav__visita" href="/#contacto">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-          <path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z" />
-          <circle cx="12" cy="10" r="2.6" />
-        </svg>
-        <span>Visitar la armería</span>
-      </Link>
     </div>
   )
 }

@@ -16,7 +16,7 @@ import {
 } from 'react'
 
 type Familia = { slug: string; name: string; model_key: string | null }
-type Seccion = 'familias' | 'taller' | null
+type Seccion = 'familias' | null
 
 const FLECHA_ATRAS = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
@@ -26,22 +26,16 @@ const FLECHA_ATRAS = (
 
 const FOTO_DEFECTO = '/img/model/rifle.webp'
 
+/* "Taller", "Requisitos" y "Contacto" del original apuntaban a secciones
+ * (#taller, #preguntas, #contacto) que todavia no se portaron a esta app --
+ * ninguna fase de PLAN.md las cubre. Se sacan de aca hasta que existan
+ * (fase futura), en vez de dejar enlaces que no llevan a ningun lado. */
 const NIVEL1: Array<
-  { label: string; foto: string } & ({ seccion: 'familias' | 'taller' } | { href: string })
+  { label: string; foto: string } & ({ seccion: 'familias' } | { href: string })
 > = [
   { label: 'Familias', seccion: 'familias', foto: FOTO_DEFECTO },
   { label: 'Catálogo', href: '/catalogo', foto: '/img/model/pistol.webp' },
-  { label: 'Taller', seccion: 'taller', foto: '/img/model/optic.webp' },
   { label: 'Marcas', href: '/#marcas', foto: '/img/model/shotgun.webp' },
-  { label: 'Requisitos', href: '/#preguntas', foto: '/img/model/cartridge.webp' },
-  { label: 'Contacto', href: '/#contacto', foto: '/img/model/gcase.webp' },
-]
-
-const TALLER = [
-  { label: 'Cita y elección', href: '/#paso-1', foto: '/img/model/binocular.webp' },
-  { label: 'Papeles', href: '/#paso-2', foto: '/img/model/gcase.webp' },
-  { label: 'Taller', href: '/#paso-3', foto: '/img/model/optic.webp' },
-  { label: 'Entrega y revisión', href: '/#paso-4', foto: '/img/model/reddot.webp' },
 ]
 
 export default function NavMenu({
@@ -84,7 +78,6 @@ export default function NavMenu({
   useEffect(() => {
     const fotos = new Set([
       ...NIVEL1.map((n) => n.foto),
-      ...TALLER.map((t) => t.foto),
       ...familias.filter((f) => f.model_key).map((f) => `/img/model/${f.model_key}.webp`),
     ])
     fotos.forEach((src) => { new window.Image().src = src })
@@ -200,30 +193,6 @@ export default function NavMenu({
                 </li>
               ))}
             </ul>
-
-            <div className="menu__seccion" data-seccion="taller" hidden={seccion !== 'taller'}>
-              <div className="menu__volver">
-                <button className="menu__atras" type="button" onClick={volver}>
-                  {FLECHA_ATRAS}
-                  Taller
-                </button>
-                <Link className="menu__todo" href="/#taller">Ver todo</Link>
-              </div>
-              <ul className="nav__links">
-                {TALLER.map((item, i) => (
-                  <li key={item.label} style={{ '--i': i } as React.CSSProperties}>
-                    <Link
-                      href={item.href}
-                      data-foto={item.foto}
-                      onMouseEnter={() => setFoto(item.foto)}
-                      onFocus={() => setFoto(item.foto)}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
 
             <div className="menu__seccion" data-seccion="familias" hidden={seccion !== 'familias'}>
               <div className="menu__volver">

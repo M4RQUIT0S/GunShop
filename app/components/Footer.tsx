@@ -22,9 +22,7 @@ export default async function Footer() {
         <div className="foot__top">
           <a href="/catalogo">Catálogo</a>
           <a href="/#familias">Familias</a>
-          <a href="/#taller">Taller</a>
           <a href="/#marcas">Marcas</a>
-          <a href="/#preguntas">Requisitos</a>
           <a href="mailto:taller@alcantara.example">Escribir</a>
 
           <span>Av. Rivadavia 0000</span>

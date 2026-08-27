@@ -82,7 +82,6 @@ export default async function Home() {
               <p className="lede">Ninguna venta se cierra sin Credencial de Legítimo Usuario
                 vigente. La munición exige además Tarjeta de Consumo ligada a un arma
                 registrada a su nombre.</p>
-              <a className="btn btn--ghost" href="/#preguntas">Qué hay que tener en regla</a>
             </div>
           </section>
 
@@ -102,7 +101,6 @@ export default async function Home() {
               <h2 className="h-display" id="lam3">Ajustada a su mano</h2>
               <p className="lede">Disparador, monturas, puesta a cero y culata a medida. El
                 arma no sale del local para ajustarse.</p>
-              <a className="btn btn--ghost" href="/#taller">Pedir cita en el taller</a>
             </div>
           </section>
 
