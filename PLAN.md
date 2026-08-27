@@ -291,7 +291,7 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
         antes de tocar nada.
       - Commit: `feat: cesta, cuenta, busqueda y consulta como client components`.
 
-- [ ] **7. Respaldo 3D — se deja fuera, a propósito.**
+- [x] **7. Respaldo 3D — se deja fuera, a propósito.**
       - `js/meshes.js`/`scene.js`/`art.js` no se portan: código muerto
         incluso en el sitio estático (los 76 productos tienen foto real).
       - El fallback "sin foto" ya existe en `app/catalogo/page.tsx`
@@ -429,12 +429,51 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
 
 ## Criterios de cierre
 
-- [ ] `npx next build` en verde con el diseño rolls-royce servido desde `/`.
-- [ ] `/catalogo` filtra por familia, subcategoría y calibre, ninguna ficha
-      regulada aparece con `direct_checkout`.
-- [ ] `/producto/[slug]` existe y no da 404 para ningún enlace del listado.
-- [ ] Los cuatro paneles abren, atrapan foco y cierran con Escape.
-- [ ] `node --test test/`, `node db/supabase/revisa.js`, `npx next build`
-      en verde.
-- [ ] `js/catalog.js` sigue vivo mientras la fase 9 no cierre; el día que
-      cierre, se borra junto con `test/selftest.js`.
+- [x] `npx next build` en verde con el diseño rolls-royce servido desde `/`.
+- [x] `/catalogo` filtra por familia, subcategoría y calibre, ninguna ficha
+      regulada aparece con `direct_checkout`. Reforzado tras la revisión
+      final: `CartContext.add()` valida `comprableDirecto()` por sí mismo,
+      no sólo el botón que lo llama.
+- [x] `/producto/[slug]` existe y no da 404 para ningún enlace del listado.
+- [x] Los cuatro paneles abren, atrapan foco y cierran con Escape.
+- [x] `node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts"`
+      (13/13), `node db/supabase/revisa.js`, `npx next build` en verde.
+- [x] `js/catalog.js` y `test/selftest.js` se borraron en la fase 10, una
+      vez que la fase 9 confirmó los 76 productos aplicados contra Supabase.
+
+## Revisión final y fixes posteriores
+
+La revisión con `code-reviewer` sobre el diff completo (807280d..4692209)
+encontró 0 CRITICAL, 1 HIGH y 4 WARNING. Todo resuelto en tres commits
+aparte, ya en la rama:
+
+- `84242b7` — `requisitos()` en `lib/regimen.ts` ya no revienta con
+  `TypeError` ante un régimen desconocido (mismo fallback fail-safe que
+  `modoVenta()`); `CartContext.add()` valida `comprableDirecto()` por sí
+  solo, no sólo vía la UI que lo llama.
+- `b47016c` — el filtro de familia en `lib/catalogo.ts` usaba un embed
+  to-one sin `!inner` (footgun conocido de PostgREST: una futura versión de
+  librería podría dejar de filtrar en silencio). `family_id` es `NOT NULL`
+  en `product`, así que `!inner` no pierde productos legítimos. Verificado
+  contra la base real: 79 fichas sin filtro, 15 con `?familia=rifles`.
+- `2e71d5a` — HIGH: nav, footer, header y dos CTA de portada apuntaban a
+  `/#taller`, `/#preguntas`, `/#contacto`, `/#paso-1..4` — secciones que
+  ninguna fase de este plan portó (gap del plan original, no de la
+  ejecución). Se sacaron esos enlaces hasta que esas secciones se porten en
+  una fase futura; `Familias`/`Catálogo`/`Marcas` quedan intactos porque sí
+  existen.
+
+No resueltos, quedan documentados para una fase futura si se retoma el
+alcance completo del sitio original:
+
+- Las secciones Taller (4 pasos), Preguntas (FAQ) y Contacto (bloque de 4
+  consultas "En qué podemos ayudarle") de `index.html` no están portadas.
+- `<a href>` plano en vez de `next/link` en las baldosas de familia y las
+  CTA de portada (`app/page.tsx`) — provoca recarga completa en vez de
+  transición cliente.
+- Bloque `.calibre__sel` (estilos de `<select>` nativo) en `css/catalog.css`
+  quedó sin uso: la fase 4 implementó el filtro de calibre con chips, no
+  con `<select>`. Ya estaba así en `main`, no lo introdujo esta migración.
+- Ventana de *staleness* de hasta 10 min por `revalidate = 600` si cambia un
+  régimen en Supabase — impacto bajo hoy (no hay checkout real), anotar
+  cuando exista panel de administración.
