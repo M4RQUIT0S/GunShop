@@ -1,557 +1,278 @@
-# GunShop
+# Armería Alcántara — GunShop en Next.js
 
-Tienda de armería (tiro deportivo y caza). Sitio estático: sin build, sin
-dependencias, sin bundler. Se abre haciendo doble clic en `index.html`.
+Tienda de armería (tiro deportivo y caza) para el mercado argentino. Next.js
+16 (App Router) + React 19 + Supabase (Postgres con RLS). El catálogo, las
+familias y el cambio del día se leen de Supabase en cada request; no hay
+datos hardcodeados en la app.
+
+Rama `ecommerce-next`. `main` sigue siendo el sitio estático viejo
+(`D:\GunShop`, sin build) — no se toca desde acá.
 
 ## Regla de trabajo (importante)
 
 **Escribe siempre el progreso en `PLAN.md` y haz commit al cerrar cada fase.**
 
-El chat se pierde; el disco no. Antes de empezar algo largo, deja en `PLAN.md`
-las fases y ve marcándolas. Al terminar cada fase: commit. Si una sesión se
-corta a mitad, la siguiente arranca leyendo `PLAN.md` y `git log`, no
-reconstruyendo la conversación.
-
-`PLAN.md` es un cuaderno de trabajo, no documentación: se borra cuando la
-tarea termina.
+El chat se pierde; el disco no. `PLAN.md` es un cuaderno de trabajo, no
+documentación: se borra cuando la migración termina. Si una sesión se corta a
+mitad, la siguiente arranca leyendo `PLAN.md` y `git log`, no reconstruyendo
+la conversación.
 
 ## Cómo se comprueba
 
 ```
-node test/selftest.js
+npx next build                                                          # compila y tipa
+node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 13 pruebas
+node db/supabase/revisa.js                                              # lee las migraciones sin necesitar base
 ```
 
-Cubre lo que no se ve a simple vista: el catálogo es determinista, la
-paginación no repite ni pierde fichas, las mallas del respaldo cierran con las
-caras hacia fuera, están las ocho fotos genéricas con su fichero de créditos, y
-ninguna ficha apunta a una ruta rota, a la foto de otro producto ni a un
-fichero idéntico al de otro. También que ninguna etiqueta de régimen se salga
-de la tabla —una desconocida se trataría como venta libre, que es vender sin
-pedir la credencial—, que a cada munición se le saque calibre y cartuchos por
-caja, y que `tools/seed.js` siga siendo determinista. Si tocas
-`js/catalog.js`, `js/scene.js`, `tools/models.py`, `tools/fotos.py` o
-`tools/seed.js`, ejecútalo.
+`node --test test/` (sin fichero) no resuelve el directorio en Node 24; por
+eso el loader apunta al glob `test/*.test.ts` explícito. `test/resuelve-ts.mjs`
+es un hook de ~10 líneas (`node:module`, sin dependencia nueva) que reintenta
+la resolución poniendo `.ts` cuando falla — hace falta porque los imports
+internos de `lib/` van sin extensión (`./supabase`), que es lo que
+`moduleResolution: "bundler"` de `tsconfig.json` espera pero el ESM nativo de
+Node no resuelve solo.
 
-Las migraciones de Supabase se leen sin necesidad de base:
+`test/slug.test.ts` pega contra el Supabase real (necesita
+`NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` en
+`.env.local`); `test/buscar.test.ts` y `test/modoventa.test.ts` usan fixtures
+locales y no tocan la base.
 
-```
-node db/supabase/revisa.js
-```
+`db/supabase/prueba.sql` prueba una venta entera contra una base ya aplicada
+y sembrada, y hace `rollback`: no deja ni una fila. No está automatizado
+(necesita psql contra el proyecto real), se corre a mano cuando se toca
+`db/supabase/`.
 
-Comprueba lo que se ve en el texto y hunde el despliegue si falla: que nada se
-nombre antes de existir —el fallo número uno al partir un esquema en ficheros
-numerados—, que toda tabla de `public` tenga RLS, que toda función
-`security definer` fije `search_path`, que toda vista lleve `security_invoker`,
-que las columnas de cada `insert` existan y cuadren con sus valores, y que los
-`$$` estén pareados. No ejecuta el SQL, así que no ve nada que dependa de los datos. Eso lo cubre
-la venta entera, contra una base ya aplicada y sembrada:
+## Rutas y arquitectura
 
-```
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/supabase/prueba.sql
-```
+Tres páginas, todas Server Components:
 
-Abre transacción, inventa un cliente, le vende un rifle y cartuchos y hace
-`rollback`: no deja ni una fila. Dieciséis comprobaciones, y las que importan
-son que sin CLU el arma no sale y el intento fallido no deja medio pedido, que
-dos cajas del mismo calibre se suman contra el cupo de la TCCM, que las tablas
-internas devuelven `42501` y no cero filas, y que al entregar el asiento sale
-sólo para lo que se cuenta por saldo. Los dos únicos fallos reales que han
-tenido estas migraciones salieron aquí, no en `revisa.js`.
+| Ruta | Fichero | Qué hace |
+|---|---|---|
+| `/` | `app/page.tsx` | Portada: rieles de láminas, cifras del catálogo, baldosas de familias, marquesina de marcas |
+| `/catalogo` | `app/catalogo/page.tsx` | Filtros de dos niveles (familia → subcategoría) + calibre, todo por `?familia=&sub=&calibre=&q=` en la URL |
+| `/producto/[slug]` | `app/producto/[slug]/page.tsx` | Ficha con CTA por régimen, `generateMetadata()` con Open Graph |
 
-El esquema anterior, `db/schema.sql`, se comprueba aparte porque necesita un
-Postgres:
+`app/layout.tsx` es el único punto que monta el "chrome" compartido: `<Nav/>`
+(cabecera + menú), `<Footer/>`, `<Pie/>` (mide el pie fijo y le da hueco al
+resto de la página) y los cuatro `<dialog>` (cesta, cuenta, búsqueda,
+consulta) envueltos en sus cuatro `Provider` de contexto. Todas las páginas
+heredan eso; ninguna monta su propia cabecera.
 
-```
-docker run -d --name gunshop-pg -e POSTGRES_PASSWORD=demo -v "$PWD/db:/db:ro" postgres:17-alpine
-docker exec gunshop-pg psql -U postgres -v ON_ERROR_STOP=1 -f /db/schema.sql
-docker exec gunshop-pg psql -U postgres -v ON_ERROR_STOP=1 -f /db/seed.sql
-docker exec gunshop-pg psql -U postgres -v ON_ERROR_STOP=1 -f /db/smoke.sql
-```
+### Server vs Client Components
 
-## Restricciones del código
+Regla del proyecto: `'use client'` sólo en lo que necesita interactividad;
+todo lo que sólo lee Supabase y renderiza queda de servidor.
 
-- Nada de `import`/`export` en `js/`: los scripts se cargan con `<script>`
-  clásico para que funcione sobre `file://`. `js/scene.js` y `js/catalog.js`
-  además exportan por `module.exports` sólo para el selftest en Node.
-- El orden de los `<script>` en `index.html` importa: meshes → scene → art →
-  catalog → cart → search → account → consulta → nav → reveal → portada → main.
-  Los cuatro paneles se cargan antes que `main.js` porque es él quien los
-  arranca, y arranca primero `account` (la cesta le pregunta por la CLU nada
-  más pintarse).
-  `main.js` llama a `reveal.init()` al final,
-  cuando las baldosas de familias ya existen: si se observan antes, nacen
-  invisibles y nadie las descubre. También arranca `portada.init()`, que es
-  el riel de láminas y el hueco que descubre el pie.
-- `js/meshes.js` e `img/` están **generados**: no se editan a mano.
-- Toda foto tiene respaldo: si `img/model/` falta, la ficha cae al esquema de
-  `js/scene.js` y la página sigue abriéndose con doble clic. Al tocar esa
-  cascada, compruébala renombrando `img/model/`.
-- **Contraste mínimo 4.5:1.** El sistema es blanco sobre negro, así que el
-  cuerpo va sobrado; donde se juega es en los grises. `--gris` (#8a8a8a) da
-  6.08:1 sobre el negro y 5.29:1 sobre `--pieza`, y es el más oscuro que
-  cumple en los dos. El #7c7c7c del original **no** llega —4.37:1 sobre
-  `--pieza`— y por eso aquí sólo es filete, nunca texto. Los números están
-  anotados en `css/tokens.css` junto a cada gris.
-- **Texto sobre foto exige velo.** Las láminas llevan un degradado radial más
-  uno vertical encima de la imagen (`.lamina::after`). Sin él, el contraste
-  depende de que la foto salga oscura, que no es una garantía: `img/hero.webp`
-  tiene hojas de otoño iluminadas justo detrás del titular.
-- Respetar `prefers-reduced-motion` en cualquier animación nueva.
+**Server** (leen `lib/catalogo.ts`, sin estado): `app/page.tsx`,
+`app/catalogo/page.tsx`, `app/producto/[slug]/page.tsx`, `app/layout.tsx`,
+`Nav.tsx`, `Footer.tsx`.
+
+**Client** (estado, contexto o listeners del DOM): los cuatro `*Context.tsx`
+(`CartContext`, `AccountContext`, `SearchContext`, `ConsultaContext`) y los
+cuatro paneles que los consumen (`CartPanel`, `AccountPanel`, `SearchPanel`,
+`ConsultaPanel`), `NavMenu.tsx` (menú de dos niveles + `inert` sobre el resto
+de la página), `HeaderActions.tsx` (los tres botones de la barra — separado
+de `Nav.tsx` porque éste es Server y no puede llevar `onClick`), `CartCount.tsx`,
+`ProductoCTA.tsx` (botón de la ficha, pregunta a `CartContext` cuántas
+unidades hay — no guarda estado propio), `RielLaminas.tsx`, `Marquee.tsx`,
+`Scrollicono.tsx`, `Reveal.tsx` (dos clases + `IntersectionObserver`, puerto
+de `js/reveal.js` del sitio viejo).
+
+## `lib/` — dónde vive cada decisión
+
+| Fichero | Qué hace |
+|---|---|
+| `lib/supabase.ts` | Cliente con la clave publicable. Revienta el **build** (no el arranque) si faltan las env vars — más vale un despliegue rojo que uno verde sirviendo una tienda vacía |
+| `lib/regimen.ts` | **Fuente única del régimen legal ANMaC.** Sin imports a propósito: se prueba sola, sin base ni env vars |
+| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorCalibre()` |
+| `lib/cesta.ts` | Lógica de la reserva sin DOM: `exige()`/`faltas()`/`cupos()`/`notas()`/`reserva()`. Puro, se prueba solo |
+| `lib/cuenta.ts` | Sólo el tipo `Perfil` — vive aparte para que `cesta.ts` no dependa de un componente de React |
+| `lib/buscar.ts` | `llano()`/`buscar()`: búsqueda sin acentos, AND entre palabras, sobre nombre + ficha técnica |
+
+### `lib/regimen.ts` — régimen legal ANMaC
+
+Todo lo que decide si un producto se puede pagar sin credencial sale de acá,
+y de acá solamente:
+
+- `Regimen`: `'libre' | 'aire-comprimido' | 'uso-civil' | 'uso-civil-condicional' | 'requiere-tccm'`
+  — llega de `product.licence_regime` (o el de la familia si el producto no
+  lo pisa) en Supabase, no se deriva del nombre ni de ninguna etiqueta en
+  español.
+- `modoVenta(regimen)` → `'direct_checkout' | 'validated_checkout' | 'inquiry_only'`.
+  Es una función pura del régimen, nunca una columna aparte: si viviera en
+  dos sitios, el día que alguien cambie el régimen de una familia y no el
+  modo, la tienda vendería un arma con checkout directo. Un régimen
+  desconocido cae a `inquiry_only` — lo contrario (tratarlo como venta libre)
+  es entregar sin pedir la credencial.
+- `requisitos(regimen)` → `{ clu, tccm, certificado }`, lo que `lib/cesta.ts`
+  usa para decidir qué le falta a una reserva.
+
+`test/modoventa.test.ts` cubre que ningún régimen regulado caiga en
+`direct_checkout`. Al añadir un régimen nuevo, se toca sólo este fichero —
+`ProductoCTA.tsx` y `lib/cesta.ts` ya leen de acá, no hay una segunda tabla
+que sincronizar.
+
+## Supabase
+
+`db/supabase/migrations/0001..0009` son el esquema real, aplicado contra el
+proyecto de producción. `0006_rls.sql` revoca todo y concede `select` sólo
+sobre las tablas de catálogo (`brand`, `product`, `product_variant`,
+`product_photo`, `family`, `calibre`, `licence_regime`, `fx_rate`) — la clave
+publicable que viaja al navegador no alcanza existencias, unidades con
+número de serie, clientes ni pedidos.
+
+Variables de entorno (`.env.local`, no viaja al repo — ver `.env.example`):
+
+| Variable | Para qué |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | endpoint del proyecto |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | clave publicable, protegida por RLS |
+
+En Vercel hay que darlas de alta en **Production, Preview y Development**
+(*Project → Settings → Environment Variables*); sin ellas el build falla, no
+el arranque (ver `lib/supabase.ts`).
+
+Supabase ya tiene los 76 productos del catálogo (más 3 que traía la semilla
+de muestra) cargados vía `tools/seed-supabase.js` → `db/supabase/seed-productos.sql`,
+idempotente (`on conflict ... do update/nothing`). No hace falta volver a
+correrlo salvo que cambie `D:\GunShop\js\catalog.js` en el repo del sitio
+estático — es de ahí de donde lee, no de ningún fichero de esta rama.
+
+`db/schema.sql`, `db/seed.sql` y `db/smoke.sql` (en `db/`, no en
+`db/supabase/`) son el prototipo anterior a Supabase: un esquema Postgres
+plano, probado a mano con Docker. Ya no lo usa nada de la app ni de los
+tests automatizados — `db/supabase/` es el esquema real. Se dejan en el
+repo como referencia de las decisiones de modelado (existencias por
+asiento, dinero en centavos, línea de pedido con copia del régimen), que
+`db/supabase/README.md` retoma.
 
 ## Cesta, cuenta, búsqueda y consulta
 
-Cuatro paneles, todos `<dialog>` modal, que ya trae fondo oscuro, foco atrapado
-y cierre con Escape: no hay nada de eso escrito a mano. Tres los abren los
-botones de la barra y el cuarto las filas de «En qué podemos ayudarle». El
-marcado vive al final de `index.html` y la pintura en `css/shop.css`.
+Los cuatro botones de la barra abren un `<dialog>` modal — foco atrapado y
+cierre con Escape vienen gratis del elemento nativo. Cada panel tiene su
+`*Context.tsx` (Context de React + `localStorage`), que es lo que reemplaza
+al singleton `window.GunShop.*` del sitio estático: header, ficha y panel
+necesitan ver el mismo estado.
 
-| Fichero | Qué hace | Qué guarda |
+| Contexto | Guarda en `localStorage` | Qué hace |
 |---|---|---|
-| `js/cart.js` | cesta, cantidades, avisos de régimen y reserva | `gunshop:cesta`, `gunshop:pedidos` |
-| `js/search.js` | panel de la lupa, y «/» lo abre | nada |
-| `js/account.js` | perfil del cliente: CLU, vencimiento, TCCM | `gunshop:cuenta` |
-| `js/consulta.js` | las cuatro consultas y su formulario | nada |
+| `CartContext` | `gunshop:cesta` | `{id: unidades}`, no la ficha — el producto se resuelve contra `listaProductos()` fresco al montar, así un precio nuevo entra solo |
+| `AccountContext` | `gunshop:cuenta` | Perfil del cliente: CLU, vencimiento, TCCM. Sin contraseña a propósito — guardar una en `localStorage` es peor que no tenerla |
+| `SearchContext` | nada | Sólo el tick de "abrir panel"; el filtrado corre en `lib/buscar.ts` |
+| `ConsultaContext` | nada | `abrir({titulo, rotulo, mensaje})` — cualquier CTA puede abrir el panel de consulta prellenado |
 
-Cosas que no son evidentes:
+**No hay reserva real contra el backend.** `crear_pedido()` en Supabase exige
+`auth.uid()` y no hay login/signup en esta tanda; `CartPanel` arma la reserva
+100% en cliente (`localStorage['gunshop:pedidos']` + `mailto:`), igual que
+hacía `js/cart.js` en el sitio estático — ninguno de los dos llamó nunca a un
+backend real. Cablear la reserva de verdad arrastra login/signup, fuera de
+alcance salvo que se pida.
 
-- **La cesta guarda `{id: unidades}`, no la ficha.** El producto se vuelve a
-  resolver contra el catálogo al cargar, así que un precio nuevo entra solo y
-  una referencia que desaparece se cae sola.
-- **La ficha no tiene estado propio**: su botón le pregunta a la cesta cuántas
-  unidades hay. Por eso quitar una línea en el panel devuelve el botón a
-  «Añadir» sin que nadie sincronice nada.
-- **La búsqueda vive por encima de los filtros**: entra en «Todo» y deja un
-  chip para deshacerla. Ese chip también es `.chip`, así que el manejador de
-  los filtros exige `[data-filter]` para no tratarlo como una familia.
-- **Los filtros son de dos niveles y el segundo no tiene datos propios.** El
-  filtro es `familia` o `familia/subcategoría`, y la subcategoría es el `kind`
-  que cada ficha ya llevaba escrito para pintarse: 6 familias dan 33
-  subcategorías sin una tabla que mantener aparte, y una familia nueva trae
-  las suyas sola. Ningún id de familia lleva barra, que es lo que permite
-  meter los dos niveles en la misma cadena sin tocar `page()` ni `counts()`.
-  El selftest comprueba que las subcategorías **reparten** la familia —si una
-  ficha se quedara sin `kind`, no se alcanzaría desde ningún chip y el
-  listado enseñaría menos de lo que hay sin que se note—. La fila del segundo
-  nivel no sale en «Todo» ni con una búsqueda puesta, y `.filters--sub[hidden]`
-  necesita su propia regla porque `display: flex` le gana a `[hidden]`.
-- **El calibre no es un chip, es un `<select>`.** Corta de través: cruza con
-  familia, subcategoría y búsqueda a la vez, así que no cabe en una fila de
-  chips que son excluyentes entre sí. El nativo trae rueda del sistema en el
-  móvil, teclado y lector de pantalla sin escribir nada. Saca el calibre con
-  `catalog.calibre()`, que es la misma función con la que la cesta cuenta el
-  cupo de la TCCM: si el filtro leyera el calibre por su cuenta, un día el
-  desplegable y el cupo dirían cosas distintas. El selftest comprueba que a
-  toda referencia con `cals` se le saque el suyo —un calibre que la expresión
-  no conozca no da error: deja la ficha fuera del desplegable y fuera del
-  cupo, y las dos cosas son invisibles mirando la página—. Al cambiar de
-  familia, un calibre que allí no exista se suelta solo en vez de dejar la
-  rejilla vacía.
-- **Los chips envuelven, no se recortan.** Eran una fila con `overflow-x:
-  auto` y la barra escondida, así que lo que no cabía desaparecía sin ninguna
-  pista; con las subcategorías son más y más largos. Por debajo de 40rem
-  envuelven a tres líneas y ahí `.filters` deja de ser `sticky`: pegada se
-  comía 169 px de una vista de 844.
-- **La cuenta no tiene contraseña a propósito.** Guardar una en `localStorage`
-  es peor que no tenerla. El alta de verdad es `customer` en el esquema SQL.
-- **Una sola ventana para las cuatro consultas.** El original tiene ocho
-  formularios distintos, uno por trámite. Cuatro copias del mismo formulario
-  serían cuatro sitios donde arreglar la misma errata: lo que cambia es el
-  título, el asunto del correo y un campo. Y no lleva casilla de
-  consentimiento de marketing como el original **a propósito**: no se envía
-  nada a ninguna parte, así que pedir permiso para tratar unos datos que no
-  salen del navegador sería escenografía. Mismo motivo que el aviso de
-  cookies, que tampoco está.
-- **Los tres paneles entran y salen con `@starting-style`**, no con
-  `@keyframes`. Un `<dialog>` pasa de `display: none` a `block` y no hay
-  desde donde animar: `@starting-style` da ese valor de partida y
-  `allow-discrete` retrasa el `display` hasta que la transicion acaba, que
-  es lo que permite animar tambien el cierre y el fondo oscuro. El bloque de
-  movimiento reducido de `base.css` nombra `::backdrop` aparte porque `*` no
-  lo alcanza.
-- Lo que puede o no reservarse sale de `REGIMEN`, `calibre()`, `porCaja()` y
-  `topeTccm()` en `js/catalog.js`, que es la misma fuente de la que
-  `tools/seed.js` llena `licence_regime` y `calibre`. Si cada uno comparase
-  etiquetas por su cuenta, un día dirían cosas distintas.
+`app/catalogo/page.tsx` acepta `?q=` por encima de `familia`/`sub`/`calibre`:
+la búsqueda entra en "Todo" y cruza sólo con el filtro de calibre, con un
+chip `.chip--busqueda` para deshacerla.
 
-## Base de datos
+## Imágenes
 
-`db/schema.sql` es PostgreSQL 14 o más, y no lo lee nadie desde el navegador:
-es a donde se mudan el catálogo y la cesta el día que haya servidor. Está
-probado —se aplica, se llena y pasa `db/smoke.sql`, que es una venta entera
-de la cesta a la entrega— pero ninguna parte de la página depende de él.
+`public/img/product/<marca-ref>.webp` — una foto por producto (77 ficheros,
+1200×750). `public/img/model/<modelo>.webp` — genéricas por arquetipo (10
+ficheros), donde cae la ficha si falta la del producto propio; hoy ese
+peldaño no se pisa porque los 76 productos tienen la suya. La cascada:
 
-    js/catalog.js  LINES    → family        localStorage  cesta   → cart
-                   items    → brand+product               cuenta  → customer
-                   cals[]   → product_variant             pedidos → sales_order
-                   usd      → product.usd_cents + fx_rate
+    product_photo (Supabase)  →  public/img/model/<modelo>.webp  →  .foto.sinFoto (CSS, sin imagen)
 
-Lo que decidió el modelo:
+Ninguna de las dos carpetas de foto está aclarada para redistribuir sin más
+trámite — la procedencia de cada una vive en su propio `CREDITS.md`
+(`public/img/product/CREDITS.md`, `public/img/model/CREDITS.md`).
 
-- **Cada arma de fuego es una fila, no una cantidad**: lleva número de serie y
-  CUIM, y ANMaC pregunta por ella una a una (`firearm_unit`). Lo que no se
-  serializa —munición, óptica, fundas— va por cantidad.
-- **Las existencias se llevan por asiento** (`stock_move`) y `stock_level` es
-  sólo el saldo, mantenido por disparador. Un inventario que se edita a mano
-  no se puede auditar.
-- **Dinero en centavos de dólar, entero.** Los pesos salen de `fx_rate`, y el
-  pedido se queda con el cambio que se le aplicó: una factura de hace dos años
-  tiene que seguir cuadrando.
-- **La línea de pedido guarda copia** del nombre, del precio y del régimen. El
-  catálogo cambia; lo que se vendió y bajo qué ley, no.
-- La CLU y la TCCM son documentos con vencimiento (`credential`), no casillas.
-  El cupo de munición se comprueba contra la vista `ammo_consumed`.
+El **respaldo 3D está aparcado, no portado**: `js/meshes.js`/`scene.js`/`art.js`
+del sitio estático no se trajeron a esta app porque los 76 productos ya
+tienen foto real y era código muerto incluso ahí. De la cadena sólo queda
+`tools/models.py`, que funciona solo (Blender headless) pero no hornea nada
+que la app lea; `tools/render.py` se borró, porque escribía dos carpetas que
+ya no existen y su único lector era el `mount()`, que está en el historial.
+No inviertas ahí sin decidir primero que el 3D vuelve.
 
-`db/seed.sql` está **generado**: sale de `js/catalog.js` con `node
-tools/seed.js` y no se edita a mano. Trae los 76 productos, las 102
-referencias y las mismas existencias que enseña la página —166 armas con
-número de serie de prueba y 118 unidades contadas—. Es determinista: dos
-ejecuciones dan el mismo fichero, y pasarlo dos veces por la base no duplica
-nada.
+## Diseño — "Alcántara"
 
-### Supabase (`db/supabase/`)
+Lienzo negro puro, medido de `rolls-roycemotorcars.com` y no aproximado a
+ojo. Vive en `css/tokens.css` (raíz del repo, **no** en `app/`) e importado
+como CSS global clásico desde `app/layout.tsx`, en el mismo orden que llevaba
+`index.html` en el sitio estático: `tokens.css` → `base.css` → `catalog.css`
+→ `shop.css`. Es el diseño en producción hoy — reemplazó a un sistema
+anterior de papel claro y acento lima que se abandonó a mitad de esta
+migración; si alguna nota vieja o comentario menciona "Himon"/lima/radio 4px,
+es de ese sistema descartado, no de éste.
 
-La mudanza a Postgres gestionado, **sin Docker en ningún paso**. Ocho
-migraciones numeradas y una semilla; el detalle de cómo se despliega está en
-`db/supabase/README.md`. Se comprueba con `node db/supabase/revisa.js`.
+- `--negro: #000` de fondo, piezas en `--pieza: #151515`. Sin segundo acento.
+- Tenor Sans (display, un solo peso 400) + Jost (texto, 300/400/500) vía
+  `next/font/google` — se auto-alojan, no hay petición a Google en runtime.
+  `css/tokens.css` referencia ambas por nombre literal (`"Tenor Sans"`,
+  `"Jost"`), que es el nombre que `next/font` conserva en el `@font-face`
+  generado; basta con `.variable` en `<html>` para que la hoja se incluya.
+- Tracking **positivo y fijo en píxeles** (`--tr: 2.5px`), no proporcional al
+  cuerpo — es la firma del original: un rótulo pequeño queda más abierto que
+  un titular grande.
+- Canto vivo en todo; la única curva es la píldora de los botones
+  (`--r-pildora: 30px`). `--r: 0` en el resto.
+- Una sola curva de movimiento (`cubic-bezier` fuerte a la salida, sin
+  rebote), tres tiempos fijos, igual que documentaba el sitio estático.
+  Respetar `prefers-reduced-motion` en cualquier animación nueva.
+- Los grises están anotados con su contraste real medido contra cada fondo,
+  al lado de cada variable en `css/tokens.css` — no confiar a ojo si un gris
+  nuevo llega a 4.5:1.
 
-Lo que hay que tener claro antes de tocarlo:
-
-- **Toda tabla de `public` queda expuesta por la API salvo que la RLS lo
-  impida.** Crear una tabla y olvidar la RLS no la deja «medio protegida»: la
-  deja legible y escribible con la clave `anon`, que va escrita en el HTML. Por
-  eso `0006_rls.sql` empieza revocando todo. Es el fichero al que hay que
-  volver.
-- **Tres grupos de ocho tablas**, y cabe en la cabeza a propósito: catálogo
-  público (`select` para cualquiera), del cliente (comparado con `auth.uid()`),
-  e internas —existencias, unidades con número de serie, asientos, pagos,
-  trámites— que **no las nombra ninguna política**. Se escriben con
-  `service_role` o desde las funciones de `0008_funciones.sql`.
-- **Una función `security definer` es segura cuando su resultado depende de
-  `auth.uid()` y de nada más que lo ensanche.** `crear_pedido()` trabaja sobre
-  la cesta de quien llama y no acepta un `customer_id`. En cuanto una acepte un
-  identificador ajeno, deja de ser una función y pasa a ser un agujero. Todas
-  llevan `set search_path = ''` y los nombres cualificados.
-- **`family.licence_regime_id` es `NOT NULL`, y esa es la línea más importante
-  del esquema.** En `db/schema.sql` era nullable y el régimen nulo se pintaba
-  como «Venta libre»: una familia mal dada de alta se entregaba sin pedir la
-  credencial.
-- **Los códigos de régimen son los mismos que emite `tools/seed.js`**
-  (`libre`, `uso-civil`, `uso-civil-condicional`, `aire-comprimido`,
-  `requiere-tccm`). Con otros, el volcado completo de los 76 productos no
-  encontraría ni una familia. Y `requiere-tccm` **no** exige certificación:
-  pedirla sería pedir un papel que la ley no pide.
-- **`crear_pedido()` bloquea la ficha del cliente antes de mirar nada.** Sin
-  eso, dos pestañas del mismo cliente pasan el mismo cupo de munición a la vez.
-  Y acumula por calibre dentro de la propia cesta: dos cajas del mismo calibre
-  no se cuentan por separado.
-- **Las reservas caducan solas o no caducan.** `public.vencer_reservas()` está
-  escrita pero **no** programada: `pg_cron` se activa y se programa desde el
-  panel, no desde la migración, para no atar el despliegue a que la extensión
-  esté permitida en el proyecto.
-
-Las ocho **están aplicadas y probadas** contra un proyecto de Supabase real
-(24 tablas, 28 políticas, 8 internas en `FORCE`), con la semilla dentro y
-`prueba.sql` en verde. Los *Advisors* salen limpios de `rls_disabled_in_public`
-y de `security_definer_view`; lo que sí sale son siete avisos de «función
-`security definer` llamable por RPC», que son los cinco `grant execute`
-deliberados de `0004` y `0008`.
-
-Lo que falta está listado al final del README: facturación AFIP, pasarela de
-pago, agenda del taller y búsqueda en el servidor.
-
-## Modelos 3D (sólo respaldo)
-
-**El 3D está apartado.** Las fichas enseñan fotos; el esquema vectorial sólo
-aparece si una foto falta. Las 224 imágenes horneadas de `img/card/` e
-`img/hero/` están borradas, y con ellas el banco de fotogramas y el `mount()`
-de `js/scene.js`, que era lo único que las leía. De `js/scene.js` queda lo que
-dibuja el esquema de respaldo.
-
-`tools/models.py` sigue en el repositorio y funciona, pero nada de la página
-depende ya de él: sólo hace falta si se toca una malla. El horno de Cycles
-(`tools/render.py`) se ha borrado — escribía las dos carpetas de imágenes que
-ya no existen y su único lector, el `mount()`, tampoco. Los tres están en el
-historial si el 3D vuelve.
-
-Lo que sigue describe cómo funciona ese respaldo. Siete de las ocho piezas se
-modelan en `tools/models.py` con Blender y se hornean a `js/meshes.js`. La
-octava, el cartucho, sigue escrita a mano en `js/scene.js`: para el esquema es
-pura revolucion y alli son ocho lineas.
-
-Cada modelo apunta a un arquetipo con cotas reales, porque uno solo sirve a
-toda una familia del catalogo:
-
-| Modelo | Arquetipo | Lo que lo delata |
-|---|---|---|
-| `pistol` | pistola de servicio de polimero, 204 x 138 mm | ventana de expulsion con el canon dentro, riel, estrias |
-| `rifle` | cerrojo de caza con visor 3-9x40 | culata que estrangula en la muneca, manillar, torretas |
-| `shotgun` | superpuesta de tiro | banda ventilada sobre pilares, pico de pato, llave caida |
-| `optic` | visor 3-9x40 | torretas de alza y deriva, anillo de aumentos |
-| `reddot` | reflex abierto | dos montantes con aire en medio y el cristal inclinado |
-| `binocular` | prismatico de techo 10x42 | oculares con copa, rueda de enfoque, dioptrias |
-| `gcase` | maleta rigida estanca | ranura de tapa, cuatro cierres, valvula, ruedas |
-| `cartridge` | vaina de gollete | piston, ranura de extraccion, hombro |
-
-Para regenerar tras tocar `tools/models.py`:
-
-```
-"D:\Editores Codigo\blender.exe" --background --factory-startup --python tools/models.py
-```
-
-Escribe `js/meshes.js` y aborta si alguna pieza no cierra, si tiene el volumen
-negativo o si queda enterrada dentro de otra. Lo ultimo cubre la regla 4 de
-mas abajo: girar un tubo hacia el lado que no es lo mete dentro de la pieza
-que deberia decorar y simplemente no se ve. Un aro no cuenta como
-contenedor -- llena muy poco su caja, y lo que cae en su agujero se ve
-perfectamente. Se modela en ejes de Blender (X a la boca, Y ancho, Z arriba) y se
-exporta girado a los de la escena; el giro tiene determinante +1, porque con
-un espejo se invertirian todas las caras y el recorte de traseras borraria la
-pieza entera.
-
-### Las cuatro reglas del detalle
-
-Salen de medir, no de suponer: la misma pistola a 214, 694 y 2614 caras.
-
-1. **Presupuesto de 200 a 700 caras por modelo.** No es rendimiento: el render
-   dibuja el borde de cada cara en dorado, y pasado ese numero el plano
-   tecnico se vuelve una marana.
-2. **Bisel de un solo segmento, y nunca subdividido.** Lo que se fundio en la
-   prueba fue el bisel partido en cuatro, no el bisel: este da a cada canto un
-   valor de luz propio y es lo que separa una pieza de un prisma. Va en los
-   volumenes grandes; en los herrajes pequenos, no.
-3. **Nada que sobresalga menos de 0,03.** A tamano de ficha el encuadre da
-   85 px por unidad, asi que un resalte de 0,01 no llega a un pixel y solo
-   aporta raya. Por eso el grabado de las empunaduras no existe y las ranuras
-   de los dedos van en el perfil, que es silueta.
-4. **Cuidado con lo pegado a una superficie.** El pintor ordena por
-   profundidad media de cara: un control pequeno junto al extremo de un panel
-   grande puede quedar detras de el y desaparecer a ciertos angulos. Se monta
-   rompiendo silueta, y se revisa a yaw -1,45 y 0,9.
-
-Dos cosas mas que no cambian: no se triangula nunca al exportar, y nada de
-booleanos. Cada modelo es una union de solidos cerrados simples; un boolean
-deja n-gons rotos y vertices en T que el ordenado por profundidad pinta mal.
-
-### Hueco = pieza aparte, no rebaje
-
-Una cara con agujero no se puede dibujar, y un rebaje plano sale del mismo
-color que la superficie de al lado porque comparte normal. Asi que los huecos
-se construyen: la ventana de expulsion son cuatro bloques cerrados (puente
-debajo, pared a un lado) con el canon cruzando por dentro, y el guardamonte
-es un aro de quads. Fue la unica forma de que se leyeran como huecos.
-
-### Proporcion y encuadre
-
-Las armas largas se modelan con la relacion real canon/culata y se devuelven
-al hueco de la ficha bajando `scale` en `MODELS` (rifle 0,88, escopeta 0,84).
-Comprimir el canon para que quepa era lo que las hacia parecer de juguete.
-
-## Imagenes
-
-Dos niveles, con licencias distintas. Cada **producto** tiene su foto en
-`img/product/<marca-ref>.webp` y cada **modelo** una generica en
-`img/model/<modelo>.webp`, que es donde cae la ficha si falta la del producto.
-Todas 1200x750. La cascada es:
-
-    product.photo  ->  img/model/<modelo>.webp  ->  esquema de scene.js
-
-Los 76 productos tienen la suya, asi que el segundo peldano hoy no se pisa;
-sigue ahi porque el fallo, si se rompe una ruta, es invisible.
-
-`img/hero.webp` (2400x1350) es el fondo de la portada.
-
-### img/model/ -- genericas, licencia libre
-
-Las baja `tools/fotos.py` de Wikimedia Commons:
-
-```
-python tools/fotos.py
-```
-
-**Solo licencias que permitan redistribuir** -- dominio publico, CC0, CC BY,
-CC BY-SA. El script comprueba la licencia y aborta si no lo es. La mitad son
-CC BY o CC BY-SA y **exigen citar al autor**: la tabla vive en
-`img/model/CREDITS.md` y el selftest comprueba que el fichero siga ahi.
-
-### img/product/ -- del producto, licencia sin aclarar
-
-Son fotos de catalogo del fabricante o de un distribuidor. **No estan
-aclaradas para redistribuir** y el repositorio es publico, asi que antes de
-produccion hay que sustituirlas por fotos del taller o pedir permiso. Cada una
-lleva su pagina de origen en `img/product/CREDITS.md`, que es lo que permite
-saber a quien.
-
-Commons no sirve para este nivel: no tiene fotografia de producto de modelos
-comerciales concretos, y buscar por marca+modelo alli devuelve un pueblo de
-Colorado llamado Rifle y un sepulcro para la AyA Aguila.
-
-Lo que si funciona es buscar imagenes por el nombre exacto y **mirarlas**. El
-titulo del resultado de una tienda es literalmente el nombre del producto, asi
-que puntuar por titulo deja arriba lo que hay que ver; pero elegir por el
-titulo sin abrir la imagen es como se colo un AR-15 en el Blaser R8. Se revisa
-una hoja de contactos por producto.
-
-Cuatro productos se cambiaron por otro de su misma familia porque de ellos no
-hay foto publicada y del sustituto si: `SAGA Perdiz 34` -> `SAGA Heavy 34`,
-`RIO Star 32` -> `RIO Game Load BlueSteel`, `Vanguard Pioneer 46` ->
-`Beretta Hunter Tech Rifle Case`, `Ferrimax Alfa 5` -> `Rottner Gun 5 Cargo`.
-Otros tres se renombraron al modelo que de verdad ensena su foto:
-`Arregui Rifle 180020` -> `Braco 5`, `AyA Aguila` -> `AyA No. 1 De Luxe`,
-`Grulla Consejo` -> `Grulla 216 RB`.
-
-Al encuadrar, `contain` y nunca `cover`: la foto de tienda trae el arma entera
-en diagonal y recortar a 8:5 se come la boca del canon. Antes hay que quitar el
-margen liso, porque un rifle fotografiado en un cuadrado de 1600x1600 entra en
-la ficha como una raya. El relleno es el color de las cuatro esquinas del
-original, no blanco fijo.
-
-Para cambiar una foto basta con dejar otro `.webp` de 1200x750 con el mismo
-nombre, o cambiar el `photo:` del producto en `js/catalog.js`. Ninguna de las
-dos cosas toca codigo.
-
-El selftest comprueba que ninguna ruta `photo:` este rota, que ningun producto
-use la foto de otro y que no haya dos ficheros identicos: el reparto
-automatico llego a dar la misma imagen al armero Arregui y al Ferrimax, y eso
-por nombre de fichero no se ve.
-
-## Diseño
-
-El lenguaje visual está portado de **rolls-roycemotorcars.com**, medido con
-Chrome sin ventana y no aproximado a ojo. Es lo contrario del sistema anterior
-—la plantilla Himon, papel claro y acento lima— en casi todo, y por eso el
-cambio vive en la rama `rediseno-rr`. Todo está en `css/tokens.css`:
-
-- Lienzo **negro** (`--negro #000`) con la pieza levantada a `--pieza #151515`,
-  que es también la tinta de los botones claros. **Sin acento de color.** Lo
-  que destaca, destaca por tamaño o por estar solo, no por ser de otro color.
-- **Tenor Sans** para rotular y **Jost** para el cuerpo. La fuente del original
-  es «Riviera Nights» y es propietaria; Tenor Sans es lo más cercano que se
-  puede redistribuir —humanista, misma modulación de trazo, terminales
-  acampanados— y **trae acentos y eñe**, que es donde se cae media fuente de
-  display en español. Se comprobó midiendo el glifo antes de elegirla. Jost
-  lleva la interfaz porque Tenor Sans, con un solo peso, ahí se vuelve frágil.
-- **Tracking positivo y fijo en píxeles**: 2,5 px valga lo que valga el cuerpo.
-  Al no escalar, el rótulo pequeño acaba más abierto que el titular, y esa
-  desproporción es la firma. `--tr-ancho` (0,22em) es el caso extremo, para una
-  sola palabra en una lámina. Es exactamente al revés que Himon, que cerraba el
-  tracking según subía el cuerpo.
-- **Canto vivo en todo** (`--r: 0`). La única forma redondeada es la píldora
-  del botón: 30 px de radio y 46 de alto, medidos del original.
-- **Separación por filete de un píxel**, no por cambio de fondo. `--filete`
-  sobre foto, `--filete-tenue` (#222) entre fichas, `--filete-medio` (#7c7c7c)
-  entre columnas. Ninguno es texto nunca.
-- Una sola curva, fuerte a la salida: `cubic-bezier(0.16, 1, 0.3, 1)`. Y tres
-  tiempos, no más: `--t-largo` 1,1s para lo que entra en pantalla, `--t` 0,45s
-  para lo que responde al puntero, `--t-corto` 0,2s sólo para el salto de
-  teclado. Lo que entra en fila se escalona con `--stagger`.
-
-### De dónde salen las medidas
-
-El original **no se puede abrir desde aquí**: la extensión de Chrome no conecta
-y el sitio no responde ni a `curl` ni a WebFetch. La fuente es la captura del
-**11 de agosto de 2026** en el Internet Archive más su hoja de estilos entera
-(866 KB, 6.477 reglas):
-
-```
-http://web.archive.org/web/20260811191207/https://www.rolls-roycemotorcars.com/en_GB/home.html
-.../etc.clientlibs/rrmc/clientlibs/clientlib-components.<hash>.css
-```
-
-La página propia sí se abre, con el arnés CDP del scratchpad (`cdp.js`, y
-`web.js` para una web ajena): Chrome sin ventana por el puerto de depuración.
-Es lo que se usa para comprobar cada cambio, porque `file://` la extensión no
-lo acepta.
-
-### Lo que la portada hereda del original
-
-- **Tres láminas de 100vh apiladas**, no un carrusel que gira solo. En el
-  original miden 804 px sobre una vista de 804: es scroll, no temporizador.
-- **La navegación entera detrás de «Menú»**, a cualquier ancho. No hay enlaces
-  sueltos en la barra ni en escritorio. Bajó como persiana desde arriba, y es
-  una **rejilla de dos paneles**: enlaces a la izquierda alineados a la derecha
-  (`grid-column: 2/span 9` de 24) y foto ocupando la derecha (`11/span 15`).
-  Las secciones con segundo nivel son `<button>` y las que llevan a un sitio
-  son `<a>`, igual que allí.
-- **«MENÚ» y «CERRAR» cruzadas en el mismo hueco**, con un tercer `<span>`
-  invisible que sostiene el ancho. Sin él el botón encoge al abrir y empuja a
-  la marca del centro. El fantasma lleva la palabra **ancha**, que en
-  castellano es «Cerrar» y no «Menú» como en el original.
-- **Flecha en el botón primario**: 16×16, transparente en reposo pero con el
-  hueco ya reservado, y al señalar se enciende y se corre 4 px en 0,4 s. Esos
-  0,4 s son suyos: es el único tiempo del sistema que viene de fuera.
-- **Indicador de scroll** de 4×80 px fijo abajo al centro, que se apaga en un
-  segundo al despegarse la portada. La caja es la suya; lo que baja por dentro
-  **no está medido** —el original lo dibuja desde su JS— y es lo único
-  inventado de todo el port.
-- **Bloque de «en qué podemos ayudarle»**, su `enquire block`: filas de 76 px
-  con filete debajo, 28 px entre una y otra y 80 % de ancho centrado.
-- **Barra fija de 120 px con degradado por detrás**, que se encoge a 80 y pasa
-  a banda sólida al despegarse de la portada.
-- **El pie está fijo por debajo** y el contenido se desliza por encima hasta
-  descubrirlo. Por eso `.hoja` es opaca y lleva `z-index`. El hueco lo mide
-  `js/portada.js`, porque el alto del pie depende del ancho. Por debajo de
-  60rem el pie vuelve a ser normal: en una pantalla corta se comería media
-  vista.
-- **Riel de puntos** fijo a la izquierda, que dice en qué lámina estás y salta
-  a ella. Nace con `hidden` y lo enciende el JS.
-
-### Lo que no se copió, y por qué
-
-- **El original encuadra en cuadrado.** Aquí las cajas de foto se quedan en
-  8:5 porque las imágenes son 1200x750 y un cuadrado con `cover` se come la
-  boca del cañón. Manda la fotografía.
-- **Las fotos se reparten por luminancia medida**, no por gusto. La del taller
-  es la única del repositorio con fondo oscuro (media 21 frente a 113 de la
-  siguiente); las dos de estudio con fondo blanco puro (224 y 202) están fuera
-  de la portada, porque sobre negro son dos rectángulos que gritan.
-- **Familias y pie llevan columnas contadas, no `auto-fill`.** Seis familias en
-  un reparto automático caben de cinco en cinco y dejan la sexta sola estirada
-  a lo ancho.
-- **Ni aviso de cookies ni selector de idioma**, que el original sí tiene. Esta
-  tienda no pone cookies y no está traducida: un consentimiento de mentira es
-  peor que ninguno. Tampoco el buscador de concesionarios con reCAPTCHA ni sus
-  ocho formularios de captación.
-- **El velo de la foto del menú sí, y es suyo** (`rgba(0,0,0,.5)`): de las ocho
-  fotos de modelo, cinco vienen de estudio con fondo claro —`pistol` y `reddot`
-  miden 255 y 254 de luminancia en el borde— y sobre negro entran como un
-  rectángulo que grita. Ahí el panel sí recorta a `cover`, porque es un fondo
-  entero como las láminas y no una caja de ficha.
-
-Las animaciones que en el original hace su propio motor aquí son
-`js/reveal.js`: dos clases y un `IntersectionObserver`. El estado oculto va
-bajo `.js` a propósito, para que si el script no llega a ejecutarse la página
-se vea entera en vez de en blanco.
+Las entradas en pantalla (`Reveal.tsx`) son dos clases + `IntersectionObserver`,
+puerto de `js/reveal.js`; el estado oculto va bajo `.js` a propósito, para que
+si el script no llega a ejecutarse la página se vea entera y no en blanco.
 
 ## Precios
 
-El campo `usd` de cada producto es el precio **en dólares**, como se cotizan
-las armas en Argentina. Los pesos salen de `ARS_POR_USD` en `js/catalog.js`:
-al mover el cambio se toca ese número y nada más.
-
-Los importes están anclados a precios publicados por armerías argentinas
-(agosto de 2026): Glock, Bersa, Pelican, munición del 22, escopetas y rifles
-tácticos. El resto de la lista se derivó de esas anclas por familia. Las
-piezas que casi no entran al país —paralelas de Eibar, pistolas de precisión
-ISSF, óptica alpina— van modeladas, no verificadas una a una.
+`Producto.usdCents` es el precio en dólares (centavos enteros), como se
+cotizan las armas en Argentina — viene de la columna `product.usd_cents`.
+`lib/catalogo.ts#cambio()` trae el último `fx_rate.ars_per_usd` de Supabase;
+`precio(usdCents, arsPorUsd)` hace la conversión y el formato `Intl.NumberFormat`
+en pesos. No hay ningún tipo de cambio hardcodeado en la app — a diferencia
+del sitio estático (`ARS_POR_USD` en `js/catalog.js`), acá cambiar el cambio
+es un `UPDATE`/`INSERT` en `fx_rate`, no un despliegue.
 
 ## Régimen legal
 
-La tienda es argentina y se rige por ANMaC. La etiqueta de cada ficha sale
-del art. 5 del decreto 395/75, que corta el arma de hombro en 5,6 mm y la
-pistola en 6,35 mm:
+La tienda es argentina y se rige por ANMaC. La etiqueta de cada producto
+sale del art. 5 del decreto 395/75 (corta el arma de hombro en 5,6 mm y la
+pistola en 6,35 mm), pero en esta app **vive en la base**, no en código:
 
 | Etiqueta | Qué la lleva |
 |---|---|
-| `Uso civil` | escopetas tiro a tiro, rifles y pistolas del .22 |
-| `Uso civil condicional` | calibres mayores y toda semiautomática |
-| `Aire comprimido` | pistolas de 4,5 mm; no son armas de fuego |
-| `Requiere TCCM` | munición |
-| `null` → «Venta libre» | óptica y accesorios |
+| `uso-civil` | escopetas tiro a tiro, rifles y pistolas del .22 |
+| `uso-civil-condicional` | calibres mayores y toda semiautomática |
+| `aire-comprimido` | pistolas de 4,5 mm; no son armas de fuego |
+| `requiere-tccm` | munición |
+| `libre` | óptica y accesorios |
 
-`test/selftest.js` comprueba que ningún rifle salga con un régimen que no
-corresponde a su calibre. Al añadir productos, la familia pone la etiqueta
-por defecto y la ficha la sobreescribe con `licence:` si es una excepción.
+`test/modoventa.test.ts` prueba `lib/regimen.ts` sobre los cinco. Al añadir
+un producto en Supabase, la familia (`family.licence_regime_id`, `NOT NULL`)
+pone la etiqueta por defecto; el producto la pisa con su propio
+`licence_regime_id` sólo si es una excepción — el mismo patrón que llevaba
+`licence:` en `js/catalog.js` del sitio estático.
 
-El pie cita las resoluciones vigentes (Tenencia Express 45/2025, TCCM
-14/2025, semiautomáticas 37/2025). Si cambia la normativa, ahí es donde hay
-que mirar.
+## Herramientas conservadas (`tools/`)
+
+Ninguna corre en build ni en CI; son insumo manual de fases anteriores de la
+migración y del respaldo 3D aparcado.
+
+| Fichero | Para qué | Se corre cuando |
+|---|---|---|
+| `tools/seed-supabase.js` | Generó `db/supabase/seed-productos.sql` (idempotente) leyendo `js/catalog.js`. **Hoy no corre**: al fusionar el port en `main` se borró el sitio estático y con él su catálogo, que era la última copia. El SQL que produjo está commiteado y aplicado; para volver a generarlo hay que sacar `js/catalog.js` del historial (rama `main-antes-del-merge`) o apuntar el script a Supabase | no se corre hoy |
+| `tools/seed.js` | Genera el `db/seed.sql` del esquema Postgres viejo (`db/schema.sql`) desde un `js/catalog.js` local — ese fichero ya no existe en esta rama (se borró en la fase de limpieza junto con el resto del sitio estático), así que hoy **no corre** sin apuntarlo a otra fuente. Se conserva como referencia de cómo se generó `db/seed.sql` | no se corre hoy; ver nota más abajo |
+| `tools/models.py` | Modela las 8 piezas del respaldo 3D en Blender y hornea `js/meshes.js` | si el respaldo 3D vuelve a activarse |
+| `tools/fotos.py` | Baja las fotos genéricas de `public/img/model/` desde Wikimedia Commons, sólo licencias redistribuibles | si hace falta una foto genérica nueva |
+
+## Lo que queda pendiente
+
+- **Fase 11 (despliegue)**: fast-forward de `main` a la punta de esta rama y
+  cambio del Production Branch en Vercel. `main` hoy no tiene build; este
+  paso lo activa por primera vez en producción.
+- **Login/signup**: sin ellos, `crear_pedido()` no se puede cablear y la
+  reserva sigue siendo un aviso por `mailto:`, no una venta real.

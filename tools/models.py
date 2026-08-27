@@ -230,11 +230,9 @@ def etiquetadas(parts):
 
     Una pieza se pasa suelta o como ('nogal', bm). El sitio no sabe de
     materiales y las desempaqueta sin mirar. La etiqueta era para los shaders
-    del horno de Cycles, que ya no esta: `js/meshes.js` guarda vertices y caras
-    y nada mas, y `js/scene.js` pinta cada modelo con una sola paleta. Se deja
-    porque no cuesta nada y es lo que habria que rellenar si el 3D vuelve.
-    Solo se etiquetan las excepciones: lo que no lleva etiqueta cae en el
-    material por defecto del modelo.
+    del horno de Cycles, que ya no esta. Se deja porque no cuesta nada y es lo
+    que habria que rellenar si el 3D vuelve. Solo se etiquetan las
+    excepciones: lo que no lleva etiqueta cae en el material por defecto.
     """
     nombres, bms = [], []
     for p in parts:

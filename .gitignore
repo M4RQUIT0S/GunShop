@@ -9,18 +9,17 @@ Thumbs.db
 __pycache__/
 *.pyc
 
-# Restos de Next.js: este directorio comparte disco con el worktree de
-# ecommerce-next y no siempre esta en esa rama. Nunca entran al repo, ni
-# aqui ni alli: build cache, config local de Vercel y variables de entorno
-# con la clave publicable real.
+# Next.js
 .next/
+next-env.d.ts
 .vercel/
+
+# Entorno: la URL y la clave publicable van en .env.example con marcador de
+# posicion; el fichero real no entra nunca, y la service_role menos.
 .env
 .env*.local
-next-env.d.ts
 
 # Config de agentes: apunta a proyectos reales y es de cada maquina.
-# El ejemplo con marcador de posicion si va al repo.
 .codex/*
 !.codex/config.example.toml
 .claude/settings.local.json
