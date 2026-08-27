@@ -8,6 +8,8 @@ export type { Regimen, ModoVenta } from './regimen'
    solo alcanza lo que `0006_rls.sql` deja ver: catalogo, nada de existencias
    ni de clientes. */
 
+export type Calibre = { name: string; annualQuota: number }
+
 export type Producto = {
   id: number
   marca: string
@@ -21,6 +23,11 @@ export type Producto = {
   usdCents: number
   foto: string | null
   variantes: number
+  spec: string[]
+  cartridgesPerBox: number
+  // Calibres de las referencias del producto (product_variant.calibre_id),
+  // sin repetir. Vacio en lo que no se sirve por calibre -- optica, fundas.
+  calibres: Calibre[]
 }
 
 /* El slug sale de la marca y la referencia. `product` todavia no tiene columna
@@ -36,14 +43,27 @@ export function slugDe(p: { marcaSlug: string; ref: string }): string {
 }
 
 const SELECT = `
-  id, ref, kind, usd_cents,
+  id, ref, kind, usd_cents, spec, cartridges_per_box,
   brand:brand_id ( slug, name ),
   family:family_id ( slug, name, licence_regime:licence_regime_id ( code, label ) ),
   licence_regime:licence_regime_id ( code, label ),
-  product_photo ( path, is_primary )
+  product_photo ( path, is_primary ),
+  product_variant ( calibre:calibre_id ( name, annual_quota ) )
 `
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+function calibresDeVariantes(variantes: any[]): Calibre[] {
+  // Varias referencias pueden compartir calibre (raro, pero el join no lo
+  // impide); se queda con el primero que aparece.
+  const vistos = new Map<string, number>()
+  variantes.forEach((v) => {
+    if (v.calibre && !vistos.has(v.calibre.name)) {
+      vistos.set(v.calibre.name, v.calibre.annual_quota)
+    }
+  })
+  return [...vistos].map(([name, annualQuota]) => ({ name, annualQuota }))
+}
+
 function aProducto(fila: any): Producto {
   // El regimen del producto pisa al de la familia. La familia lo tiene NOT
   // NULL a proposito, asi que siempre hay uno: nunca se cae a «venta libre»
@@ -51,6 +71,7 @@ function aProducto(fila: any): Producto {
   const reg = fila.licence_regime ?? fila.family.licence_regime
   const fotos = fila.product_photo ?? []
   const portada = fotos.find((f: any) => f.is_primary) ?? fotos[0]
+  const variantes = fila.product_variant ?? []
   return {
     id: fila.id,
     marca: fila.brand.name,
@@ -63,17 +84,64 @@ function aProducto(fila: any): Producto {
     regimenEtiqueta: reg.label,
     usdCents: fila.usd_cents,
     foto: portada ? '/' + portada.path : null,
-    variantes: 0,
+    variantes: variantes.length,
+    spec: fila.spec ?? [],
+    cartridgesPerBox: fila.cartridges_per_box ?? 0,
+    calibres: calibresDeVariantes(variantes),
   }
 }
 
-export async function listaProductos(familia?: string): Promise<Producto[]> {
+// Segundo nivel del filtro: el `kind` que cada ficha ya lleva para pintarse
+// (p.ej. «Rifle de cerrojo»). No es un dato aparte que mantener sincronizado:
+// sale del mismo `kind` de la base, asi que una familia nueva trae sus
+// subcategorias sola.
+export function filtrarPorSub(productos: Producto[], sub: string): Producto[] {
+  return productos.filter((p) => p.kind === sub)
+}
+
+// El calibre corta de traves a familias y subcategorias: es la misma funcion
+// tanto si se aplica sobre el catalogo entero como sobre una familia ya
+// filtrada.
+export function filtrarPorCalibre(productos: Producto[], calibre: string): Producto[] {
+  return productos.filter((p) => p.calibres.some((c) => c.name === calibre))
+}
+
+// Las subcategorias presentes en `productos`, con cuantas hay de cada una,
+// alfabeticas: el orden de llegada no le dice nada a quien lee la fila de
+// chips.
+export function subcategorias(productos: Producto[]): { kind: string; n: number }[] {
+  const n: Record<string, number> = {}
+  productos.forEach((p) => {
+    n[p.kind] = (n[p.kind] ?? 0) + 1
+  })
+  return Object.keys(n)
+    .sort((a, b) => a.localeCompare(b, 'es'))
+    .map((kind) => ({ kind, n: n[kind] }))
+}
+
+// Los calibres presentes en `productos`, sin repetir y alfabeticos. Sirve
+// para ofrecer solo los que hay algo que ver, tanto en «todo» como dentro de
+// una familia o subcategoria ya filtrada.
+export function calibresDe(productos: Producto[]): string[] {
+  const vistos = new Set<string>()
+  productos.forEach((p) => p.calibres.forEach((c) => vistos.add(c.name)))
+  return [...vistos].sort((a, b) => a.localeCompare(b, 'es'))
+}
+
+export async function listaProductos(
+  familia?: string,
+  sub?: string,
+  calibre?: string,
+): Promise<Producto[]> {
   let q = supabase.from('product').select(SELECT).is('discontinued_at', null)
   if (familia) q = q.eq('family.slug', familia)
 
   const { data, error } = await q
   if (error) throw new Error(`No se pudo leer el catalogo: ${error.message}`)
-  return (data ?? []).map(aProducto)
+  let productos = (data ?? []).map(aProducto)
+  if (sub) productos = filtrarPorSub(productos, sub)
+  if (calibre) productos = filtrarPorCalibre(productos, calibre)
+  return productos
 }
 
 export type Familia = {

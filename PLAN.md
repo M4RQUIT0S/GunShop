@@ -140,22 +140,39 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
         nada roto).
       - Commit: `feat: portada con rieles de laminas, cifras y familias`.
 
-- [ ] **4. Catálogo (`app/catalogo/page.tsx`) — filtros de dos niveles y calibre sobre Supabase.**
-      - Extender `lib/catalogo.ts`: sumar al `SELECT` de `listaProductos()`
-        `spec`, `cartridges_per_box` y
-        `product_variant(calibre:calibre_id(name, annual_quota))`. Con esto
-        `REGIMEN`/`calibre()`/`porCaja()`/`topeTccm()` de `js/catalog.js`
-        quedan obsoletos para lo sembrado en Supabase — no se portan a
-        TypeScript, ya están mejor resueltos en columnas reales.
-      - `filtrarPorSub(kind)` y `filtrarPorCalibre(nombre)` como parámetros
-        opcionales de `listaProductos()`.
-      - Chips de familia/subcategoría y `<select>` de calibre como
-        `<Link href="/catalogo?familia=x&sub=y&calibre=z">`, sin JS de
-        cliente.
-      - **Sin paginación**: se renderiza toda la lista filtrada de una vez
-        (~76-100 productos, revalida cada 10 min). *Hecho X (sin scroll
-        infinito); si hace falta, decirlo.*
-      - Reskin con clases de `css/catalog.css` en vez de `catalogo.module.css`.
+- [x] **4. Catálogo (`app/catalogo/page.tsx`) — filtros de dos niveles y calibre sobre Supabase.**
+      - `lib/catalogo.ts`: `SELECT` de `listaProductos()` suma `spec`,
+        `cartridges_per_box` y
+        `product_variant(calibre:calibre_id(name, annual_quota))`.
+        `Producto` gana `spec`, `cartridgesPerBox` y `calibres` (dedupe por
+        nombre). `REGIMEN`/`calibre()`/`porCaja()`/`topeTccm()` de
+        `js/catalog.js` no se portan: ya resueltos en columnas reales.
+      - `filtrarPorSub(productos, kind)` y `filtrarPorCalibre(productos, nombre)`
+        exportadas como funciones puras (no como filtros SQL) — `familia`
+        sigue siendo el único `.eq()` contra Supabase; `sub` y `calibre` se
+        aplican sobre el array ya traido. `listaProductos(familia?, sub?,
+        calibre?)` las usa internamente, y la página las reusa directo sobre
+        el catálogo completo para no pedirlo dos veces (una consulta cubre
+        la rejilla Y los contadores de los chips). También nuevas:
+        `subcategorias()` y `calibresDe()`, para las listas de los chips.
+      - Chips de familia/subcategoría y el de calibre son todos
+        `<Link href="/catalogo?familia=x&sub=y&calibre=z">` — el de calibre
+        NO es un `<select>` nativo (habría exigido JS para enviarse sin
+        botón); son chips `.chip` iguales a los de subcategoría, dentro del
+        contenedor `.calibre`. Un `sub`/`calibre` en la URL que no aplica al
+        filtro vigente (p.ej. cambiar de familia) se descarta en el propio
+        render, no con JS.
+      - Sin paginación, como estaba previsto.
+      - Reskin con clases de `css/catalog.css`; sumado un `paddingTop: calc(var(--nav-h-ancha) + 1rem)`
+        en el `<main>` porque el nav es `position:fixed` y esta página no
+        tiene la lámina de portada que le da hueco arriba en `/`.
+      - Verificado además de `npx next build`: `npm run start` contra la
+        base real — `/catalogo` (18), `?familia=rifles` (3, dos
+        subcategorías), `?familia=rifles&calibre=.308 Win` (2) — los
+        recuentos de chips y de rejilla cuadran a mano.
+      - Borrados `app/globals.css`, `app/tokens.css`, `app/catalogo.module.css`
+        (sin más referencias tras el reskin; sólo se adelantó de la fase 10
+        porque ya no servían para nada desde esta misma fase).
       - Commit: `feat: catalogo con filtros de dos niveles y calibre sobre Supabase`.
 
 - [ ] **5. Ficha de producto — `app/producto/[slug]/page.tsx`.**
@@ -214,8 +231,8 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
       - Commit: `feat: genera el seed de Supabase con los 76 productos de js/catalog.js`.
 
 - [ ] **10. Limpieza.**
-      - Borrar `app/globals.css`, `app/tokens.css`, `app/catalogo.module.css`
-        (sólo tras verificar fases 1-6 en navegador).
+      - ~~Borrar `app/globals.css`, `app/tokens.css`, `app/catalogo.module.css`~~
+        ya borrados en la fase 4 (dejaron de usarse ahí mismo).
       - Borrar `index.html` y los `js/*.js`/`css/*.css` sueltos en la raíz
         de `ecommerce-next` (foto vieja pre-rediseño). Confirmar que
         `public/img/` es superset de `img/` antes de borrar `img/`.
