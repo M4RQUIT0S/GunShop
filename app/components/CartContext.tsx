@@ -14,7 +14,7 @@
 import {
   createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode,
 } from 'react'
-import { listaProductos, cambio, type Producto } from '@/lib/catalogo'
+import { listaProductos, cambio, comprableDirecto, type Producto } from '@/lib/catalogo'
 import type { Linea } from '@/lib/cesta'
 
 const LLAVE = 'gunshop:cesta'
@@ -107,12 +107,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  // El gate legal tiene que vivir aca, no solo en el boton que hoy es el
+  // unico llamador (ProductoCTA): sin el catalogo cargado, o si el producto
+  // no permite compra directa, no se agrega -- mismo criterio fail-safe que
+  // modoVenta()/requisitos() en lib/regimen.ts.
   const add = useCallback((id: number) => {
+    const producto = productos.find((p) => p.id === id)
+    if (!producto || !comprableDirecto(producto.regimen)) return
     setUnidades((previas) => ({
       ...previas,
       [id]: Math.min(MAX_UNIDADES, (previas[id] ?? 0) + 1),
     }))
-  }, [])
+  }, [productos])
 
   const vaciar = useCallback(() => setUnidades({}), [])
 

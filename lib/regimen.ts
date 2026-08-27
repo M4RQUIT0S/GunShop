@@ -69,6 +69,11 @@ const REQUISITOS: Record<Regimen, Requisitos> = {
   'requiere-tccm': { clu: true, tccm: true, certificado: false },
 }
 
+/* Mismo criterio fail-safe que modoVenta(): un regimen que no esta en la
+ * tabla no puede resolver a "no hace falta nada" -- eso seria entregar sin
+ * pedir credencial. Cae al mas exigente de los conocidos. */
+const REQUISITOS_DESCONOCIDO: Requisitos = { clu: true, tccm: true, certificado: true }
+
 export function requisitos(regimen: Regimen): Requisitos {
-  return REQUISITOS[regimen]
+  return REQUISITOS[regimen] ?? REQUISITOS_DESCONOCIDO
 }
