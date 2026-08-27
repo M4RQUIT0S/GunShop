@@ -298,15 +298,37 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
         (`.foto.sinFoto`), sólo se reskinea en la fase 1.
       - Sin commit propio.
 
-- [ ] **8. Testing.**
-      - `test/modoventa.test.ts` sigue igual.
-      - Nuevo `test/buscar.test.ts` para `llano()`/`buscar()`.
-      - Nuevo test chico: cada `slugDe()` de `listaProductos()` resuelve vía
-        `productoPorSlug()`.
-      - `test/selftest.js` se mantiene mientras `js/catalog.js` siga siendo
-        fuente de los 76 productos (fase 9); se borra junto con él.
-      - `node db/supabase/revisa.js` y `npx next build` siguen siendo las
-        comprobaciones bloqueantes.
+- [x] **8. Testing.**
+      - `test/modoventa.test.ts` sigue igual, sin tocar.
+      - Nuevo `test/buscar.test.ts` para `llano()`/`buscar()`: acentos y
+        mayúsculas, AND entre palabras (no OR), casa por marca+ref pero
+        también por familia/kind/spec/calibre/régimen, y el desempate que
+        sube lo que casa por nombre sobre lo que sólo casa por ficha.
+        Fixtures `Producto` locales — no toca Supabase.
+      - Nuevo `test/slug.test.ts`: cada `slugDe()` de `listaProductos()`
+        (18 productos reales) resuelve al mismo `id` vía `productoPorSlug()`,
+        y no hay dos productos con el mismo slug. Éste sí pega contra
+        Supabase real.
+      - `test/selftest.js` sin cambios (fase 9 lo hereda para borrar).
+      - **Sumado sobre lo planeado, no estaba previsto**: `node --test`
+        no puede importar `lib/catalogo.ts` tal cual — sus imports internos
+        van sin extensión (`./supabase`), que es lo que espera el resolver
+        "bundler" de tsconfig pero el ESM nativo de Node exige el
+        especificador completo; `test/modoventa.test.ts` no lo sufría
+        porque `lib/regimen.ts` no importa nada. Se agregó
+        `test/resuelve-ts.mjs`, un hook de resolución de ~10 líneas
+        (`node:module`, sin dependencia nueva) que reintenta con `.ts`
+        puesto cuando la resolución normal falla; vive sólo en `test/` y
+        `next build` no pasa por ahí. Se descartó tocar el import de
+        `lib/catalogo.ts` porque `allowImportingTsExtensions` no está en
+        `tsconfig.json` y encenderlo se sale del alcance de esta fase.
+      - Comprobación real: `node --test test/` (sin fichero) sigue fallando
+        en este entorno igual que en la fase 6 — Node 24 no resuelve el
+        directorio, no es cosa de esta fase. La forma que sí corre las 13
+        pruebas en verde:
+        `node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts"`.
+        `node db/supabase/revisa.js` en verde. `npx next build` (Turbopack)
+        compila y tipa sin errores.
       - Commit: `test: cubre buscar() y el redondeo slug↔producto`.
 
 - [ ] **9. Cargar los 76 productos en Supabase (puede ir en paralelo con 4-6).**
