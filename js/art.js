@@ -32,6 +32,5 @@
   }
 
   global.GunShop = global.GunShop || {};
-  global.GunShop.art = { foto: foto, sprite: sprite,
-    ANGLES: ANGLES, width: W, height: H };
+  global.GunShop.art = { foto: foto, sprite: sprite, width: W, height: H };
 })(window);

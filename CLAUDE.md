@@ -267,11 +267,11 @@ aparece si una foto falta. Las 224 imágenes horneadas de `img/card/` e
 de `js/scene.js`, que era lo único que las leía. De `js/scene.js` queda lo que
 dibuja el esquema de respaldo.
 
-`tools/models.py` y `tools/render.py` siguen en el repositorio y funcionan,
-pero nada de la página depende ya de ellos. `render.py` volvería a escribir
-`img/card/` e `img/hero/` desde cero; el segundo no tendría quien lo pintase
-sin recuperar antes el `mount()` que está en el historial. No inviertas ahí sin
-decidir primero que el 3D vuelve.
+`tools/models.py` sigue en el repositorio y funciona, pero nada de la página
+depende ya de él: sólo hace falta si se toca una malla. El horno de Cycles
+(`tools/render.py`) se ha borrado — escribía las dos carpetas de imágenes que
+ya no existen y su único lector, el `mount()`, tampoco. Los tres están en el
+historial si el 3D vuelve.
 
 Lo que sigue describe cómo funciona ese respaldo. Siete de las ocho piezas se
 modelan en `tools/models.py` con Blender y se hornean a `js/meshes.js`. La

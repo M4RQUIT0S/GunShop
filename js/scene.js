@@ -226,27 +226,11 @@
     });
   }
 
-  /* ----------------------------------------------------------------- *
-   * Montaje: gira con el scroll, cambia de pieza con el filtro.        *
-   * ----------------------------------------------------------------- */
-
-  // ponytail: el giro es un barrido acotado, no una vuelta entera. Vista a 90 grados
-  // exactos una pieza plana colapsa a una lamina; el seno nunca llega a ese angulo.
-  var YAW_CENTER = -0.30;
-  var YAW_AMP = 0.95;
-  var YAW_PHASE = -0.68;
-  var TURN_PER_PX = 0.00155;
-  var BASE_YAW = YAW_CENTER + YAW_AMP * Math.sin(YAW_PHASE);
-
-  function yawAt(scrollY) {
-    return YAW_CENTER + YAW_AMP * Math.sin(YAW_PHASE + scrollY * TURN_PER_PX);
-  }
-
+  // extrude, tube, normal y rotate salen para que el selftest compruebe que
+  // las mallas cierran con las caras hacia fuera; la pagina solo usa render.
   var api = {
-    area2: area2, extrude: extrude, tube: tube, merge: merge,
-    normal: normal, rotate: rotate, render: render, yawAt: yawAt,
-    models: MODELS, model: model,
-    BASE_YAW: BASE_YAW, YAW_CENTER: YAW_CENTER, YAW_AMP: YAW_AMP
+    extrude: extrude, tube: tube, normal: normal, rotate: rotate,
+    render: render, models: MODELS, model: model
   };
 
   global.GunShop = global.GunShop || {};

@@ -243,15 +243,6 @@ Object.keys(scene.models).forEach(function (name) {
   });
 });
 
-/* --- el giro nunca cae en el perfil exacto ---------------------------- */
-
-var worst = 0;
-for (var y = 0; y <= 60000; y += 25) {
-  worst = Math.max(worst, Math.abs(scene.yawAt(y)));
-}
-assert.ok(worst < 1.35,
-  'el barrido llega a ' + worst.toFixed(2) + ' rad y la pieza se ve de canto');
-
 /* --- fotos del catalogo ------------------------------------------------ */
 
 // La ficha muestra img/model/<modelo>.webp (ver su CREDITS.md). Que falte un

@@ -415,7 +415,7 @@
   var api = {
     LINES: LINES, PAGE: PAGE,
     MONEDAS: MONEDAS, ARS_POR_USD: ARS_POR_USD,
-    rng: rng, build: build, page: page, filtered: filtered, counts: counts,
+    build: build, page: page, filtered: filtered, counts: counts,
     kinds: kinds,
     format: format, money: money,
     REGIMEN: REGIMEN, regimen: regimen,

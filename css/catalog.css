@@ -246,7 +246,6 @@
   color: var(--gris-claro);
 }
 .tag--licence { color: var(--tinta); }
-.tag--last { color: var(--alerta); }
 
 .card__body {
   display: flex;
