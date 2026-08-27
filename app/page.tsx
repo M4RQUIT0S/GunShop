@@ -1,4 +1,4 @@
-import { familias, listaProductos } from '@/lib/catalogo'
+import { familias, listaProductos, raices, cuentaPorRama } from '@/lib/catalogo'
 import RielLaminas from './components/RielLaminas'
 import Scrollicono from './components/Scrollicono'
 import Reveal from './components/Reveal'
@@ -26,10 +26,9 @@ export default async function Home() {
   // El titular cuenta lo mismo que enseñaría la rejilla, no un número escrito
   // a mano; y las baldosas de familia igual, contadas por `familia` (slug).
   const total = productos.length
-  const porFamilia = productos.reduce<Record<string, number>>(
-    (acc, p) => ({ ...acc, [p.familia]: (acc[p.familia] ?? 0) + 1 }),
-    {},
-  )
+  // Por rama, no por `p.familia`: desde 0010 Municion no tiene producto
+  // propio -- los tiene su hija Cartuchos -- y contarla plana daria cero.
+  const porFamilia = cuentaPorRama(productos, fams)
   // Únicas por marca (marcaSlug), no por nombre: dos marcas no comparten
   // slug aunque compartiesen nombre de vitrina.
   const marcas = [...new Map(productos.map((p) => [p.marcaSlug, p.marca])).values()]
@@ -130,7 +129,7 @@ export default async function Home() {
               </p>
             </div>
             <div className="tiles" id="tiles">
-              {fams.map((f, i) => (
+              {raices(fams).map((f, i) => (
                 <a
                   key={f.slug}
                   className="tile"

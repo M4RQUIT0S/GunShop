@@ -1,7 +1,10 @@
 import { supabase } from './supabase'
 import type { Regimen } from './regimen'
+import { rama, type Familia } from './familia'
 
 export { modoVenta, comprableDirecto } from './regimen'
+export { raices, hijas, rama, arbolMenu } from './familia'
+export type { Familia, Nodo } from './familia'
 export type { Regimen, ModoVenta } from './regimen'
 
 /* Catalogo publico. Todo lo de aqui se lee con la clave publicable, asi que
@@ -134,20 +137,38 @@ export function calibresDe(productos: Producto[]): string[] {
   return [...vistos].sort((a, b) => a.localeCompare(b, 'es'))
 }
 
-export async function listaProductos(
-  familia?: string,
-  sub?: string,
-  calibre?: string,
-): Promise<Producto[]> {
-  let q = supabase.from('product').select(SELECT).is('discontinued_at', null)
-  if (familia) q = q.eq('family.slug', familia)
-
-  const { data, error } = await q
+/* Sin parametros a proposito: trae el catalogo entero y los filtros se
+ * aplican encima, con las funciones puras de arriba. Los tenia -- (familia,
+ * sub, calibre) -- y no los usaba nadie: las dos paginas piden todo una vez y
+ * filtran en memoria para poder contar los chips sin volver a preguntar. El
+ * de familia, ademas, se quedo mal con 0010: hacia `family.slug = familia`,
+ * que desde que la familia es un arbol se salta las hijas. */
+export async function listaProductos(): Promise<Producto[]> {
+  const { data, error } = await supabase
+    .from('product').select(SELECT).is('discontinued_at', null)
   if (error) throw new Error(`No se pudo leer el catalogo: ${error.message}`)
-  let productos = (data ?? []).map(aProducto)
-  if (sub) productos = filtrarPorSub(productos, sub)
-  if (calibre) productos = filtrarPorCalibre(productos, calibre)
-  return productos
+  return (data ?? []).map(aProducto)
+}
+
+/* Un producto cae dentro de `slug` si cuelga de el o de cualquier
+ * descendiente. Desde 0010 no es lo mismo que `p.familia === slug`: los 15
+ * cartuchos cuelgan de `cartuchos`, no de `municion`, y la baldosa de la
+ * portada contaria cero. */
+export function filtrarPorFamilia(
+  productos: Producto[], fams: Familia[], slug: string,
+): Producto[] {
+  const dentro = new Set(rama(fams, slug))
+  return productos.filter((p) => dentro.has(p.familia))
+}
+
+// Cuantos hay en cada familia contando su rama entera, para las baldosas de
+// la portada y los chips del catalogo.
+export function cuentaPorRama(
+  productos: Producto[], fams: Familia[],
+): Record<string, number> {
+  return Object.fromEntries(
+    fams.map((f) => [f.slug, filtrarPorFamilia(productos, fams, f.slug).length]),
+  )
 }
 
 // Misma clave que arma los enlaces del listado (slugDe), asi que un producto
@@ -158,28 +179,22 @@ export async function productoPorSlug(slug: string): Promise<Producto | null> {
   return productos.find((p) => slugDe(p) === slug) ?? null
 }
 
-export type Familia = {
-  slug: string
-  name: string
-  model_key: string | null
-  // Etiqueta por defecto de la familia (art. 5 decreto 395/75 o "Venta
-  // libre"), para la baldosa de #tiles. La ficha puede pisarla con
-  // `licence:`, pero la familia siempre tiene una -- NOT NULL en el esquema.
-  licencia: string
-}
-
+// Devuelve el arbol entero, plano y ordenado por `position`. Quien solo
+// quiera las seis de siempre filtra con `raices()`.
 export async function familias(): Promise<Familia[]> {
   const { data, error } = await supabase
     .from('family')
-    .select('slug, name, position, model_key, licence_regime:licence_regime_id ( label )')
+    .select('id, slug, name, position, model_key, parent_id, licence_regime:licence_regime_id ( label )')
     .order('position')
   if (error) throw new Error(`No se pudieron leer las familias: ${error.message}`)
   /* eslint-disable @typescript-eslint/no-explicit-any */
   return (data ?? []).map((f: any) => ({
+    id: f.id,
     slug: f.slug,
     name: f.name,
     model_key: f.model_key,
     licencia: f.licence_regime.label,
+    parentId: f.parent_id ?? null,
   }))
 }
 

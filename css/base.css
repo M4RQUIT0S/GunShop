@@ -431,6 +431,10 @@ a { color: inherit; text-decoration: none; }
   flex-direction: column;
   justify-content: center;
   overflow-y: auto;
+  /* `clip` y no `visible`: la flecha de la familia abierta se desplaza 0,35rem
+     y con `overflow-y: auto` eso basta para que el navegador saque una barra
+     horizontal por 6 px de nada. Aqui nunca hay nada que desplazar de lado. */
+  overflow-x: clip;
 }
 
 /* `cover` aqui si: esto es un fondo de panel entero, como las laminas de la
@@ -441,8 +445,10 @@ a { color: inherit; text-decoration: none; }
    de modelo, cinco vienen de estudio con fondo claro -- `pistol` y `reddot`
    miden 255 y 254 de borde -- y sobre negro entran como un rectangulo que
    grita. Es el mismo motivo por el que esas dos estan fuera de la portada. */
-.menu__derecha { position: relative; min-width: 0; }
-.menu__foto { position: relative; height: 100%; overflow: hidden; }
+/* La columna derecha es una fila: un panel por nivel abierto, en cascada
+   hacia la derecha, con la foto de fondo debajo de todos. */
+.menu__derecha { position: relative; min-width: 0; display: flex; }
+.menu__foto { position: absolute; inset: 0; overflow: hidden; }
 .menu__foto img { width: 100%; height: 100%; object-fit: cover; }
 .menu__foto::after {
   content: "";
@@ -469,6 +475,10 @@ a { color: inherit; text-decoration: none; }
      una segunda fila vacia y le repartiria medio alto de la pantalla. */
   .menu__derecha { display: contents; }
   .nav__menu.is-nivel2 .menu__nav { display: none; }
+  /* Un nivel cada vez: en estrecho no caben dos paneles de lado, asi que solo
+     se ve el ultimo y del anterior se sale por la fila de «volver». */
+  .menu__subs { display: none; }
+  .menu__subs.is-ultima { display: block; }
   .menu__subs {
     position: static;
     background: none;
@@ -484,23 +494,34 @@ a { color: inherit; text-decoration: none; }
    el panel es translucido, no opaco. En estrecho no hay dos columnas y si
    pasa a tapar (mas abajo, en la media query). */
 .menu__subs {
-  position: absolute;
-  inset: 0;
+  position: relative;
   z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
   overflow-y: auto;
+  overflow-x: clip;
   padding: calc(var(--nav-h-ancha) + 1rem) var(--pad-x) 2rem clamp(1rem, 2vw, 2rem);
   background: rgba(0, 0, 0, 0.82);
   animation: entra-subs var(--t) var(--ease);
 }
 @keyframes entra-subs { from { opacity: 0; transform: translateX(-1.5rem); } }
+/* Un filete entre paneles: sin el, dos velos del mismo negro al 82% se leen
+   como uno solo y la cascada se pierde. */
+.menu__subs + .menu__subs { border-left: 1px solid var(--filete-tenue); }
 
 /* Enfrentadas: el nivel 1 termina contra la calle y el nivel 2 arranca en
    ella, asi que las dos columnas se tocan por el eje del despliegue. */
-.menu__subs .nav__links a {
+.menu__subs .nav__links a,
+.menu__subs .nav__links .menu__cat {
   text-align: left;
+  /* La flecha al canto derecho del panel, no pegada al rotulo: aqui la lista
+     arranca por la izquierda y es el borde opuesto el que senala hacia donde
+     se abre el nivel siguiente. */
+  justify-content: space-between;
   font-size: clamp(1rem, 0.8rem + 0.7vw, 1.4rem);
 }
-.menu__subs .nav__links a:hover { padding-right: 0; padding-left: 1.25rem; }
+.menu__subs .nav__links a:hover,
+.menu__subs .nav__links .menu__cat:hover { padding-right: 0; padding-left: 1.25rem; }
 
 .menu__volver {
   display: flex;

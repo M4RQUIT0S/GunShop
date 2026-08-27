@@ -6,19 +6,18 @@
  * foco atrapado lo da `inert` sobre el resto de la pagina mientras esta
  * abierto, no algo nativo del elemento.
  *
- * El nivel 1 son las familias mismas (Rifles, Escopetas...), no una entrada
- * «Familias» que hay que abrir primero; al pulsar una, sus subcategorias se
- * despliegan a la derecha, en la columna de la foto. Ni las familias ni las
- * subcategorias son una lista escrita aqui: salen de Supabase via Nav
- * (`familias()` y `subsPorFamilia()`), asi que una familia o un `kind` nuevo
- * en la base aparece en el menu solo. */
+ * El menu no sabe cuantos niveles tiene: recibe el arbol ya montado
+ * (`lib/catalogo.ts#arbolMenu()`, que lee `family.parent_id` de Supabase) y
+ * pinta una columna por cada nodo abierto. Con los datos de hoy eso son dos
+ * columnas en Rifles (familia > kind) y tres en Municion (Municion > Recarga
+ * > Polvoras); si manana la base gana un nivel, sale solo. Aqui no hay
+ * ninguna lista de categorias escrita a mano. */
 
 import Link from 'next/link'
 import {
   useCallback, useEffect, useRef, useState, type ReactNode,
 } from 'react'
-
-type Familia = { slug: string; name: string; model_key: string | null }
+import type { Nodo } from '@/lib/catalogo'
 
 const FLECHA_ATRAS = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
@@ -33,39 +32,57 @@ const CHEVRON = (
 )
 
 const FOTO_DEFECTO = '/img/model/rifle.webp'
+const FOTO_CATALOGO = '/img/model/pistol.webp'
 
-const fotoDe = (f: Familia) => (f.model_key ? `/img/model/${f.model_key}.webp` : FOTO_DEFECTO)
+// Todas las fotos del arbol, para precargarlas de una: sin esto el primer
+// paso por cada rama ensena el hueco mientras el fichero viaja.
+function fotosDe(nodos: Nodo[]): string[] {
+  return nodos.flatMap((n) => (n.foto ? [n.foto] : []).concat(fotosDe(n.hijos)))
+}
 
 export default function NavMenu({
-  familias, subs, acciones, children,
+  arbol, acciones, children,
 }: {
-  familias: Familia[]
-  subs: Record<string, string[]>
+  arbol: Nodo[]
   acciones: ReactNode
   children: ReactNode
 }) {
   const [open, setOpen] = useState(false)
-  // Slug de la familia con las subcategorias desplegadas, o null.
-  const [abierta, setAbierta] = useState<string | null>(null)
+  /* El camino abierto, por indices: [] es solo el nivel 1, [4] es Municion
+   * desplegada, [4,2] es Municion > Recarga. Guardar el camino y no «que
+   * nodo esta abierto» es lo que hace que el numero de columnas no este
+   * escrito en ningun sitio. */
+  const [camino, setCamino] = useState<number[]>([])
   const [foto, setFoto] = useState(FOTO_DEFECTO)
   const [stuck, setStuck] = useState(false)
 
   const toggleRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
-  const subsRef = useRef<HTMLDivElement>(null)
-  const familiaCerrada = useRef<string | null>(null)
+  const cerrado = useRef<number[] | null>(null)
 
-  const familia = familias.find((f) => f.slug === abierta) ?? null
+  // Las columnas: la primera es el arbol entero, cada siguiente son los hijos
+  // del nodo elegido en la anterior.
+  const columnas: Nodo[][] = [arbol]
+  const abiertos: Nodo[] = []
+  camino.forEach((i) => {
+    const nodo = columnas[columnas.length - 1][i]
+    if (!nodo) return
+    abiertos.push(nodo)
+    columnas.push(nodo.hijos)
+  })
 
   const cerrar = useCallback(() => {
     setOpen(false)
     toggleRef.current?.focus()
   }, [])
 
-  const volver = useCallback(() => {
-    familiaCerrada.current = abierta
-    setAbierta(null)
-  }, [abierta])
+  // Recoge hasta dejar el camino en `n` niveles, no cierra el menu entero.
+  const retroceder = useCallback((n: number) => {
+    setCamino((c) => {
+      cerrado.current = c
+      return c.slice(0, n)
+    })
+  }, [])
 
   // La barra que se encoge al pasar los 40px de scroll -- el mismo umbral en
   // todas las paginas, no solo la portada.
@@ -76,34 +93,37 @@ export default function NavMenu({
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Precarga: sin esto el primer paso por cada familia ensena el hueco
-  // mientras el fichero viaja. Una vez, al montar, como en niveles().
   useEffect(() => {
-    const fotos = new Set([FOTO_DEFECTO, '/img/model/pistol.webp', ...familias.map(fotoDe)])
+    const fotos = new Set([FOTO_DEFECTO, FOTO_CATALOGO, ...fotosDe(arbol)])
     fotos.forEach((src) => { new window.Image().src = src })
-    // Solo al montar: `familias` no cambia entre renders del mismo layout.
+    // Solo al montar: el arbol no cambia entre renders del mismo layout.
   }, [])
 
   useEffect(() => {
     if (open) {
-      const first = menuRef.current?.querySelector<HTMLElement>('.nav__links a, .nav__links button')
-      first?.focus()
+      menuRef.current?.querySelector<HTMLElement>('.nav__links a, .nav__links button')?.focus()
     } else {
-      setAbierta(null)
+      setCamino([])
     }
   }, [open])
 
+  // El foco sigue al nivel: al abrir uno se va a su boton de volver, y al
+  // recogerlo regresa al nodo que lo abrio.
   useEffect(() => {
-    if (abierta) {
-      subsRef.current?.querySelector<HTMLElement>('.menu__atras')?.focus()
+    if (!open) return
+    const previo = cerrado.current
+    cerrado.current = null
+    if (camino.length && (!previo || previo.length < camino.length)) {
+      menuRef.current
+        ?.querySelector<HTMLElement>('.menu__subs.is-ultima .menu__atras')
+        ?.focus()
       return
     }
-    // Al cerrar el despliegue, el foco vuelve al boton de la familia.
-    const cual = familiaCerrada.current
-    if (!cual || !open) return
-    familiaCerrada.current = null
-    menuRef.current?.querySelector<HTMLElement>(`[data-familia="${cual}"]`)?.focus()
-  }, [abierta, open])
+    if (!previo) return
+    menuRef.current
+      ?.querySelector<HTMLElement>(`[data-camino="${previo.join('-')}"]`)
+      ?.focus()
+  }, [camino, open])
 
   // Al pasar a escritorio el panel deja de existir: hay que soltar el scroll.
   useEffect(() => {
@@ -113,23 +133,52 @@ export default function NavMenu({
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
-  // Escape recoge primero el despliegue y solo despues cierra el menu: si
-  // cerrase las dos cosas de golpe, salir de una subcategoria por error
+  // Escape recoge un nivel cada vez y solo cierra el menu cuando ya no queda
+  // ninguno: si cerrase todo de golpe, salir de una subcategoria por error
   // costaria volver a abrir el menu entero.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Escape' || !open) return
-      if (abierta) volver()
+      if (camino.length) retroceder(camino.length - 1)
       else cerrar()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [open, abierta, cerrar, volver])
+  }, [open, camino, cerrar, retroceder])
 
   // Un <div> a pantalla completa no frena el scroll de detras por si solo.
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
   }, [open])
+
+  // Una columna del menu: enlace si el nodo es hoja, boton que despliega si
+  // tiene hijos. Es la misma funcion en todos los niveles.
+  function fila(nodo: Nodo, i: number, nivel: number) {
+    const suCamino = [...camino.slice(0, nivel), i]
+    const enfoca = () => setFoto(nodo.foto ?? abiertos[nivel - 1]?.foto ?? FOTO_DEFECTO)
+    return (
+      <li key={nodo.href + nodo.etiqueta} style={{ '--i': i } as React.CSSProperties}>
+        {nodo.hijos.length ? (
+          <button
+            className="menu__cat"
+            type="button"
+            data-camino={suCamino.join('-')}
+            aria-expanded={camino[nivel] === i}
+            onClick={() => { enfoca(); setCamino(suCamino) }}
+            onMouseEnter={enfoca}
+            onFocus={enfoca}
+          >
+            {nodo.etiqueta}
+            {CHEVRON}
+          </button>
+        ) : (
+          <Link href={nodo.href} onMouseEnter={enfoca} onFocus={enfoca}>
+            {nodo.etiqueta}
+          </Link>
+        )}
+      </li>
+    )
+  }
 
   return (
     <>
@@ -160,10 +209,10 @@ export default function NavMenu({
 
       <div
         ref={menuRef}
-        className={`nav__menu${open ? ' is-open' : ''}${abierta ? ' is-nivel2' : ''}`}
+        className={`nav__menu${open ? ' is-open' : ''}${camino.length ? ' is-nivel2' : ''}`}
         id="navMenu"
         onClick={(e) => { if ((e.target as HTMLElement).closest('a')) setOpen(false) }}
-        onMouseLeave={() => setFoto(familia ? fotoDe(familia) : FOTO_DEFECTO)}
+        onMouseLeave={() => setFoto(abiertos.at(-1)?.foto ?? FOTO_DEFECTO)}
       >
         <div className="menu__rejilla">
           <nav className="menu__nav" aria-label="Principal">
@@ -171,60 +220,39 @@ export default function NavMenu({
               <li style={{ '--i': 0 } as React.CSSProperties}>
                 <Link
                   href="/catalogo"
-                  onMouseEnter={() => setFoto('/img/model/pistol.webp')}
-                  onFocus={() => setFoto('/img/model/pistol.webp')}
+                  onMouseEnter={() => setFoto(FOTO_CATALOGO)}
+                  onFocus={() => setFoto(FOTO_CATALOGO)}
                 >
                   Catálogo
                 </Link>
               </li>
-              {familias.map((f, i) => (
-                <li key={f.slug} style={{ '--i': i + 1 } as React.CSSProperties}>
-                  <button
-                    className="menu__cat"
-                    type="button"
-                    data-familia={f.slug}
-                    aria-expanded={abierta === f.slug}
-                    aria-controls="menuSubs"
-                    onClick={() => {
-                      setFoto(fotoDe(f))
-                      setAbierta((a) => (a === f.slug ? null : f.slug))
-                    }}
-                    onMouseEnter={() => setFoto(fotoDe(f))}
-                    onFocus={() => setFoto(fotoDe(f))}
-                  >
-                    {f.name}
-                    {CHEVRON}
-                  </button>
-                </li>
-              ))}
+              {columnas[0].map((n, i) => fila(n, i, 0))}
             </ul>
           </nav>
 
           <div className="menu__derecha">
-            {familia && (
-              <div className="menu__subs" id="menuSubs" ref={subsRef}>
+            {/* Una columna por nivel abierto, en cascada hacia la derecha. */}
+            {columnas.slice(1).map((hijos, k) => (
+              <div
+                className={`menu__subs${k === columnas.length - 2 ? ' is-ultima' : ''}`}
+                key={abiertos[k].href + abiertos[k].etiqueta}
+              >
                 <div className="menu__volver">
-                  <button className="menu__atras" type="button" onClick={volver}>
+                  <button
+                    className="menu__atras"
+                    type="button"
+                    onClick={() => retroceder(k)}
+                  >
                     {FLECHA_ATRAS}
-                    {familia.name}
+                    {abiertos[k].etiqueta}
                   </button>
-                  <Link className="menu__todo" href={`/catalogo?familia=${familia.slug}`}>
-                    Ver todo
-                  </Link>
+                  <Link className="menu__todo" href={abiertos[k].href}>Ver todo</Link>
                 </div>
                 <ul className="nav__links">
-                  {(subs[familia.slug] ?? []).map((kind, i) => (
-                    <li key={kind} style={{ '--i': i } as React.CSSProperties}>
-                      <Link
-                        href={`/catalogo?familia=${familia.slug}&sub=${encodeURIComponent(kind)}`}
-                      >
-                        {kind}
-                      </Link>
-                    </li>
-                  ))}
+                  {hijos.map((n, i) => fila(n, i, k + 1))}
                 </ul>
               </div>
-            )}
+            ))}
 
             <div className="menu__foto" aria-hidden="true">
               <img id="menuFoto" src={foto} alt="" width={1200} height={750} />

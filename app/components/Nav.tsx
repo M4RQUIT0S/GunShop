@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { familias, subsPorFamilia } from '@/lib/catalogo'
+import { familias, subsPorFamilia, arbolMenu } from '@/lib/catalogo'
 import NavMenu from './NavMenu'
 import HeaderActions from './HeaderActions'
 
@@ -11,11 +11,11 @@ import HeaderActions from './HeaderActions'
 
 export default async function Nav({ children }: { children: React.ReactNode }) {
   const [fams, subs] = await Promise.all([familias(), subsPorFamilia()])
+  const arbol = arbolMenu(fams, subs)
 
   return (
     <NavMenu
-      familias={fams}
-      subs={subs}
+      arbol={arbol}
       acciones={(
         <>
           <Link className="brand" href="/" aria-label="Armería Alcántara, inicio">

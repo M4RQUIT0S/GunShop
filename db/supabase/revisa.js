@@ -79,6 +79,15 @@ piezas.forEach(function (p) {
       .filter(function (c) { return /^\w+$/.test(c); });
   }
 
+  /* Una columna tambien puede llegar despues, por `alter table`. Sin esto la
+     comprobacion 5 daba por inexistente cualquier columna anadida en una
+     migracion posterior a la que creo la tabla, y cantaba un fallo que no
+     estaba. */
+  var reAlta = /alter table public\.(\w+)\s+add column (?:if not exists )?(\w+)/g;
+  while ((m = reAlta.exec(p.sql))) {
+    if (columnas[m[1]] && columnas[m[1]].indexOf(m[2]) === -1) columnas[m[1]].push(m[2]);
+  }
+
   var reVista = /create (?:or replace )?view public\.(\w+)([\s\S]*?)\bas\b/g;
   while ((m = reVista.exec(p.sql))) {
     apunta(m[1], p.nombre);

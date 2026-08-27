@@ -21,7 +21,7 @@ la conversación.
 
 ```
 npx next build                                                          # compila y tipa
-node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 13 pruebas
+node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 20 pruebas
 node db/supabase/revisa.js                                              # lee las migraciones sin necesitar base
 ```
 
@@ -71,10 +71,9 @@ todo lo que sólo lee Supabase y renderiza queda de servidor.
 **Client** (estado, contexto o listeners del DOM): los cuatro `*Context.tsx`
 (`CartContext`, `AccountContext`, `SearchContext`, `ConsultaContext`) y los
 cuatro paneles que los consumen (`CartPanel`, `AccountPanel`, `SearchPanel`,
-`ConsultaPanel`), `NavMenu.tsx` (nivel 1 = las familias de Supabase; al pulsar una, sus
-subcategorías se despliegan a la derecha, sobre la columna de la foto —
-en estrecho ocupan el sitio del nivel 1. Más `inert` sobre el resto de la
-página), `HeaderActions.tsx` (los tres botones de la barra — separado
+`ConsultaPanel`), `NavMenu.tsx` (menú en cascada: pinta una columna por nivel abierto del
+árbol que le pasa `Nav.tsx`, sin saber cuántos hay. Más `inert` sobre el
+resto de la página), `HeaderActions.tsx` (los tres botones de la barra — separado
 de `Nav.tsx` porque éste es Server y no puede llevar `onClick`), `CartCount.tsx`,
 `ProductoCTA.tsx` (botón de la ficha, pregunta a `CartContext` cuántas
 unidades hay — no guarda estado propio), `RielLaminas.tsx`, `Marquee.tsx`,
@@ -87,7 +86,8 @@ de `js/reveal.js` del sitio viejo).
 |---|---|
 | `lib/supabase.ts` | Cliente con la clave publicable. Revienta el **build** (no el arranque) si faltan las env vars — más vale un despliegue rojo que uno verde sirviendo una tienda vacía |
 | `lib/regimen.ts` | **Fuente única del régimen legal ANMaC.** Sin imports a propósito: se prueba sola, sin base ni env vars |
-| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorCalibre()` |
+| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorCalibre()`/`filtrarPorFamilia()`/`cuentaPorRama()`. Reexporta `lib/familia.ts` entero |
+| `lib/familia.ts` | **El árbol de familias, sin tocar la base.** `raices()`, `hijas()`, `rama()`, `arbolMenu()`. Aparte de `catalogo.ts` por lo mismo que `regimen.ts`: aquel importa el cliente de Supabase al cargarse y nada de dentro se puede probar sin `.env.local` |
 | `lib/cesta.ts` | Lógica de la reserva sin DOM: `exige()`/`faltas()`/`cupos()`/`notas()`/`reserva()`. Puro, se prueba solo |
 | `lib/cuenta.ts` | Sólo el tipo `Perfil` — vive aparte para que `cesta.ts` no dependa de un componente de React |
 | `lib/buscar.ts` | `llano()`/`buscar()`: búsqueda sin acentos, AND entre palabras, sobre nombre + ficha técnica |
@@ -117,12 +117,48 @@ que sincronizar.
 
 ## Supabase
 
-`db/supabase/migrations/0001..0009` son el esquema real, aplicado contra el
+`db/supabase/migrations/0001..0010` son el esquema real, aplicado contra el
 proyecto de producción. `0006_rls.sql` revoca todo y concede `select` sólo
 sobre las tablas de catálogo (`brand`, `product`, `product_variant`,
 `product_photo`, `family`, `calibre`, `licence_regime`, `fx_rate`) — la clave
 publicable que viaja al navegador no alcanza existencias, unidades con
 número de serie, clientes ni pedidos.
+
+### La familia es un árbol (0010)
+
+`family.parent_id` apunta a la propia `family`. `NULL` = familia raíz: las
+seis que salen en las baldosas de la portada y en los chips del catálogo. Hoy
+sólo Munición tiene rama:
+
+    Munición ─┬─ Balas
+              ├─ Cartuchos      ← los 15 productos de munición cuelgan de aquí
+              └─ Recarga ─┬─ Accesorios
+                          ├─ Equipos
+                          ├─ Fulminantes
+                          ├─ Pólvoras
+                          └─ Puntas
+
+Se resolvió con una columna y no con una tabla nueva porque `family` ya tiene
+su política de RLS y su `grant select` de `0006_rls.sql`; una tabla nueva
+llegaría sin ninguna de las dos.
+
+Consecuencias que hay que tener presentes al tocar el catálogo:
+
+- **`?familia=X` significa «X y su rama entera»**, no `p.familia === X`. Lo
+  resuelve `filtrarPorFamilia()`; contar plano daría cero en Munición, que ya
+  no tiene producto propio. Las baldosas y los chips cuentan con
+  `cuentaPorRama()`.
+- Los slugs de las hijas de Recarga van con prefijo (`recarga-accesorios`)
+  porque `accesorios` ya es una familia raíz y `family.slug` es único. El
+  rótulo que se lee es `name`, que sí se repite.
+- Las ocho ramas heredan `requiere-tccm` de Munición **a propósito**, incluidas
+  las que a primera vista no son munición: errar del lado estricto obliga a
+  pisar el régimen a mano para vender libre; al revés se entrega sin pedir la
+  credencial el día que alguien cargue pólvora en la rama equivocada.
+- El menú deriva su forma de aquí: los hijos de una familia son sus familias
+  hijas, y si no tiene ninguna, los `kind` de sus productos. Por eso Rifles
+  sigue abriéndose en sus seis `kind` sin caso especial, y Cartuchos —hoja del
+  árbol pero con los 15 productos— también. `test/arbol.test.ts` lo fija.
 
 Variables de entorno (`.env.local`, no viaja al repo — ver `.env.example`):
 

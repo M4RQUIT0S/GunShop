@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   listaProductos, familias, cambio, precio, slugDe, modoVenta,
+  raices, rama, filtrarPorFamilia, cuentaPorRama,
   filtrarPorSub, filtrarPorCalibre, subcategorias, calibresDe,
 } from '@/lib/catalogo'
 import { buscar } from '@/lib/buscar'
@@ -53,7 +54,7 @@ export default async function Catalogo({ searchParams }: Props) {
 
   const productosFamilia = busqueda
     ? buscar(todos, busqueda)
-    : (familia ? todos.filter((p) => p.familia === familia) : todos)
+    : (familia ? filtrarPorFamilia(todos, fams, familia) : todos)
 
   // Segundo nivel: solo existe dentro de una familia, y solo si hay algo
   // entre lo que elegir. No sale con una busqueda puesta -- serian chips sin
@@ -68,10 +69,7 @@ export default async function Catalogo({ searchParams }: Props) {
   const calibreActivo = calibre && calibres.includes(calibre) ? calibre : undefined
   const productos = calibreActivo ? filtrarPorCalibre(productosSub, calibreActivo) : productosSub
 
-  const countsPorFamilia = todos.reduce<Record<string, number>>(
-    (acc, p) => ({ ...acc, [p.familia]: (acc[p.familia] ?? 0) + 1 }),
-    {},
-  )
+  const countsPorFamilia = cuentaPorRama(todos, fams)
 
   const etiqueta = busqueda
     ? `«${busqueda}»`
@@ -102,12 +100,12 @@ export default async function Catalogo({ searchParams }: Props) {
             Todo
             <span className="chip__n">{todos.length}</span>
           </Link>
-          {fams.map((f) => (
+          {raices(fams).map((f) => (
             <Link
               key={f.slug}
               href={href({ familia: f.slug })}
               className="chip"
-              aria-pressed={!busqueda && familia === f.slug}
+              aria-pressed={!busqueda && !!familia && rama(fams, f.slug).includes(familia)}
             >
               {f.name}
               <span className="chip__n">{countsPorFamilia[f.slug] ?? 0}</span>
