@@ -205,3 +205,28 @@ export function precio(usdCents: number, arsPorUsd: number): string {
   if (!arsPorUsd) return 'Consultar'
   return pesos.format(Math.round((usdCents / 100) * arsPorUsd))
 }
+
+/* Subcategorias (`product.kind`) agrupadas por familia, para el menu de la
+ * barra. Consulta aparte y no `listaProductos()` porque el menu sale en cada
+ * pagina: aqui se piden dos columnas, no las fotos ni las variantes de los 79
+ * productos. Sale del mismo `kind` que el filtro del catalogo, asi que una
+ * subcategoria nueva aparece en el menu sola. */
+export async function subsPorFamilia(): Promise<Record<string, string[]>> {
+  const { data, error } = await supabase
+    .from('product')
+    .select('kind, family:family_id!inner ( slug )')
+    .is('discontinued_at', null)
+  if (error) throw new Error(`No se pudieron leer las subcategorias: ${error.message}`)
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const porFamilia = new Map<string, Set<string>>()
+  ;(data ?? []).forEach((p: any) => {
+    const slug = p.family.slug
+    if (!porFamilia.has(slug)) porFamilia.set(slug, new Set())
+    porFamilia.get(slug)!.add(p.kind)
+  })
+  return Object.fromEntries(
+    [...porFamilia].map(([slug, kinds]) => [
+      slug, [...kinds].sort((a, b) => a.localeCompare(b, 'es')),
+    ]),
+  )
+}

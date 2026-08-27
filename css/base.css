@@ -441,6 +441,7 @@ a { color: inherit; text-decoration: none; }
    de modelo, cinco vienen de estudio con fondo claro -- `pistol` y `reddot`
    miden 255 y 254 de borde -- y sobre negro entran como un rectangulo que
    grita. Es el mismo motivo por el que esas dos estan fuera de la portada. */
+.menu__derecha { position: relative; min-width: 0; }
 .menu__foto { position: relative; height: 100%; overflow: hidden; }
 .menu__foto img { width: 100%; height: 100%; object-fit: cover; }
 .menu__foto::after {
@@ -461,13 +462,45 @@ a { color: inherit; text-decoration: none; }
   }
   /* En estrecho no hay sitio para las dos cosas: manda la lista. */
   .menu__foto { display: none; }
+  /* Sin segunda columna donde desplegar, el nivel 2 ocupa el sitio del 1 --
+     se sale de el con la fila de «volver», que por eso esta siempre puesta.
+     `display: contents` en la columna derecha para que la rejilla vea solo
+     lo que de verdad se pinta: si no, con la foto ya oculta seguiria contando
+     una segunda fila vacia y le repartiria medio alto de la pantalla. */
+  .menu__derecha { display: contents; }
+  .nav__menu.is-nivel2 .menu__nav { display: none; }
+  .menu__subs {
+    position: static;
+    background: none;
+    padding: calc(var(--nav-h-ancha) + 1rem) var(--pad-x) 2rem;
+  }
 }
 
 .menu__nav { min-width: 0; }
 
-/* El segundo nivel tapa al primero, no se abre debajo. */
-.menu__seccion[hidden] { display: none; }
-.nav__menu.is-nivel2 #navNivel1 { display: none; }
+/* El segundo nivel se despliega A LA DERECHA, sobre la columna de la foto, no
+   tapando al primero: las dos listas se leen a la vez, que es lo que hace que
+   se vea de que familia cuelga cada subcategoria. La foto sigue detras porque
+   el panel es translucido, no opaco. En estrecho no hay dos columnas y si
+   pasa a tapar (mas abajo, en la media query). */
+.menu__subs {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow-y: auto;
+  padding: calc(var(--nav-h-ancha) + 1rem) var(--pad-x) 2rem clamp(1rem, 2vw, 2rem);
+  background: rgba(0, 0, 0, 0.82);
+  animation: entra-subs var(--t) var(--ease);
+}
+@keyframes entra-subs { from { opacity: 0; transform: translateX(-1.5rem); } }
+
+/* Enfrentadas: el nivel 1 termina contra la calle y el nivel 2 arranca en
+   ella, asi que las dos columnas se tocan por el eje del despliegue. */
+.menu__subs .nav__links a {
+  text-align: left;
+  font-size: clamp(1rem, 0.8rem + 0.7vw, 1.4rem);
+}
+.menu__subs .nav__links a:hover { padding-right: 0; padding-left: 1.25rem; }
 
 .menu__volver {
   display: flex;
@@ -506,7 +539,10 @@ a { color: inherit; text-decoration: none; }
   background: none;
   border: 0;
   cursor: pointer;
-  padding: 1.1rem 0;
+  /* 0.9rem y no 1.1: el nivel 1 son las seis familias mas «Catalogo», siete
+     filas, y a 1.1rem la columna se pasaba del alto de vista por dos pixeles
+     -- barra de scroll en mitad del lienzo negro por nada. */
+  padding: 0.9rem 0;
   font-family: var(--display);
   font-size: clamp(1.35rem, 0.9rem + 1.6vw, 2.25rem);
   letter-spacing: var(--tr);
@@ -519,6 +555,26 @@ a { color: inherit; text-decoration: none; }
 }
 .nav__links a:hover,
 .nav__links button:hover { color: var(--tinta); padding-right: 1.25rem; }
+
+/* La familia lleva su flecha pegada al rotulo -- la lista va alineada a la
+   derecha, asi que la flecha queda en el borde, apuntando a la columna donde
+   se abren las subcategorias. */
+.nav__links .menu__cat {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.menu__cat svg {
+  width: 0.62em;
+  height: 0.62em;
+  flex: none;
+  opacity: 0.5;
+  transition: transform var(--t) var(--ease), opacity var(--t) var(--ease);
+}
+.menu__cat:hover svg { opacity: 1; }
+.menu__cat[aria-expanded="true"] { color: var(--tinta); }
+.menu__cat[aria-expanded="true"] svg { opacity: 1; transform: translateX(0.35rem); }
 
 /* Los enlaces entran escalonados detras de la persiana. */
 .nav__menu.is-open .nav__links li {

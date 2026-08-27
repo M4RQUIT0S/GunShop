@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { familias } from '@/lib/catalogo'
+import { familias, subsPorFamilia } from '@/lib/catalogo'
 import NavMenu from './NavMenu'
 import HeaderActions from './HeaderActions'
 
@@ -10,11 +10,12 @@ import HeaderActions from './HeaderActions'
  * HeaderActions (cliente) -- un Server Component no puede llevar onClick. */
 
 export default async function Nav({ children }: { children: React.ReactNode }) {
-  const fams = await familias()
+  const [fams, subs] = await Promise.all([familias(), subsPorFamilia()])
 
   return (
     <NavMenu
       familias={fams}
+      subs={subs}
       acciones={(
         <>
           <Link className="brand" href="/" aria-label="Armería Alcántara, inicio">

@@ -71,8 +71,10 @@ todo lo que sólo lee Supabase y renderiza queda de servidor.
 **Client** (estado, contexto o listeners del DOM): los cuatro `*Context.tsx`
 (`CartContext`, `AccountContext`, `SearchContext`, `ConsultaContext`) y los
 cuatro paneles que los consumen (`CartPanel`, `AccountPanel`, `SearchPanel`,
-`ConsultaPanel`), `NavMenu.tsx` (menú de dos niveles + `inert` sobre el resto
-de la página), `HeaderActions.tsx` (los tres botones de la barra — separado
+`ConsultaPanel`), `NavMenu.tsx` (nivel 1 = las familias de Supabase; al pulsar una, sus
+subcategorías se despliegan a la derecha, sobre la columna de la foto —
+en estrecho ocupan el sitio del nivel 1. Más `inert` sobre el resto de la
+página), `HeaderActions.tsx` (los tres botones de la barra — separado
 de `Nav.tsx` porque éste es Server y no puede llevar `onClick`), `CartCount.tsx`,
 `ProductoCTA.tsx` (botón de la ficha, pregunta a `CartContext` cuántas
 unidades hay — no guarda estado propio), `RielLaminas.tsx`, `Marquee.tsx`,
@@ -85,7 +87,7 @@ de `js/reveal.js` del sitio viejo).
 |---|---|
 | `lib/supabase.ts` | Cliente con la clave publicable. Revienta el **build** (no el arranque) si faltan las env vars — más vale un despliegue rojo que uno verde sirviendo una tienda vacía |
 | `lib/regimen.ts` | **Fuente única del régimen legal ANMaC.** Sin imports a propósito: se prueba sola, sin base ni env vars |
-| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorCalibre()` |
+| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorCalibre()` |
 | `lib/cesta.ts` | Lógica de la reserva sin DOM: `exige()`/`faltas()`/`cupos()`/`notas()`/`reserva()`. Puro, se prueba solo |
 | `lib/cuenta.ts` | Sólo el tipo `Perfil` — vive aparte para que `cesta.ts` no dependa de un componente de React |
 | `lib/buscar.ts` | `llano()`/`buscar()`: búsqueda sin acentos, AND entre palabras, sobre nombre + ficha técnica |

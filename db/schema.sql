@@ -31,6 +31,7 @@
 
 begin;
 
+
 create schema if not exists gunshop;
 set search_path = gunshop, public;
 
