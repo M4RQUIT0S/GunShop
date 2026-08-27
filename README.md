@@ -47,10 +47,9 @@ Dos cosas que no son evidentes:
 ## Comprobaciones
 
 ```
-npx next build                      # compila y comprueba tipos
-node --test test/modoventa.test.ts  # ningun producto regulado se paga sin validar
-node db/supabase/revisa.js          # lee las migraciones sin necesitar base
-node test/selftest.js               # catalogo e imagenes del sitio anterior
+npx next build                                                           # compila y comprueba tipos
+node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 13 pruebas
+node db/supabase/revisa.js                                               # lee las migraciones sin necesitar base
 ```
 
 `db/supabase/prueba.sql` prueba una venta entera contra una base ya aplicada
@@ -65,6 +64,6 @@ y sembrada, y hace `rollback`: no deja ni una fila.
 - `db/supabase/` · las nueve migraciones y su comprobador.
 - `public/img/product/` · una foto por producto. **Ninguna aclarada para
   redistribuir**; la procedencia está en su `CREDITS.md`.
-- `js/`, `css/`, `index.html` · el sitio estático anterior. Ya no se sirve,
-  pero `js/catalog.js` sigue siendo la única fuente de los 76 productos
-  mientras la base tenga sólo los 18 de la muestra. No borrar hasta cargarlos.
+- `css/` · el diseño "Alcántara" (lienzo negro, medido de rolls-roycemotorcars.com).
+  Importado como CSS global clásico desde `app/layout.tsx`, no es resto del
+  sitio estático — es la hoja de estilos en producción.

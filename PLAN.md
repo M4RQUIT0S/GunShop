@@ -369,16 +369,41 @@ sin salida). `0009_fotos.sql` sólo existe en `ecommerce-next` y llega solo a
         base real ya con 79 productos) y `npx next build` en verde.
       - Commit: `feat: genera el seed de Supabase con los 76 productos de js/catalog.js`.
 
-- [ ] **10. Limpieza.**
+- [x] **10. Limpieza.**
       - ~~Borrar `app/globals.css`, `app/tokens.css`, `app/catalogo.module.css`~~
         ya borrados en la fase 4 (dejaron de usarse ahí mismo).
-      - Borrar `index.html` y los `js/*.js`/`css/*.css` sueltos en la raíz
-        de `ecommerce-next` (foto vieja pre-rediseño). Confirmar que
-        `public/img/` es superset de `img/` antes de borrar `img/`.
-      - Conservar `tools/seed.js`, `tools/models.py`, `tools/render.py`,
-        `tools/fotos.py`.
-      - Reescribir `CLAUDE.md` de `ecommerce-next` (hoy describe Himon /
-        papel claro / lima, no la app real).
+      - `img/` **no existe** en la raíz de `ecommerce-next` (ya se había ido
+        en un commit anterior de esta rama) — nada que comparar contra
+        `public/img/` ni que borrar en ese punto.
+      - Borrados `index.html` y los diez `js/*.js` sueltos en la raíz (sitio
+        estático pre-Next.js): `account.js`, `art.js`, `cart.js`,
+        `catalog.js`, `main.js`, `meshes.js`, `nav.js`, `reveal.js`,
+        `scene.js`, `search.js`. Ninguno tenía `import`/`require` real desde
+        `app/`/`lib/` — sólo comentarios de "puerto de js/x.js" y menciones
+        en Markdown.
+      - **`css/*.css` NO se borró**, a diferencia de lo que decía el resumen
+        de la fase: `app/layout.tsx` los importa como CSS global clásico
+        (`import '../css/tokens.css'` etc., fase 1) — son la hoja de
+        estilos en producción, no restos del sitio estático. `README.md`
+        decía lo contrario ("el sitio estático anterior. Ya no se sirve");
+        esa línea estaba desactualizada y se corrigió de paso.
+      - Fase 9 confirmada aplicada contra Supabase real (79 productos, ver
+        su propio cierre) → condición cumplida para borrar `js/catalog.js`
+        y `test/selftest.js`, y se borraron. Efecto colateral: `tools/seed.js`
+        hace `require('../js/catalog.js')` y ese fichero ya no existe en esta
+        rama — `tools/seed.js` queda sin poder correr tal cual (genera
+        `db/seed.sql`, el esquema Postgres viejo que ya no usa nada de la
+        app ni de los tests automatizados). Se conserva igual, como pide el
+        plan, documentado en el `CLAUDE.md` nuevo.
+      - Conservados `tools/seed.js`, `tools/seed-supabase.js`,
+        `tools/models.py`, `tools/render.py`, `tools/fotos.py`.
+      - `CLAUDE.md` reescrito entero: describe la app real (rutas, Server vs
+        Client Components, `lib/regimen.ts` como fuente única del régimen,
+        Supabase/RLS, diseño "Alcántara", cómo correr build/tests). También
+        se corrigieron las mismas dos líneas obsoletas en `README.md`
+        (comando de test viejo, la nota sobre `js/`/`css/`/`index.html`).
+      - Comprobación: `npx next build` y la batería de tests en verde tras
+        borrar (ver commit).
       - Commit: `chore: retira el sitio estatico viejo y pone CLAUDE.md al dia`.
 
 - [ ] **11. Despliegue.**
