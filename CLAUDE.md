@@ -404,3 +404,20 @@ migración y del respaldo 3D aparcado.
   pero falta la fila `customer` (y su política de RLS) para poder cablear
   `crear_pedido()`. Hasta entonces la reserva es un aviso por `mailto:`, no
   una venta real.
+
+Deuda menor, rescatada de `PLAN.md` antes de que ese cuaderno se borre:
+
+- **Tres secciones de `index.html` sin portar**: Taller (los 4 pasos),
+  Preguntas (FAQ) y Contacto (el bloque de 4 consultas «En qué podemos
+  ayudarle»). Los enlaces que apuntaban a ellas (`/#taller`, `/#preguntas`,
+  `/#contacto`, `/#paso-1..4`) se retiraron en `2e71d5a` para no dejar anclas
+  muertas; hay que reponerlos cuando las secciones existan.
+- **`<a href>` plano en vez de `next/link`** en las baldosas de familia y las
+  CTA de portada (`app/page.tsx`): provoca recarga completa en vez de
+  transición de cliente.
+- **`.calibre__sel` sin uso** en `css/catalog.css` — estilos de un `<select>`
+  nativo que nunca se usó: el filtro de calibre se hizo con chips. Ya venía
+  así de `main`, no lo introdujo la migración.
+- **Ventana de hasta 10 min de desfase** por `revalidate = 600` si cambia un
+  régimen en Supabase. Impacto bajo hoy (no hay checkout real); volver a
+  mirarlo cuando exista panel de administración.

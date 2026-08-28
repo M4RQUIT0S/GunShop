@@ -480,6 +480,25 @@ alcance completo del sitio original:
 
 ---
 
+## Rescatado — este cuaderno ya se puede borrar sin perder nada
+
+El 2026-08-28 se sacó de aquí todo lo que sobrevive a la migración, porque
+`CLAUDE.md` dice que este fichero es desechable y dentro había investigación
+que no lo es:
+
+| Qué | Dónde está ahora |
+|---|---|
+| Subcategorías bloqueadas por fotografía, y las tres candidatas de Commons que fallaron | `notas/fotografia-de-producto.md`, en el vault |
+| Régimen de la recarga pendiente de verificar (y la corrección: ya no están «fuera», están marcadas estrictas) | `notas/regimen-por-verificar.md`, en el vault |
+| Las cuatro deudas de código de la revisión final | `CLAUDE.md`, «Lo que queda pendiente» |
+
+Vault: `C:\Users\marco\.claude\projects\D--GunShop\memory\notas\`.
+
+Lo que queda debajo es el registro de cómo se hizo la migración: útil como
+historia, pero ya está todo en `git log` y en `CLAUDE.md`.
+
+---
+
 ## Heredado del cuaderno de `main` al fusionar el port
 
 `main` traía su propio `PLAN.md` («Más subcategorías dentro de la armería»).
