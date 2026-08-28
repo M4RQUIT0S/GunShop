@@ -305,19 +305,32 @@
   color: var(--gris-claro);
   background: var(--pieza);
 }
-.estado__clu {
+.estado__quien {
   font-family: var(--display);
   letter-spacing: var(--tr);
   text-transform: uppercase;
   font-size: 0.875rem;
   color: var(--tinta);
 }
-/* El naranja de alerta no llega a 4.5:1 sobre `--pieza`, asi que aqui hace de
-   marca y el texto se queda en blanco, como en `.aviso--falta`. */
-.estado__clu.is-mal {
-  padding-left: 0.65rem;
-  border-left: 2px solid var(--alerta);
+
+/* El acceso con Google. Fantasma, como el resto del sistema: el unico color
+   del panel es la G, que sus normas de marca piden a todo color. Se le quita
+   la flecha de `.btn::after` -- la marca que abre el boton es el logo. */
+.btn--google { width: 100%; }
+.btn--google::after { content: none; }
+
+/* El «o» entre Google y el formulario a mano, con filete a los lados. */
+.form__o {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: var(--fs-menudo);
+  letter-spacing: var(--tr);
+  text-transform: uppercase;
+  color: var(--gris);
 }
+.form__o::before,
+.form__o::after { content: ""; flex: 1; height: 1px; background: var(--filete-tenue); }
 
 .form {
   display: grid;

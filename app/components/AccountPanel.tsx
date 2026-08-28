@@ -1,11 +1,16 @@
 'use client'
 
-/* Puerto casi literal de js/account.js. Sin contraseña a proposito -- ver
- * AccountContext.tsx. El formulario es no controlado (como en el original,
- * que leia/escribia `nodo.form.campo.value` a mano): se remonta con
- * `key={abrirTick}` en cada apertura para que los valores por defecto
- * reflejen el perfil guardado, igual que `pinta()` los reescribia cada vez
- * que `abrir()` mostraba el panel. */
+/* Puerto de js/account.js, ya sin la cartera de credenciales: la pagina no
+ * vende productos controlados, asi que no pide numero de CLU, vencimiento ni
+ * TCCM. Queda la identidad de contacto -- nombre y correo -- que es lo unico
+ * que la reserva copia en el correo al taller, y el acceso con Google, que la
+ * rellena sin escribirla.
+ *
+ * Sin contraseña a proposito: o entras con Google, o dejas los datos en este
+ * navegador. Ver AccountContext.tsx. El formulario es no controlado (como en
+ * el original, que leia/escribia `nodo.form.campo.value` a mano): se remonta
+ * con `key=` cuando cambia el perfil o se abre el panel, para que los valores
+ * por defecto reflejen lo guardado. */
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { Pedido } from '@/lib/cesta'
@@ -18,44 +23,35 @@ function fecha(iso: string): string {
   return t.length === 3 ? `${t[2]}/${t[1]}/${t[0]}` : iso
 }
 
-function dias(iso: string): number {
-  const falta = Date.parse(`${iso}T00:00:00`) - Date.now()
-  return Math.floor(falta / 86400000)
-}
-
 const grupos = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 })
 
-function Estado({ perfil }: { perfil: Perfil | null }) {
-  if (!perfil) {
+/* La G de Google. Va en el boton porque sus normas de marca piden el logo
+   cuando el boton dice "con Google"; el resto del boton es el fantasma de
+   siempre, que es lo que pega con el lienzo negro. */
+function LogoGoogle() {
+  return (
+    <svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.28-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.55 10.78l7.98-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
+  )
+}
+
+function Estado({ perfil, google }: { perfil: Perfil | null; google: string | null }) {
+  if (!perfil && !google) {
     return (
       <p>
-        Sin datos cargados. Con la CLU aquí, la cesta ya sabe qué puede
-        reservarse y qué no.
+        Sin datos cargados. Entra con Google o deja tu nombre y correo: es lo único
+        que la reserva necesita para llegar al taller.
       </p>
     )
   }
-  const d = perfil.vence ? dias(perfil.vence) : null
-  let clase = 'estado__clu'
-  let texto: string
-  if (d === null) {
-    texto = `CLU ${perfil.clu} · sin vencimiento cargado`
-  } else if (d < 0) {
-    clase = 'estado__clu is-mal'
-    texto = `CLU ${perfil.clu} · venció el ${fecha(perfil.vence)}`
-  } else if (d <= 90) {
-    clase = 'estado__clu is-ojo'
-    texto = `CLU ${perfil.clu} · vence en ${d} días: ya estás en plazo de renovación`
-  } else {
-    texto = `CLU ${perfil.clu} · vigente hasta ${fecha(perfil.vence)}`
-  }
   return (
     <>
-      <p className={clase}>{texto}</p>
-      <p>
-        {perfil.tccm
-          ? 'TCCM declarada: puedes comprar munición dentro de tu cupo.'
-          : 'Sin TCCM: la munición queda fuera hasta declararla.'}
-      </p>
+      <p className="estado__quien">{perfil?.nombre || google || 'Cuenta iniciada'}</p>
+      <p>{google ? `Sesión con Google · ${google}` : perfil?.email}</p>
     </>
   )
 }
@@ -91,7 +87,7 @@ function Pedidos() {
 
 export default function AccountPanel() {
   const {
-    perfil, guardar, borrar, abrirTick,
+    perfil, google, fallo, guardar, borrar, entrarConGoogle, salir, abrirTick,
   } = useAccount()
 
   const ref = useRef<HTMLDialogElement>(null)
@@ -109,16 +105,13 @@ export default function AccountPanel() {
   }
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
-    // El navegador ya valida obligatorios, formato y fecha: no hace falta
-    // reescribir eso en JS.
+    // El navegador ya valida obligatorios y formato: no hace falta reescribir
+    // eso en JS.
     event.preventDefault()
     const f = new FormData(event.currentTarget)
     guardar({
       nombre: String(f.get('nombre') ?? '').trim(),
       email: String(f.get('email') ?? '').trim(),
-      clu: String(f.get('clu') ?? '').trim(),
-      vence: String(f.get('vence') ?? ''),
-      tccm: f.get('tccm') === 'on',
     })
   }
 
@@ -134,17 +127,39 @@ export default function AccountPanel() {
       <div className="panel__box">
         <header className="panel__head">
           <div>
-            <p className="eyebrow">Legítimo usuario</p>
+            <p className="eyebrow">Tiro deportivo y caza</p>
             <h2 className="panel__title">Mi cuenta</h2>
           </div>
           <button className="panel__x" type="button" onClick={cerrar} aria-label="Cerrar la cuenta">✕</button>
         </header>
 
         <div className="panel__estado" id="accEstado">
-          <Estado perfil={perfil} />
+          <Estado perfil={perfil} google={google} />
         </div>
 
-        <form className="form" id="accForm" key={abrirTick} onSubmit={onSubmit}>
+        {/* El perfil puede cambiar sin que el panel se cierre (entrar con
+            Google lo reescribe), asi que la clave lleva las dos cosas. */}
+        <form
+          className="form"
+          id="accForm"
+          key={`${abrirTick}:${perfil?.email ?? ''}:${perfil?.nombre ?? ''}`}
+          onSubmit={onSubmit}
+        >
+          {google ? (
+            <button className="btn btn--ghost btn--google" type="button" onClick={salir}>
+              <LogoGoogle />
+              Cerrar la sesión de Google
+            </button>
+          ) : (
+            <button className="btn btn--ghost btn--google" type="button" onClick={entrarConGoogle}>
+              <LogoGoogle />
+              Continuar con Google
+            </button>
+          )}
+          {fallo && <p className="aviso aviso--falta" role="status">{fallo}</p>}
+
+          <p className="form__o"><span>o déjalos a mano</span></p>
+
           <label className="campo">
             <span>Nombre y apellido</span>
             <input name="nombre" type="text" required autoComplete="name" maxLength={60} defaultValue={perfil?.nombre ?? ''} />
@@ -152,29 +167,6 @@ export default function AccountPanel() {
           <label className="campo">
             <span>Correo</span>
             <input name="email" type="email" required autoComplete="email" maxLength={80} defaultValue={perfil?.email ?? ''} />
-          </label>
-          <div className="campo__par">
-            <label className="campo">
-              <span>Nº de CLU</span>
-              <input
-                name="clu"
-                type="text"
-                required
-                inputMode="numeric"
-                pattern="[0-9]{4,12}"
-                title="Entre 4 y 12 cifras"
-                autoComplete="off"
-                defaultValue={perfil?.clu ?? ''}
-              />
-            </label>
-            <label className="campo">
-              <span>Vence el</span>
-              <input name="vence" type="date" required defaultValue={perfil?.vence ?? ''} />
-            </label>
-          </div>
-          <label className="campo campo--check">
-            <input name="tccm" type="checkbox" defaultChecked={!!perfil?.tccm} />
-            <span>Tengo Tarjeta de Consumo (TCCM) vigente</span>
           </label>
           <div className="form__pie">
             <button className="btn" type="submit" id="accGuarda">
@@ -185,9 +177,10 @@ export default function AccountPanel() {
             </button>
           </div>
           <p className="form__nota">
-            Sin contraseña y sin servidor: estos datos se quedan en este navegador y no
-            se envían a ninguna parte. La armería comprueba la credencial original en
-            el mostrador, siempre.
+            Solo nombre y correo: la tienda no vende piezas que exijan credencial
+            ANMaC, así que no te pedimos la CLU ni la Tarjeta de Consumo en ningún
+            momento. Lo que escribas aquí se queda en este navegador; la sesión de
+            Google solo sirve para identificarte.
           </p>
         </form>
 

@@ -88,8 +88,8 @@ de `js/reveal.js` del sitio viejo).
 | `lib/regimen.ts` | **Fuente única del régimen legal ANMaC.** Sin imports a propósito: se prueba sola, sin base ni env vars |
 | `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorCalibre()`/`filtrarPorFamilia()`/`cuentaPorRama()`. Reexporta `lib/familia.ts` entero |
 | `lib/familia.ts` | **El árbol de familias, sin tocar la base.** `raices()`, `hijas()`, `rama()`, `arbolMenu()`. Aparte de `catalogo.ts` por lo mismo que `regimen.ts`: aquel importa el cliente de Supabase al cargarse y nada de dentro se puede probar sin `.env.local` |
-| `lib/cesta.ts` | Lógica de la reserva sin DOM: `exige()`/`faltas()`/`cupos()`/`notas()`/`reserva()`. Puro, se prueba solo |
-| `lib/cuenta.ts` | Sólo el tipo `Perfil` — vive aparte para que `cesta.ts` no dependa de un componente de React |
+| `lib/cesta.ts` | Lógica de la reserva sin DOM: `faltas()` (qué impide reservar) y `reserva()` (pedido + `mailto:`) |
+| `lib/cuenta.ts` | Sólo el tipo `Perfil` (`{nombre, email}`) — vive aparte para que `cesta.ts` no dependa de un componente de React |
 | `lib/buscar.ts` | `llano()`/`buscar()`: búsqueda sin acentos, AND entre palabras, sobre nombre + ficha técnica |
 
 ### `lib/regimen.ts` — régimen legal ANMaC
@@ -107,8 +107,12 @@ y de acá solamente:
   modo, la tienda vendería un arma con checkout directo. Un régimen
   desconocido cae a `inquiry_only` — lo contrario (tratarlo como venta libre)
   es entregar sin pedir la credencial.
-- `requisitos(regimen)` → `{ clu, tccm, certificado }`, lo que `lib/cesta.ts`
-  usa para decidir qué le falta a una reserva.
+- `requisitos(regimen)` → `{ clu, tccm, certificado }`, la tabla de qué papel
+  pide ANMaC para llevarse cada cosa. **Hoy no la llama nadie**: desde que la
+  página no vende nada controlado, `lib/cesta.ts` corta con
+  `comprableDirecto()` y no gradúa qué credencial falta. Se conserva porque es
+  el art. 5 del decreto 395/75 escrito una sola vez, y volver a derivarlo el
+  día que la munición se venda en línea es más caro que dejarlo.
 
 `test/modoventa.test.ts` cubre que ningún régimen regulado caiga en
 `direct_checkout`. Al añadir un régimen nuevo, se toca sólo este fichero —
@@ -117,7 +121,7 @@ que sincronizar.
 
 ## Supabase
 
-`db/supabase/migrations/0001..0010` son el esquema real, aplicado contra el
+`db/supabase/migrations/0001..0011` son el esquema real, aplicado contra el
 proyecto de producción. `0006_rls.sql` revoca todo y concede `select` sólo
 sobre las tablas de catálogo (`brand`, `product`, `product_variant`,
 `product_photo`, `family`, `calibre`, `licence_regime`, `fx_rate`) — la clave
@@ -130,8 +134,8 @@ número de serie, clientes ni pedidos.
 seis que salen en las baldosas de la portada y en los chips del catálogo. Hoy
 sólo Munición tiene rama:
 
-    Munición ─┬─ Balas
-              ├─ Cartuchos      ← los 15 productos de munición cuelgan de aquí
+    Munición ─┬─ Balas          ← munición metálica: rifle y arma corta (11)
+              ├─ Cartuchos      ← munición de escopeta, 12/70 y 12/76 (4)
               └─ Recarga ─┬─ Accesorios
                           ├─ Equipos
                           ├─ Fulminantes
@@ -157,8 +161,24 @@ Consecuencias que hay que tener presentes al tocar el catálogo:
   credencial el día que alguien cargue pólvora en la rama equivocada.
 - El menú deriva su forma de aquí: los hijos de una familia son sus familias
   hijas, y si no tiene ninguna, los `kind` de sus productos. Por eso Rifles
-  sigue abriéndose en sus seis `kind` sin caso especial, y Cartuchos —hoja del
-  árbol pero con los 15 productos— también. `test/arbol.test.ts` lo fija.
+  sigue abriéndose en sus seis `kind` sin caso especial, y Balas —hoja del
+  árbol pero con once productos— también. `test/arbol.test.ts` lo fija.
+
+**Bala no es cartucho (0011).** El reparto lo decide el calibre, no el nombre
+comercial: todo lo de `12/70` y `12/76` es cartucho de escopeta y se queda en
+Cartuchos; el resto (`.308`, `6,5 CM`, `.30-06`, `.22 LR`) es bala y cuelga de
+Balas. Los `kind` acompañan —«Bala de caza», «Cartucho de caza»— porque son el
+tercer nivel del menú: dejar «Cartuchería metálica» colgando de Balas volvía a
+mezclar las dos palabras justo donde se acaban de separar. Ahí cayeron también
+los duplicados sin tilde que arrastraban los tres productos de muestra de
+`db/supabase/seed.sql`.
+
+Las cinco ramas de Recarga tienen dos referencias cada una y **ninguna lleva
+`cartridges_per_box`**, ni siquiera los fulminantes que vienen en cajas de mil:
+esa columna es el cupo anual de la TCCM contado en cartuchos, y un fulminante
+suelto no lo es. Las diez heredan `requiere-tccm` de la familia, prensas y
+comparadores incluidos — herramienta marcada de más se corrige con un
+`update`, pólvora marcada de menos se entrega sin pedir la credencial.
 
 Variables de entorno (`.env.local`, no viaja al repo — ver `.env.example`):
 
@@ -196,16 +216,57 @@ necesitan ver el mismo estado.
 | Contexto | Guarda en `localStorage` | Qué hace |
 |---|---|---|
 | `CartContext` | `gunshop:cesta` | `{id: unidades}`, no la ficha — el producto se resuelve contra `listaProductos()` fresco al montar, así un precio nuevo entra solo |
-| `AccountContext` | `gunshop:cuenta` | Perfil del cliente: CLU, vencimiento, TCCM. Sin contraseña a propósito — guardar una en `localStorage` es peor que no tenerla |
+| `AccountContext` | `gunshop:cuenta` | Identidad de contacto: **sólo nombre y correo**. La pone el acceso con Google (Supabase Auth) o se escribe a mano. Sin contraseña propia y **sin CLU ni TCCM** — ver «Cuenta: Google, y ninguna credencial» |
 | `SearchContext` | nada | Sólo el tick de "abrir panel"; el filtrado corre en `lib/buscar.ts` |
 | `ConsultaContext` | nada | `abrir({titulo, rotulo, mensaje})` — cualquier CTA puede abrir el panel de consulta prellenado |
 
-**No hay reserva real contra el backend.** `crear_pedido()` en Supabase exige
-`auth.uid()` y no hay login/signup en esta tanda; `CartPanel` arma la reserva
-100% en cliente (`localStorage['gunshop:pedidos']` + `mailto:`), igual que
-hacía `js/cart.js` en el sitio estático — ninguno de los dos llamó nunca a un
-backend real. Cablear la reserva de verdad arrastra login/signup, fuera de
-alcance salvo que se pida.
+**No hay reserva real contra el backend.** Hay sesión (`auth.uid()` existe en
+cuanto entras con Google), pero `crear_pedido()` además necesita una fila en
+`customer` ligada a esa sesión, y eso no está: la cuenta de Google sólo
+identifica. `CartPanel` sigue armando la reserva 100% en cliente
+(`localStorage['gunshop:pedidos']` + `mailto:`), igual que hacía `js/cart.js`
+en el sitio estático.
+
+### Cuenta: Google, y ninguna credencial
+
+**La página no vende productos controlados.** De ahí salen dos reglas que van
+juntas y no se tocan por separado:
+
+1. **No se pide el número de CLU en ningún formulario**, ni el vencimiento ni
+   la TCCM. `Perfil` es `{nombre, email}` y nada más: es lo que el `mailto:`
+   de la reserva necesita para llegar al taller. El perfil viejo con
+   `clu`/`vence`/`tccm` que quedara en `localStorage` se lee y se descarta
+   solo (`leer()` en `AccountContext.tsx`).
+2. **Nada que exija credencial ANMaC puede reservarse.** `faltas()` corta la
+   cesta entera con `comprableDirecto()` — la misma función que ya decide el
+   botón de la ficha (`ProductoCTA.tsx`), para que no haya dos criterios que
+   puedan desincronizarse. `ProductoCTA` ya manda esos regímenes a consulta;
+   `faltas()` es la red por si uno llega a la cesta igual (una cesta vieja en
+   `localStorage`, un régimen que cambia en la base con el carrito lleno).
+   `test/modoventa.test.ts` fija el invariante del que depende: ningún régimen
+   regulado es `direct_checkout`.
+
+Quitar la 2 sin la 1 sería lo caro: entregar sin pedir el papel. Por eso el
+corte vive en `lib/`, no en el panel.
+
+**El acceso con Google** es Supabase Auth con el proveedor `google`
+(`signInWithOAuth`). Sin ruta de callback a propósito: `redirectTo` es la misma
+URL en la que estabas y `supabase-js` canjea el `?code=` solo
+(`detectSessionInUrl`), que es por lo que `lib/supabase.ts` ya no lleva
+`persistSession: false`. En Node no hay `localStorage` y `auth-js` cae a
+memoria, así que el render de servidor sigue sin sesión.
+
+Entrar con Google reescribe el perfil con el nombre y el correo de la cuenta;
+cerrar sesión **no** borra el perfil (para eso está «Borrar mis datos»), porque
+quien lo escribió a mano nunca usó Google.
+
+Hay que darlo de alta en el panel de Supabase — no se configura desde el repo:
+
+| Dónde | Qué |
+|---|---|
+| *Authentication → Sign In / Providers → Google* | Client ID y Client Secret de un OAuth Client de Google Cloud |
+| Google Cloud Console → *Authorized redirect URIs* | `https://<proyecto>.supabase.co/auth/v1/callback` |
+| *Authentication → URL Configuration* | Site URL del sitio, y en *Redirect URLs* `http://localhost:3000/**` y `https://<dominio>/**` — el `/**` hace falta porque se vuelve a la página en la que estabas, no a una fija |
 
 `app/catalogo/page.tsx` acepta `?q=` por encima de `familia`/`sub`/`calibre`:
 la búsqueda entra en "Todo" y cruza sólo con el filtro de calibre, con un
@@ -214,15 +275,27 @@ chip `.chip--busqueda` para deshacerla.
 ## Imágenes
 
 `public/img/product/<marca-ref>.webp` — una foto por producto (77 ficheros,
-1200×750). `public/img/model/<modelo>.webp` — genéricas por arquetipo (10
-ficheros), donde cae la ficha si falta la del producto propio; hoy ese
-peldaño no se pisa porque los 76 productos tienen la suya. La cascada:
+1200×750). `public/img/model/<modelo>.webp` — genéricas por arquetipo (14
+ficheros), donde cae el producto que no tiene la suya. La cascada está
+cableada en `lib/catalogo.ts#aProducto()` desde 0011; antes estaba escrita
+aquí pero no en el código, y no se notaba porque los 76 productos de entonces
+traían foto propia:
 
-    product_photo (Supabase)  →  public/img/model/<modelo>.webp  →  .foto.sinFoto (CSS, sin imagen)
+    product_photo (Supabase)  →  public/img/model/<family.model_key>.webp  →  .foto.sinFoto (CSS, sin imagen)
 
-Ninguna de las dos carpetas de foto está aclarada para redistribuir sin más
-trámite — la procedencia de cada una vive en su propio `CREDITS.md`
-(`public/img/product/CREDITS.md`, `public/img/model/CREDITS.md`).
+El peldaño del medio es de lo que viven las diez referencias de recarga: de una
+prensa RCBS no hay foto libre en Commons, pero de pólvora, fulminantes, puntas
+y comparadores sí, y una foto genérica de pólvora en «Pólvoras» es cierta —la
+foto de otro producto no lo sería.
+
+Las dos carpetas no están en la misma situación legal, y conviene no
+confundirlas: `img/model/` es **toda de licencia libre** (dominio público, CC0,
+CC BY o CC BY-SA) porque la baja `tools/fotos.py`, que aborta si la licencia no
+permite redistribuir; las CC BY y CC BY-SA exigen citar al autor y por eso está
+`public/img/model/CREDITS.md`. `img/product/`, en cambio, **no está aclarada**:
+son fotos de catálogo de fabricante que valen de marcador hasta que la armería
+ponga las suyas, y la procedencia de cada una está en
+`public/img/product/CREDITS.md`.
 
 El **respaldo 3D está aparcado, no portado**: `js/meshes.js`/`scene.js`/`art.js`
 del sitio estático no se trajeron a esta app porque los 76 productos ya
@@ -312,5 +385,7 @@ migración y del respaldo 3D aparcado.
 - **Fase 11 (despliegue)**: fast-forward de `main` a la punta de esta rama y
   cambio del Production Branch en Vercel. `main` hoy no tiene build; este
   paso lo activa por primera vez en producción.
-- **Login/signup**: sin ellos, `crear_pedido()` no se puede cablear y la
-  reserva sigue siendo un aviso por `mailto:`, no una venta real.
+- **Perfil de cliente en la base**: el acceso con Google ya da `auth.uid()`,
+  pero falta la fila `customer` (y su política de RLS) para poder cablear
+  `crear_pedido()`. Hasta entonces la reserva es un aviso por `mailto:`, no
+  una venta real.

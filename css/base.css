@@ -132,6 +132,10 @@ a { color: inherit; text-decoration: none; }
   transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
 .btn:hover { background: var(--gris-claro); }
+/* El `display` de arriba gana al `[hidden] { display: none }` del navegador,
+   asi que un boton con `hidden` se seguia viendo -- «Borrar mis datos» salia
+   sin perfil que borrar. */
+.btn[hidden] { display: none; }
 
 /* La flecha del original: 16x16, transparente en reposo pero ocupando ya su
    sitio -- por eso el `gap` de arriba y no un margen que aparezca -- y al

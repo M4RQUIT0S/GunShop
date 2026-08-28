@@ -29,6 +29,9 @@ if (!url || !clave) {
   )
 }
 
-export const supabase = createClient(url, clave, {
-  auth: { persistSession: false },
-})
+/* La sesion se persiste (el defecto de supabase-js): es lo que hace falta para
+   el acceso con Google de AccountContext -- guarda el verificador PKCE antes
+   de saltar a Google y canjea el `?code=` al volver. En Node no hay
+   localStorage y auth-js cae a memoria, asi que el render de servidor sigue
+   sin sesion, que es lo que buscaba el `persistSession: false` de antes. */
+export const supabase = createClient(url, clave)

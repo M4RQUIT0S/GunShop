@@ -1,19 +1,20 @@
 'use client'
 
-/* Puerto de js/cart.js a partir de "--- panel ---": lineas, avisos de
- * regimen y la reserva. Lo que exige cada regimen y que falta para poder
- * reservar es logica pura en lib/cesta.ts (equivalente a exige()/faltas() de
- * cart.js); aqui solo queda pintarlo y cablear el <dialog>.
+/* Puerto de js/cart.js a partir de "--- panel ---": lineas, avisos y la
+ * reserva. Que puede reservarse es logica pura en lib/cesta.ts (faltas(), que
+ * corta lo que exige credencial ANMaC); aqui solo queda pintarlo y cablear el
+ * <dialog>.
  *
- * Gotcha de la fase 6 (ver PLAN.md): NO se cablea crear_pedido() -- exige
- * auth.uid() y no hay login/signup en esta tanda. Igual que hoy en
+ * Gotcha de la fase 6 (ver PLAN.md): NO se cablea crear_pedido() -- necesita
+ * un perfil de cliente en la base, y la sesion de Google (AccountContext) solo
+ * identifica: no crea `customer` ni pasa por la RLS de pedidos. Igual que hoy en
  * D:\GunShop (main), la reserva es enteramente del lado del cliente: se
  * apunta en localStorage['gunshop:pedidos'] y se ofrece un mailto: con el
  * detalle, no un pedido real contra la base. */
 
 import { useEffect, useRef, useState } from 'react'
 import { precio } from '@/lib/catalogo'
-import { faltas, notas, reserva as armarReserva, type Pedido } from '@/lib/cesta'
+import { faltas, reserva as armarReserva, type Pedido } from '@/lib/cesta'
 import { useCart } from './CartContext'
 import { useAccount } from './AccountContext'
 
@@ -41,8 +42,7 @@ export default function CartPanel() {
     ref.current?.close()
   }
 
-  const faltasList = faltas(lineas, perfil)
-  const notasList = notas(lineas)
+  const faltasList = faltas(lineas)
   const bloquea = lineas.length === 0 || faltasList.length > 0
 
   function reservar() {
@@ -142,7 +142,6 @@ export default function CartPanel() {
 
         <div className="panel__avisos" id="cartAvisos">
           {faltasList.map((t) => <p className="aviso aviso--falta" key={t}>{t}</p>)}
-          {notasList.map((t) => <p className="aviso" key={t}>{t}</p>)}
         </div>
 
         <footer className="panel__pie">
@@ -154,7 +153,7 @@ export default function CartPanel() {
             <div className="hecho" id="cartHecho">
               <p className="hecho__cod">Reserva {hecho.codigo}</p>
               <p>
-                Guardada 72 h. Te esperamos con la CLU y el DNI; el resto se hace en el
+                Guardada 72 h. Te esperamos con el DNI; el resto se hace en el
                 mostrador.
               </p>
               <a className="btn btn--ghost" href={hecho.mailto}>Enviarla al taller</a>

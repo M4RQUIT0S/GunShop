@@ -525,3 +525,42 @@ grupo punk alemán llamado Die Kassierer.
 - **Vainas y puntas.** Inertes, casi seguro venta libre, pero *casi* no basta
   para esto. Fuera hasta verificarlo.
 - **Armas usadas.** Fuera por pedido.
+
+## Fase 12 — cuenta con Google, y fuera las credenciales (2026-08-28)
+
+Pedido: acceso con Google en «Mi cuenta», y **no pedir el numero de CLU en
+ningun momento** porque no se van a vender productos controlados por la web.
+
+Hecho:
+
+- `lib/supabase.ts`: fuera `persistSession: false`. Es lo que permitia guardar
+  el verificador PKCE y canjear el `?code=` al volver de Google. En Node no hay
+  `localStorage` y `auth-js` cae a memoria, asi que el servidor sigue sin
+  sesion: el motivo original del flag se mantiene solo.
+- `AccountContext`: `entrarConGoogle()`/`salir()` sobre `signInWithOAuth`, con
+  `redirectTo: window.location.href` (sin ruta de callback: `detectSessionInUrl`
+  lo canjea). `onAuthStateChange` da la sesion inicial, asi que no hay
+  `getSession()` aparte. `SIGNED_IN` reescribe el perfil con nombre y correo de
+  Google. El `?error=` de la vuelta se detecta pero su `error_description` NO se
+  pinta: viene de la URL.
+- `Perfil` pasa a `{nombre, email}`. El perfil viejo con `clu`/`vence`/`tccm`
+  que hubiera en `localStorage` se lee y se descarta solo.
+- `lib/cesta.ts`: mueren `exige()`, `cupos()` y `notas()`. `faltas()` ya no
+  gradua que credencial falta — corta con `comprableDirecto()`, la misma
+  funcion que decide `ProductoCTA`, y bloquea la reserva entera. `Pedido` deja
+  de guardar `clu`.
+
+Lo que NO se toco, y por que:
+
+- **`lib/regimen.ts`, entero.** `requisitos()` se queda sin llamador, pero es el
+  art. 5 del decreto 395/75 escrito una vez; borrarlo obliga a rederivar la ley
+  el dia que la municion se venda en linea. `test/modoventa.test.ts` sigue en
+  verde sin tocarlo, y es el que fija el invariante del que ahora cuelga
+  `faltas()`.
+- **Sin test nuevo.** `faltas()` quedo en un `filter` sobre `comprableDirecto()`,
+  que `test/modoventa.test.ts` ya cubre para los cinco regimenes. Un test propio
+  de `lib/cesta.ts` obligaria ademas a sacar `precio()` de `lib/catalogo.ts`
+  (importa el cliente de Supabase al cargarse); no compensa por un filter.
+
+Pendiente en el panel de Supabase, no en el repo: alta del proveedor Google y
+las Redirect URLs con `/**`. Tabla en CLAUDE.md.
