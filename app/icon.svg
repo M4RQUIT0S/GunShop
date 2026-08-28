@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Monograma de Armeria Alcantara. La A va como relleno y no como trazo:
+       el apice sale a punta viva sin que el `miter` se dispare, y no hay
+       grosor que reescalar. Fondo propio porque la pestana del navegador no
+       siempre es oscura. -->
+  <rect width="64" height="64" fill="#000"/>
+  <path fill="#fff" fill-rule="evenodd" d="M32 12 L54 52 L10 52 Z
+                                           M32 27.5 L38.1 38.5 L25.9 38.5 Z
+                                           M23.2 43.5 L40.8 43.5 L45.5 52 L18.5 52 Z"/>
+</svg>

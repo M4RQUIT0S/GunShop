@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512" role="img" aria-label="Armería Alcántara">
+  <!-- El mismo monograma de app/icon.svg, encuadrado, para avatar de redes,
+       miniatura o cualquier sitio que pida un cuadrado grande. El filete es
+       el del sistema (blanco al 32 %); el canto, vivo, como todo lo demas
+       menos la pildora de los botones. -->
+  <rect width="64" height="64" fill="#000"/>
+  <rect x="2.5" y="2.5" width="59" height="59" fill="none" stroke="#fff" stroke-opacity="0.32" stroke-width="1"/>
+  <g transform="translate(32 32) scale(0.82) translate(-32 -32)">
+    <path fill="#fff" fill-rule="evenodd" d="M32 12 L54 52 L10 52 Z
+                                             M32 27.5 L38.1 38.5 L25.9 38.5 Z
+                                             M23.2 43.5 L40.8 43.5 L45.5 52 L18.5 52 Z"/>
+  </g>
+</svg>

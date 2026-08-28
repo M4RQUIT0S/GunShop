@@ -52,6 +52,7 @@ Tres páginas, todas Server Components:
 | `/` | `app/page.tsx` | Portada: rieles de láminas, cifras del catálogo, baldosas de familias, marquesina de marcas |
 | `/catalogo` | `app/catalogo/page.tsx` | Filtros de dos niveles (familia → subcategoría) + calibre, todo por `?familia=&sub=&calibre=&q=` en la URL |
 | `/producto/[slug]` | `app/producto/[slug]/page.tsx` | Ficha con CTA por régimen, `generateMetadata()` con Open Graph |
+| `/privacidad` | `app/privacidad/page.tsx` | Política de privacidad. La única página sin un solo dato de Supabase, así que se prerenderiza entera |
 
 `app/layout.tsx` es el único punto que monta el "chrome" compartido: `<Nav/>`
 (cabecera + menú), `<Footer/>`, `<Pie/>` (mide el pie fijo y le da hueco al
@@ -297,6 +298,19 @@ son fotos de catálogo de fabricante que valen de marcador hasta que la armería
 ponga las suyas, y la procedencia de cada una está en
 `public/img/product/CREDITS.md`.
 
+`public/img/marca/` es la marca, y no sale de ninguna de las dos cascadas de
+arriba: el monograma en vector (`alcantara-monograma.svg`, cuadrado con
+filete, para avatar o miniatura) y el mismo dibujo en PNG a 120 px, que existe
+sólo porque el consent screen de Google no acepta SVG. El favicon es
+`app/icon.svg` — misma letra, sin filete, y Next lo publica por convención de
+nombre sin que nadie lo enlace. El canónico de la geometría es `app/icon.svg`;
+`tools/marca.py` lleva copia de las coordenadas y dice que hay que sincronizarla
+a mano.
+
+Ojo con el logo y Google: **subirlo al consent screen dispara la verificación de
+marca**, que son semanas. Mientras la app viva con ámbitos no sensibles
+(`email`, `profile`), el campo del logo se deja vacío a propósito.
+
 El **respaldo 3D está aparcado, no portado**: `js/meshes.js`/`scene.js`/`art.js`
 del sitio estático no se trajeron a esta app porque los 76 productos ya
 tienen foto real y era código muerto incluso ahí. De la cadena sólo queda
@@ -379,6 +393,7 @@ migración y del respaldo 3D aparcado.
 | `tools/seed.js` | Genera el `db/seed.sql` del esquema Postgres viejo (`db/schema.sql`) desde un `js/catalog.js` local — ese fichero ya no existe en esta rama (se borró en la fase de limpieza junto con el resto del sitio estático), así que hoy **no corre** sin apuntarlo a otra fuente. Se conserva como referencia de cómo se generó `db/seed.sql` | no se corre hoy; ver nota más abajo |
 | `tools/models.py` | Modela las 8 piezas del respaldo 3D en Blender y hornea `js/meshes.js` | si el respaldo 3D vuelve a activarse |
 | `tools/fotos.py` | Baja las fotos genéricas de `public/img/model/` desde Wikimedia Commons, sólo licencias redistribuibles | si hace falta una foto genérica nueva |
+| `tools/marca.py` | Hornea el monograma en PNG (`--tam`). Existe porque Google pide el logo del consent screen en mapa de bits y no acepta SVG | si hace falta el monograma en otro tamaño |
 
 ## Lo que queda pendiente
 

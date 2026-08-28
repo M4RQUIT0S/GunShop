@@ -24,6 +24,7 @@ export default async function Footer() {
           <a href="/#familias">Familias</a>
           <a href="/#marcas">Marcas</a>
           <a href="mailto:taller@alcantara.example">Escribir</a>
+          <a href="/privacidad">Privacidad</a>
 
           <span>Av. Rivadavia 0000</span>
           <span>Balvanera · CABA</span>
