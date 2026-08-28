@@ -9,7 +9,11 @@ from PIL import Image
 
 UA = {'User-Agent': 'GunShopDemo/1.0 (marcosobrido@gmail.com)'}
 API = 'https://commons.wikimedia.org/w/api.php?'
-DESTINO = r'D:\GunShop\img\model'
+# Ruta relativa al repo y no absoluta: la carpeta se movio a public/ al
+# portar el sitio a Next.js y el valor viejo apuntaba a un sitio que ya no
+# existe -- el script fallaba en el primer open() sin decir por que.
+DESTINO = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       'public', 'img', 'model')
 ANCHO, ALTO = 1200, 750          # 8:5, el encuadre que ya usaba la ficha
 
 ELEGIDAS = {
@@ -21,7 +25,22 @@ ELEGIDAS = {
     'binocular': 'File:Vortex Diamonback roof prism binoculars.jpg',
     'gcase':     'File:AKKAR Over & Under Hunting Shotgun 12G 01.jpg',
     'cartridge': 'File:Modern-rifle-cartridges-cases.jpg',
+    # Municion y recarga (0011): una por rama del arbol de Municion, para que
+    # cada categoria tenga imagen aunque todavia no tenga foto de producto.
+    'shotshell': 'File:Shotgun Shells 12-70 Gauge CC BY-SA 4.0 by Grasyl.jpg',
+    'powder':    'File:Poudre PC88.jpg',
+    'primer':    'File:007 2019 01 21 Anzuendhuetchen.jpg',
+    'bullet':    'File:3CastBullets.png',
+    'press':     'File:Hornady Reloading Press.jpg',
+    'gauge':     'File:Case Neck Gage.jpg',
 }
+
+# Banda que se recorta ANTES de encuadrar, en fraccion de alto (arriba, abajo).
+# Hace falta cuando el encuadre centrado no da: 3CastBullets lleva una franja
+# rosa abajo, y la prensa es un retrato de 1632x2743 del que un 8:5 centrado
+# saca un trozo de hierro rojo sin principio ni final -- la banda elegida es la
+# que deja el bastidor entero con el rotulo legible.
+RECORTE = {'bullet': (0, 0.84), 'press': (0.18, 0.56), 'gauge': (0.03, 0.55)}
 
 LIBRES = ('public domain', 'cc0', 'cc by', 'cc-by', 'pd-')
 
@@ -70,14 +89,18 @@ def main():
         with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=90) as r:
             datos = r.read()
 
+        img = Image.open(io.BytesIO(datos))
+        if modelo in RECORTE:
+            a, b = RECORTE[modelo]
+            img = img.crop((0, round(img.height * a), img.width, round(img.height * b)))
+
         salida = os.path.join(DESTINO, modelo + '.webp')
-        encuadra(Image.open(io.BytesIO(datos))).save(salida, 'WEBP', quality=82, method=6)
+        encuadra(img).save(salida, 'WEBP', quality=82, method=6)
         print('%-10s %7d B  %s' % (modelo, os.path.getsize(salida), licencia))
 
         if modelo == HERO[0]:
             portada = os.path.join(os.path.dirname(DESTINO), 'hero.webp')
-            encuadra(Image.open(io.BytesIO(datos)), HERO[1], HERO[2]).save(
-                portada, 'WEBP', quality=80, method=6)
+            encuadra(img, HERO[1], HERO[2]).save(portada, 'WEBP', quality=80, method=6)
             print('%-10s %7d B  (portada)' % ('hero', os.path.getsize(portada)))
 
         creditos.append({
@@ -90,7 +113,7 @@ def main():
 
     with open(os.path.join(DESTINO, 'creditos.json'), 'w', encoding='utf-8') as f:
         json.dump(creditos, f, ensure_ascii=False, indent=2)
-    print('\nocho fotos, todas libres')
+    print('\n%d fotos, todas libres' % len(ELEGIDAS))
 
 
 if __name__ == '__main__':

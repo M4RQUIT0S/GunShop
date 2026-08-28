@@ -51,7 +51,7 @@ export function slugDe(p: { marcaSlug: string; ref: string }): string {
 const SELECT = `
   id, ref, kind, usd_cents, spec, cartridges_per_box,
   brand:brand_id ( slug, name ),
-  family:family_id!inner ( slug, name, licence_regime:licence_regime_id ( code, label ) ),
+  family:family_id!inner ( slug, name, model_key, licence_regime:licence_regime_id ( code, label ) ),
   licence_regime:licence_regime_id ( code, label ),
   product_photo ( path, is_primary ),
   product_variant ( calibre:calibre_id ( name, annual_quota ) )
@@ -79,6 +79,13 @@ function aProducto(fila: any): Producto {
   const portada = fotos.find((f: any) => f.is_primary) ?? fotos[0]
   // Portada primero, el resto en el orden que llego: es el orden de galeria.
   const enOrden = portada ? [portada, ...fotos.filter((f: any) => f !== portada)] : fotos
+  /* El peldano de en medio de la cascada: producto -> familia -> sin foto.
+   * Estaba documentado y no cableado, y hasta 0011 no se pisaba porque los 76
+   * productos traian la suya; las diez de recarga no tienen foto propia -- de
+   * una prensa RCBS no hay ninguna libre -- y sin esto salian en blanco. La
+   * de la familia es generica a proposito: ensena polvora en «Polvoras», que
+   * es cierto, en vez de la foto de otro producto, que no lo seria. */
+  const generica = fila.family.model_key ? `/img/model/${fila.family.model_key}.webp` : null
   const variantes = fila.product_variant ?? []
   return {
     id: fila.id,
@@ -91,8 +98,8 @@ function aProducto(fila: any): Producto {
     regimen: reg.code as Regimen,
     regimenEtiqueta: reg.label,
     usdCents: fila.usd_cents,
-    foto: portada ? '/' + portada.path : null,
-    fotos: enOrden.map((f: any) => '/' + f.path),
+    foto: portada ? '/' + portada.path : generica,
+    fotos: enOrden.length ? enOrden.map((f: any) => '/' + f.path) : (generica ? [generica] : []),
     variantes: variantes.length,
     spec: fila.spec ?? [],
     cartridgesPerBox: fila.cartridges_per_box ?? 0,

@@ -54,5 +54,47 @@
     "autor": "DL24",
     "licencia": "CC0",
     "pagina": "https://commons.wikimedia.org/wiki/File:Modern-rifle-cartridges-cases.jpg"
+  },
+  {
+    "modelo": "shotshell",
+    "titulo": "Shotgun Shells 12-70 Gauge CC BY-SA 4.0 by Grasyl.jpg",
+    "autor": "Grasyl",
+    "licencia": "CC BY-SA 4.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Shotgun_Shells_12-70_Gauge_CC_BY-SA_4.0_by_Grasyl.jpg"
+  },
+  {
+    "modelo": "powder",
+    "titulo": "Poudre PC88.jpg",
+    "autor": "Bouterolle",
+    "licencia": "CC BY-SA 3.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Poudre_PC88.jpg"
+  },
+  {
+    "modelo": "primer",
+    "titulo": "007 2019 01 21 Anzuendhuetchen.jpg",
+    "autor": "Friedrich Haag",
+    "licencia": "CC BY-SA 4.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:007_2019_01_21_Anzuendhuetchen.jpg"
+  },
+  {
+    "modelo": "bullet",
+    "titulo": "3CastBullets.png",
+    "autor": "Thewellman",
+    "licencia": "CC0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:3CastBullets.png"
+  },
+  {
+    "modelo": "press",
+    "titulo": "Hornady Reloading Press.jpg",
+    "autor": "Arthurrh",
+    "licencia": "CC BY-SA 3.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Hornady_Reloading_Press.jpg"
+  },
+  {
+    "modelo": "gauge",
+    "titulo": "Case Neck Gage.jpg",
+    "autor": "Krakuspm",
+    "licencia": "CC BY-SA 3.0",
+    "pagina": "https://commons.wikimedia.org/wiki/File:Case_Neck_Gage.jpg"
   }
 ]
