@@ -19,6 +19,11 @@ next-env.d.ts
 .env
 .env*.local
 
+# Obsidian: si un vault acaba solapando el repo, su configuracion cambia cada
+# vez que se mueve un panel y no pinta nada en el historial. El contenido (los
+# .md) si se puede commitear, si alguna vez se quiere.
+.obsidian/
+
 # Config de agentes: apunta a proyectos reales y es de cada maquina.
 .codex/*
 !.codex/config.example.toml
