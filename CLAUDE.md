@@ -50,7 +50,7 @@ Tres páginas, todas Server Components:
 | Ruta | Fichero | Qué hace |
 |---|---|---|
 | `/` | `app/page.tsx` | Portada: rieles de láminas, cifras del catálogo, baldosas de familias, marquesina de marcas |
-| `/catalogo` | `app/catalogo/page.tsx` | Filtros de dos niveles (familia → subcategoría) + calibre, todo por `?familia=&sub=&calibre=&q=` en la URL |
+| `/catalogo` | `app/catalogo/page.tsx` | Chips de familia + desplegables de faceta (marca, calibre, cañón, aumentos), todo por `?familia=&marca=&calibre=&canon=&aumentos=&q=` en la URL |
 | `/producto/[slug]` | `app/producto/[slug]/page.tsx` | Ficha con CTA por régimen, `generateMetadata()` con Open Graph |
 | `/privacidad` | `app/privacidad/page.tsx` | Política de privacidad. La única página sin un solo dato de Supabase, así que se prerenderiza entera |
 
@@ -87,11 +87,12 @@ de `js/reveal.js` del sitio viejo).
 |---|---|
 | `lib/supabase.ts` | Cliente con la clave publicable. Revienta el **build** (no el arranque) si faltan las env vars — más vale un despliegue rojo que uno verde sirviendo una tienda vacía |
 | `lib/regimen.ts` | **Fuente única del régimen legal ANMaC.** Sin imports a propósito: se prueba sola, sin base ni env vars |
-| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorCalibre()`/`filtrarPorFamilia()`/`cuentaPorRama()`. Reexporta `lib/familia.ts` entero |
+| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorFamilia()`/`cuentaPorRama()`. Reexporta `lib/familia.ts` entero |
 | `lib/familia.ts` | **El árbol de familias, sin tocar la base.** `raices()`, `hijas()`, `rama()`, `arbolMenu()`. Aparte de `catalogo.ts` por lo mismo que `regimen.ts`: aquel importa el cliente de Supabase al cargarse y nada de dentro se puede probar sin `.env.local` |
 | `lib/cesta.ts` | Lógica de la reserva sin DOM: `faltas()` (qué impide reservar) y `reserva()` (pedido + `mailto:`) |
 | `lib/cuenta.ts` | Sólo el tipo `Perfil` (`{nombre, email}`) — vive aparte para que `cesta.ts` no dependa de un componente de React |
 | `lib/buscar.ts` | `llano()`/`buscar()`: búsqueda sin acentos, AND entre palabras, sobre nombre + ficha técnica |
+| `lib/facetas.ts` | **Los desplegables del catálogo.** `FACETAS` (marca, calibre, cañón, aumentos), `opciones()`, `filtrarPorFaceta()`, `aplicarFacetas()`, `seleccion()`, `alternar()`. Aparte de `catalogo.ts` por lo mismo que `familia.ts`: así se prueba sin `.env.local` |
 
 ### `lib/regimen.ts` — régimen legal ANMaC
 
@@ -269,9 +270,43 @@ Hay que darlo de alta en el panel de Supabase — no se configura desde el repo:
 | Google Cloud Console → *Authorized redirect URIs* | `https://<proyecto>.supabase.co/auth/v1/callback` |
 | *Authentication → URL Configuration* | Site URL del sitio, y en *Redirect URLs* `http://localhost:3000/**` y `https://<dominio>/**` — el `/**` hace falta porque se vuelve a la página en la que estabas, no a una fija |
 
-`app/catalogo/page.tsx` acepta `?q=` por encima de `familia`/`sub`/`calibre`:
-la búsqueda entra en "Todo" y cruza sólo con el filtro de calibre, con un
-chip `.chip--busqueda` para deshacerla.
+`app/catalogo/page.tsx` acepta `?q=` por encima de la familia: la búsqueda
+entra en "Todo" y cruza sólo con las facetas, con un chip `.chip--busqueda`
+para deshacerla.
+
+### Las facetas del catálogo
+
+La fila de subcategorías (`?sub=`, un chip por `product.kind`) se retiró:
+repartía una familia en tantos chips como etiquetas sueltas tuvieran sus
+productos, varios de ellos a un único producto. En su sitio van cuatro
+desplegables de selección múltiple, todos derivados del mismo
+`listaProductos()` que ya se pide una vez:
+
+| Faceta | De dónde sale |
+|---|---|
+| Marca | `product.brand` |
+| Calibre | `product_variant.calibre` |
+| Cañón | `spec` con la forma `cañón 560 mm` — sale donde la ficha lo trae: rifles, escopetas y pistolas |
+| Aumentos | El nombre comercial del visor (`Z8i 2-16x50 P` → `2-16x`), y **sólo en `familia === 'optica'`**: `9,3x62` es un calibre con la misma forma exacta |
+
+Reglas que sostienen el conjunto, y que hay que respetar al añadir una quinta:
+
+- **Dentro de una faceta la selección suma; entre facetas resta.** Los valores
+  van repetidos en la URL (`?calibre=A&calibre=B`) y no separados por comas:
+  «6,5 Creedmoor» lleva una coma dentro.
+- **Cada desplegable cuenta sus opciones sobre lo que dejan las _demás_
+  facetas** (`aplicarFacetas(base, sel, f.clave)`). Contadas sobre el resultado
+  final, marcar un calibre pondría el resto a cero y no se podría añadir un
+  segundo.
+- Un desplegable con menos de dos opciones no se pinta, y cambiar de familia
+  limpia la selección — un calibre de rifle en Óptica no deja nada que ver.
+- **`?sub=` se sigue honrando** aunque ya no tenga fila propia: el tercer nivel
+  del menú de la cabecera enlaza ahí (`lib/familia.ts#arbolMenu()`). Llega como
+  chip con su ✕, no como filtro invisible.
+- El desplegable es un `<details>` nativo (`app/components/Desplegable.tsx`),
+  sin `'use client'`: el teclado y el abrir/cerrar vienen del elemento, y cada
+  opción es un enlace que alterna su valor en la URL. El panel sobrevive a la
+  navegación blanda porque `open` es estado del DOM y React no lo toca.
 
 ## Imágenes
 
@@ -415,9 +450,6 @@ Deuda menor, rescatada de `PLAN.md` antes de que ese cuaderno se borre:
 - **`<a href>` plano en vez de `next/link`** en las baldosas de familia y las
   CTA de portada (`app/page.tsx`): provoca recarga completa en vez de
   transición de cliente.
-- **`.calibre__sel` sin uso** en `css/catalog.css` — estilos de un `<select>`
-  nativo que nunca se usó: el filtro de calibre se hizo con chips. Ya venía
-  así de `main`, no lo introdujo la migración.
 - **Ventana de hasta 10 min de desfase** por `revalidate = 600` si cambia un
   régimen en Supabase. Impacto bajo hoy (no hay checkout real); volver a
   mirarlo cuando exista panel de administración.

@@ -2,9 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   listaProductos, familias, cambio, precio, slugDe, modoVenta,
-  raices, rama, filtrarPorFamilia, cuentaPorRama,
-  filtrarPorSub, filtrarPorCalibre, subcategorias, calibresDe,
+  raices, rama, filtrarPorFamilia, cuentaPorRama, filtrarPorSub,
 } from '@/lib/catalogo'
+import {
+  FACETAS, opciones, aplicarFacetas, seleccion, alternar, type Seleccion,
+} from '@/lib/facetas'
+import Desplegable from '@/app/components/Desplegable'
 import { buscar } from '@/lib/buscar'
 
 export const metadata: Metadata = {
@@ -19,57 +22,67 @@ export const metadata: Metadata = {
 export const revalidate = 600
 
 type Props = {
-  searchParams: Promise<{
-    familia?: string; sub?: string; calibre?: string; q?: string
-  }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-// Arma la URL del catalogo con los filtros que puede llevar. `undefined`
-// quita el parametro en vez de dejarlo vacio en la barra de direcciones.
-function href(p: { familia?: string; sub?: string; calibre?: string; q?: string }): string {
+/* Arma la URL del catalogo con los filtros que puede llevar. `undefined` quita
+ * el parametro en vez de dejarlo vacio en la barra de direcciones. Los valores
+ * de faceta van repetidos (`?calibre=A&calibre=B`), no separados por comas:
+ * «6,5 Creedmoor» lleva una coma dentro. */
+function href(p: {
+  familia?: string; sub?: string; q?: string; sel?: Seleccion
+}): string {
   const qs = new URLSearchParams()
   if (p.familia) qs.set('familia', p.familia)
   if (p.sub) qs.set('sub', p.sub)
-  if (p.calibre) qs.set('calibre', p.calibre)
   if (p.q) qs.set('q', p.q)
+  FACETAS.forEach((f) => (p.sel?.[f.clave] ?? []).forEach((v) => qs.append(f.clave, v)))
   const s = qs.toString()
   return s ? `/catalogo?${s}` : '/catalogo'
 }
 
 export default async function Catalogo({ searchParams }: Props) {
-  const { familia, sub, calibre, q } = await searchParams
+  const sp = await searchParams
+  const uno = (k: string) => (Array.isArray(sp[k]) ? sp[k][0] : sp[k])
+  const familia = uno('familia')
+  const sub = uno('sub')
   // La busqueda vive por encima de los filtros: entra en "Todo" y solo se
-  // cruza con el calibre, igual que fuente()/setQuery() en js/main.js. El
+  // cruza con las facetas, igual que fuente()/setQuery() en js/main.js. El
   // chip .chip--busqueda (ya en css/shop.css) es como se deshace.
-  const busqueda = q?.trim() || ''
+  const busqueda = uno('q')?.trim() || ''
+  const sel = seleccion(sp)
 
   // Un solo viaje a Supabase: el resto de los filtros son funciones puras
   // sobre el mismo array, igual que hacia js/catalog.js con `items`. Asi los
-  // chips pueden contar lo que hay en cada familia sin volver a preguntar.
+  // chips y los desplegables pueden contar sin volver a preguntar.
   const [todos, fams, arsPorUsd] = await Promise.all([
     listaProductos(),
     familias(),
     cambio(),
   ])
 
-  const productosFamilia = busqueda
+  const enFamilia = busqueda
     ? buscar(todos, busqueda)
     : (familia ? filtrarPorFamilia(todos, fams, familia) : todos)
 
-  // Segundo nivel: solo existe dentro de una familia, y solo si hay algo
-  // entre lo que elegir. No sale con una busqueda puesta -- serian chips sin
-  // relacion con lo que se busco.
-  const subs = !busqueda && familia ? subcategorias(productosFamilia) : []
-  const subActivo = sub && subs.some((s) => s.kind === sub) ? sub : undefined
-  const productosSub = subActivo ? filtrarPorSub(productosFamilia, subActivo) : productosFamilia
+  /* La fila de subcategorias («Rifle de cerrojo», «Rifle modular»...) ya no se
+   * pinta: repartia una familia en tantos chips como etiquetas sueltas
+   * tuvieran sus productos, con varios a un solo producto. El parametro se
+   * sigue honrando porque el tercer nivel del menu de la cabecera enlaza a
+   * `?familia=X&sub=<kind>` (lib/familia.ts) -- se ve y se quita como chip. */
+  const subActivo = sub && enFamilia.some((p) => p.kind === sub) ? sub : undefined
+  const base = subActivo ? filtrarPorSub(enFamilia, subActivo) : enFamilia
 
-  // El calibre corta de traves a familia y subcategoria: se calcula sobre lo
-  // que quede despues de esos dos, tanto si eso es «todo» como una familia.
-  const calibres = calibresDe(productosSub)
-  const calibreActivo = calibre && calibres.includes(calibre) ? calibre : undefined
-  const productos = calibreActivo ? filtrarPorCalibre(productosSub, calibreActivo) : productosSub
+  // Cada desplegable cuenta sobre lo que dejan las *otras* facetas, no sobre
+  // el resultado final; si no, marcar un calibre pondria el resto a cero y no
+  // se podria anadir un segundo.
+  const desplegables = FACETAS
+    .map((f) => ({ f, opts: opciones(aplicarFacetas(base, sel, f.clave), f) }))
+    .filter(({ opts }) => opts.length >= 2)
 
+  const productos = aplicarFacetas(base, sel)
   const countsPorFamilia = cuentaPorRama(todos, fams)
+  const hayFiltro = FACETAS.some((f) => (sel[f.clave] ?? []).length > 0)
 
   const etiqueta = busqueda
     ? `«${busqueda}»`
@@ -85,14 +98,26 @@ export default async function Catalogo({ searchParams }: Props) {
           </div>
         </div>
 
+        {/* Cambiar de familia limpia las facetas: un calibre de rifle en
+            Óptica no deja nada que ver. */}
         <div className="filters" aria-label="Filtrar por familia">
           {busqueda && (
             <Link
-              href={href({ calibre: calibreActivo })}
+              href={href({ sel })}
               className="chip chip--busqueda"
               aria-label={`Quitar la búsqueda ${busqueda}`}
             >
               «{busqueda}»
+              <span className="chip__x" aria-hidden="true">✕</span>
+            </Link>
+          )}
+          {subActivo && (
+            <Link
+              href={href({ familia, q: busqueda, sel })}
+              className="chip chip--busqueda"
+              aria-label={`Quitar el filtro ${subActivo}`}
+            >
+              {subActivo}
               <span className="chip__x" aria-hidden="true">✕</span>
             </Link>
           )}
@@ -113,46 +138,28 @@ export default async function Catalogo({ searchParams }: Props) {
           ))}
         </div>
 
-        {familia && subs.length >= 2 && (
-          <div className="filters filters--sub" aria-label="Filtrar por subcategoría">
-            <Link href={href({ familia })} className="chip" aria-pressed={!subActivo}>
-              Todo
-              <span className="chip__n">{productosFamilia.length}</span>
-            </Link>
-            {subs.map((s) => (
-              <Link
-                key={s.kind}
-                href={href({ familia, sub: s.kind })}
-                className="chip"
-                aria-pressed={subActivo === s.kind}
-              >
-                {s.kind}
-                <span className="chip__n">{s.n}</span>
-              </Link>
+        {desplegables.length > 0 && (
+          <div className="filtros" aria-label="Filtrar por marca, calibre y medidas">
+            {desplegables.map(({ f, opts }) => (
+              <Desplegable
+                key={f.clave}
+                faceta={f}
+                opciones={opts}
+                sel={sel[f.clave] ?? []}
+                href={(valor) => href({
+                  familia, sub: subActivo, q: busqueda, sel: alternar(sel, f.clave, valor),
+                })}
+              />
             ))}
-          </div>
-        )}
-
-        {calibres.length >= 2 && (
-          <div className="calibre">
-            <span className="calibre__et">Calibre</span>
-            <Link
-              href={href({ familia, sub: subActivo })}
-              className="chip"
-              aria-pressed={!calibreActivo}
-            >
-              Todos
-            </Link>
-            {calibres.map((c) => (
+            {hayFiltro && (
               <Link
-                key={c}
-                href={href({ familia, sub: subActivo, calibre: c })}
-                className="chip"
-                aria-pressed={calibreActivo === c}
+                href={href({ familia, sub: subActivo, q: busqueda })}
+                className="chip chip--busqueda filtros__limpiar"
               >
-                {c}
+                Limpiar
+                <span className="chip__x" aria-hidden="true">✕</span>
               </Link>
-            ))}
+            )}
           </div>
         )}
 

@@ -107,41 +107,12 @@ function aProducto(fila: any): Producto {
   }
 }
 
-// Segundo nivel del filtro: el `kind` que cada ficha ya lleva para pintarse
-// (p.ej. «Rifle de cerrojo»). No es un dato aparte que mantener sincronizado:
-// sale del mismo `kind` de la base, asi que una familia nueva trae sus
-// subcategorias sola.
+/* El `kind` que cada ficha ya lleva para pintarse (p.ej. «Rifle de cerrojo»).
+ * Ya no tiene fila de chips propia -- repartia una familia en tantos como
+ * etiquetas sueltas tuvieran sus productos --, pero el tercer nivel del menu
+ * de la cabecera sigue enlazando a `?sub=<kind>`, y eso hay que honrarlo. */
 export function filtrarPorSub(productos: Producto[], sub: string): Producto[] {
   return productos.filter((p) => p.kind === sub)
-}
-
-// El calibre corta de traves a familias y subcategorias: es la misma funcion
-// tanto si se aplica sobre el catalogo entero como sobre una familia ya
-// filtrada.
-export function filtrarPorCalibre(productos: Producto[], calibre: string): Producto[] {
-  return productos.filter((p) => p.calibres.some((c) => c.name === calibre))
-}
-
-// Las subcategorias presentes en `productos`, con cuantas hay de cada una,
-// alfabeticas: el orden de llegada no le dice nada a quien lee la fila de
-// chips.
-export function subcategorias(productos: Producto[]): { kind: string; n: number }[] {
-  const n: Record<string, number> = {}
-  productos.forEach((p) => {
-    n[p.kind] = (n[p.kind] ?? 0) + 1
-  })
-  return Object.keys(n)
-    .sort((a, b) => a.localeCompare(b, 'es'))
-    .map((kind) => ({ kind, n: n[kind] }))
-}
-
-// Los calibres presentes en `productos`, sin repetir y alfabeticos. Sirve
-// para ofrecer solo los que hay algo que ver, tanto en «todo» como dentro de
-// una familia o subcategoria ya filtrada.
-export function calibresDe(productos: Producto[]): string[] {
-  const vistos = new Set<string>()
-  productos.forEach((p) => p.calibres.forEach((c) => vistos.add(c.name)))
-  return [...vistos].sort((a, b) => a.localeCompare(b, 'es'))
 }
 
 /* Sin parametros a proposito: trae el catalogo entero y los filtros se

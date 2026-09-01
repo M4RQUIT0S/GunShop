@@ -132,45 +132,84 @@
   white-space: nowrap;
   transition: color var(--t) var(--ease), border-color var(--t) var(--ease);
 }
-/* Segundo nivel: cuelga del primero y hereda de `.filters` el filete y el
-   hueco de abajo, que ahora cierran las dos filas. No se pega arriba porque
-   dos filas pegajosas se taparian entre si. */
-.filters--sub { position: static; padding-top: 0; }
+/* --- desplegables de faceta ---------------------------------------------- */
 
-/* `.filters` es `display: flex`, y eso gana a `[hidden]`: sin esta linea la
-   fila vacia seguiria ocupando sitio en «Todo». */
-.filters--sub[hidden] { display: none; }
-
-.filters:has(+ .filters--sub:not([hidden])) { margin-bottom: 0; border-bottom: 0; }
-
-/* El calibre corta de traves, asi que no se pinta como un chip mas: es un
-   <select> nativo con la etiqueta delante. Canto vivo y filete de un pixel,
-   como todo lo demas. */
-.calibre {
+/* Un `<details>` por faceta: marca, calibre, cañon, aumentos. Cuelga de la
+   fila de familias con el mismo margen negativo que traia el calibre. */
+.filtros {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.9rem;
+  gap: 1.75rem;
+  row-gap: 0.9rem;
   margin: -1.4rem 0 2.5rem;
 }
-.calibre[hidden] { display: none; }
-.calibre__et {
+
+.drop { position: relative; }
+
+/* Mismo texto en versalita que el chip: el filtro no cambia de idioma
+   grafico por abrirse en vertical. */
+.drop__bt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid transparent;
   font-family: var(--display);
   font-size: var(--fs-menudo);
   letter-spacing: var(--tr);
   text-transform: uppercase;
   color: var(--gris);
+  cursor: pointer;
+  white-space: nowrap;
+  /* El triangulo del navegador, fuera: el de abajo es el mismo en todos. */
+  list-style: none;
+  transition: color var(--t) var(--ease), border-color var(--t) var(--ease);
 }
-.calibre__sel {
-  padding: 0.5rem 0.7rem;
-  background: var(--negro);
-  color: var(--tinta);
-  border: 1px solid var(--filete-medio);
+.drop__bt::-webkit-details-marker { display: none; }
+.drop__bt::after { content: '▾'; letter-spacing: 0; }
+.drop[open] .drop__bt::after { content: '▴'; }
+.drop__bt:hover { color: var(--tinta); }
+/* Abierto o con algo marcado se subraya, igual que el chip activo. */
+.drop[open] > .drop__bt,
+.drop__bt:has(.drop__n) { color: var(--tinta); border-bottom-color: var(--tinta); }
+.drop__n { color: var(--gris); }
+
+.drop__menu {
+  position: absolute;
+  /* Por encima de la fila pegajosa de familias, que va en 20. */
+  z-index: 30;
+  top: calc(100% + 0.7rem);
+  left: 0;
+  min-width: 12rem;
+  max-width: min(20rem, 90vw);
+  /* Marca en «Todo» son 40 opciones: la lista rueda, no estira la pagina. */
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.4rem 0;
+  background: var(--pieza);
+  border: 1px solid var(--filete-tenue);
   border-radius: var(--r);
+}
+
+.drop__op {
+  display: grid;
+  grid-template-columns: 0.9rem 1fr auto;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.5rem 0.9rem;
   font-family: var(--texto);
   font-size: var(--fs-menudo);
-  cursor: pointer;
+  color: var(--gris-claro);
+  transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
-.calibre__sel:hover { border-color: var(--tinta); }
+.drop__op:hover { background: #1e1e1e; color: var(--tinta); }
+.drop__op[aria-pressed="true"] { color: var(--tinta); }
+.drop__tick { color: var(--tinta); }
+.drop__c { color: var(--filete-medio); }
+
+/* El «limpiar» reusa el chip de la busqueda, que ya es texto con una cruz. */
+.filtros__limpiar { align-self: center; }
 
 .chip:hover { color: var(--tinta); }
 .chip[aria-pressed="true"] { color: var(--tinta); border-bottom-color: var(--tinta); }
@@ -383,7 +422,7 @@
 
 @media (max-width: 40rem) {
   .grid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
-  .filters { gap: 1.25rem; }
+  .filters, .filtros { gap: 1.25rem; }
   /* Aqui los chips envuelven a tres lineas: pegada arriba, la fila de
      familias se comeria 169 px de una vista de 844. Se despega y se va con
      el resto -- vale mas ver fichas que tener el filtro siempre a mano. */
