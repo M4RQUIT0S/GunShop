@@ -175,6 +175,34 @@
 .drop__bt:has(.drop__n) { color: var(--tinta); border-bottom-color: var(--tinta); }
 .drop__n { color: var(--gris); }
 
+/* Con raton el panel se abre al pasar por encima y se cierra al salir, y el
+   clic deja de alternarlo -- si no, uno abierto a clic se quedaria abierto
+   detras del puntero. El teclado no se entera: `pointer-events` no toca el
+   foco, asi que Tab hasta el rotulo y Enter siguen abriendo. Las dos guardas
+   son las dos formas de quedarse sin desplegable: en tactil no hay hover, y
+   sin `::details-content` (Chrome < 131, Safari < 18.4, Firefox < 139) el
+   navegador ignora la primera regla. En cualquiera de los dos casos no entra
+   nada de aqui y el desplegable se queda como estaba, a clic. */
+@supports selector(::details-content) {
+  @media (hover: hover) and (pointer: fine) {
+    .drop:hover::details-content { content-visibility: visible; }
+    .drop > .drop__bt { pointer-events: none; }
+    /* Entre el rotulo y el panel hay 0.7rem de nada, y el puntero los cruza:
+       sin este puente el desplegable se cierra a mitad de camino. */
+    .drop:hover::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      height: 0.8rem;
+    }
+    /* Lo que `[open]` pinta al abrir, hecho a mano: el atributo ya no cambia. */
+    .drop:hover > .drop__bt { color: var(--tinta); border-bottom-color: var(--tinta); }
+    .drop:hover > .drop__bt::after { content: '▴'; }
+  }
+}
+
 .drop__menu {
   position: absolute;
   /* Por encima de la fila pegajosa de familias, que va en 20. */

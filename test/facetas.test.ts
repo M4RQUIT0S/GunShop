@@ -51,13 +51,20 @@ const PRISMA = producto({
 const PUNTO = producto({
   id: 5, marca: 'Aimpoint', ref: 'Micro H-2 2 MOA', familia: 'optica',
 })
-const TODOS = [RIFLE, RIFLE2, VISOR, PRISMA, PUNTO]
+// El cañon no es cosa de rifles: la escopeta lo trae en el mismo `spec`, y
+// de ahi que no haya una lista de familias que decidan quien tiene faceta.
+const ESCOPETA = producto({
+  id: 9, marca: 'Beretta', ref: '686 Silver Pigeon I', familia: 'escopetas',
+  spec: ['cañón 710 mm', '3,3 kg', '5 chokes'],
+})
+const TODOS = [RIFLE, RIFLE2, VISOR, PRISMA, PUNTO, ESCOPETA]
 
 test('el cañon sale de la ficha tecnica, solo de lo que lo trae', () => {
   assert.deepEqual(
     opciones(TODOS, faceta('canon')),
-    [{ valor: '560 mm', n: 1 }, { valor: '570 mm', n: 1 }],
+    [{ valor: '560 mm', n: 1 }, { valor: '570 mm', n: 1 }, { valor: '710 mm', n: 1 }],
   )
+  assert.deepEqual(faceta('canon').de(ESCOPETA), ['710 mm'])
 })
 
 test('los aumentos salen del nombre del visor, y solo en optica', () => {

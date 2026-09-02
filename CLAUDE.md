@@ -307,6 +307,14 @@ Reglas que sostienen el conjunto, y que hay que respetar al añadir una quinta:
   sin `'use client'`: el teclado y el abrir/cerrar vienen del elemento, y cada
   opción es un enlace que alterna su valor en la URL. El panel sobrevive a la
   navegación blanda porque `open` es estado del DOM y React no lo toca.
+- **Con ratón se abre al pasar por encima y se cierra al salir**, sin una línea
+  de JavaScript: `css/catalog.css` fuerza `::details-content` en `:hover` y le
+  quita el clic al rótulo (`pointer-events: none`) para que ninguno se quede
+  abierto detrás del puntero. Va bajo `@supports selector(::details-content)`
+  + `@media (hover: hover) and (pointer: fine)`, que son las dos formas de
+  quedarse sin desplegable — táctil, y navegador viejo: en cualquiera de las
+  dos no entra nada y se abre a clic, como antes. El teclado (Tab + Enter
+  sobre el rótulo) funciona en los tres casos.
 
 ## Imágenes
 
