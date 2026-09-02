@@ -105,7 +105,10 @@ export default async function Catalogo({ searchParams }: Props) {
         <div className="filters" aria-label="Filtrar por familia">
           {busqueda && (
             <Link
-              href={href({ sel })}
+              // Sin `sel`: quitar la busqueda deja «Todo» sin familia, y en
+              // «Todo» la seleccion no se lee (linea 49) -- si viajara, el
+              // enlace resultante llevaria un `?calibre=` inerte colgando.
+              href={href({})}
               className="chip chip--busqueda"
               aria-label={`Quitar la búsqueda ${busqueda}`}
             >

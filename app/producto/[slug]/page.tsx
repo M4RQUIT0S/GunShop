@@ -52,14 +52,21 @@ export default async function Ficha({ params, searchParams }: Props) {
    * un enlace de fuera. Sin ninguno -- entrada directa, enlace compartido --
    * queda el destino de siempre, la familia del producto. */
   const uno = (k: string) => (Array.isArray(sp[k]) ? sp[k][0] : sp[k])
+  const familiaParam = uno('familia')
   const busqueda = uno('q')?.trim() || ''
   const estado = consulta({
-    familia: uno('familia'), sub: uno('sub'), q: busqueda, sel: seleccion(sp),
+    familia: familiaParam, sub: uno('sub'), q: busqueda, sel: seleccion(sp),
   })
   const volver = estado ? `/catalogo?${estado}` : `/catalogo?familia=${producto.familia}`
-  // Con una busqueda detras, el rotulo no puede ser la familia del producto:
-  // se vuelve a los resultados, no a Rifles.
-  const rotulo = busqueda ? 'Catálogo' : producto.familiaNombre
+  /* Con una busqueda detras el rotulo no puede ser la familia del producto: se
+   * vuelve a los resultados, no a Rifles. Y si `familia` viene de un
+   * antepasado -- Municion es raiz, Balas cuelga de ella (0010) --, tampoco:
+   * "Balas" prometeria una vista que el volver no entrega, la de Municion
+   * entera. Solo cuando coincide exactamente sabemos que el nombre especifico
+   * es donde en verdad se vuelve. */
+  const rotulo = busqueda || (familiaParam && familiaParam !== producto.familia)
+    ? 'Catálogo'
+    : producto.familiaNombre
 
   return (
     <main id="contenido" className="section" style={{ paddingTop: 'calc(var(--nav-h-ancha) + 1rem)' }}>
