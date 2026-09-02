@@ -92,7 +92,7 @@ de `js/reveal.js` del sitio viejo).
 | `lib/cesta.ts` | Lógica de la reserva sin DOM: `faltas()` (qué impide reservar) y `reserva()` (pedido + `mailto:`) |
 | `lib/cuenta.ts` | Sólo el tipo `Perfil` (`{nombre, email}`) — vive aparte para que `cesta.ts` no dependa de un componente de React |
 | `lib/buscar.ts` | `llano()`/`buscar()`: búsqueda sin acentos, AND entre palabras, sobre nombre + ficha técnica |
-| `lib/facetas.ts` | **Los desplegables del catálogo.** `FACETAS` (marca, calibre, cañón, aumentos), `opciones()`, `filtrarPorFaceta()`, `aplicarFacetas()`, `seleccion()`, `alternar()`. Aparte de `catalogo.ts` por lo mismo que `familia.ts`: así se prueba sin `.env.local` |
+| `lib/facetas.ts` | **Los desplegables del catálogo.** `FACETAS` (marca, calibre, cañón, aumentos), `opciones()`, `filtrarPorFaceta()`, `aplicarFacetas()`, `seleccion()`, `alternar()`, `consulta()`/`Estado`, y `uno()` (lee un parámetro de un solo valor de `searchParams`, usado en catálogo y ficha). Aparte de `catalogo.ts` por lo mismo que `familia.ts`: así se prueba sin `.env.local` |
 
 ### `lib/regimen.ts` — régimen legal ANMaC
 
@@ -316,7 +316,11 @@ Reglas que sostienen el conjunto, y que hay que respetar al añadir una quinta:
   Ambos lados serializan con `consulta()` (`lib/facetas.ts`) — una sola lista
   de parámetros, para que la faceta que se añada mañana no se pierda por el
   camino de vuelta. La ficha **rearma** la cadena en vez de reenviarla, así
-  sólo vuelve lo que el catálogo entiende. Y como el producto es el mismo se
+  sólo vuelve lo que el catálogo entiende. `consulta()` suelta las facetas si
+  no hay `familia` ni `q` — el mismo criterio que `acotado`, pero exigido en
+  el único punto de paso: la ficha llega sin ese resguardo propio (no tiene
+  `fams` para calcularlo) y antes podía armar un «volver» con una faceta que
+  la URL resultante iba a ignorar en silencio. Y como el producto es el mismo se
   llegue como se llegue, `generateMetadata()` fija el `canonical` sin
   parámetros: si no, cada combinación de facetas sería una página que indexar.
 - El desplegable es un `<details>` nativo (`app/components/Desplegable.tsx`),

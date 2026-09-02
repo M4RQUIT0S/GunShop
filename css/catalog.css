@@ -168,9 +168,14 @@
 }
 .drop__bt::-webkit-details-marker { display: none; }
 .drop__bt::after { content: '▾'; letter-spacing: 0; }
+/* Hermana de `.drop:hover > .drop__bt::after` mas abajo -- misma flecha, dos
+   condiciones. No se fusionan: esta vale para teclado y tactil sin
+   `::details-content`, la de abajo solo donde el hover realmente abre el
+   panel. Tocar una sin la otra deja el glifo sin sincronizar con el color. */
 .drop[open] .drop__bt::after { content: '▴'; }
 .drop__bt:hover { color: var(--tinta); }
-/* Abierto o con algo marcado se subraya, igual que el chip activo. */
+/* Abierto o con algo marcado se subraya, igual que el chip activo. Hermana de
+   `.drop:hover > .drop__bt` mas abajo -- mismo color, misma nota de arriba. */
 .drop[open] > .drop__bt,
 .drop__bt:has(.drop__n) { color: var(--tinta); border-bottom-color: var(--tinta); }
 .drop__n { color: var(--gris); }
@@ -188,16 +193,29 @@
     .drop:hover::details-content { content-visibility: visible; }
     .drop > .drop__bt { pointer-events: none; }
     /* Entre el rotulo y el panel hay 0.7rem de nada, y el puntero los cruza:
-       sin este puente el desplegable se cierra a mitad de camino. */
+       sin este puente el desplegable se cierra a mitad de camino. Ancho del
+       panel (`min-width` de `.drop__menu`), no del boton -- si no, cruzar en
+       diagonal hacia una opcion del extremo derecho (Cañón, Aumentos: solo
+       dos opciones, panel angosto pero mas ancho que su rotulo) sale del
+       puente antes de llegar. */
     .drop:hover::after {
       content: '';
       position: absolute;
       top: 100%;
       left: 0;
-      right: 0;
+      min-width: 12rem;
       height: 0.8rem;
     }
-    /* Lo que `[open]` pinta al abrir, hecho a mano: el atributo ya no cambia. */
+    /* Lo que `[open]` pinta al abrir, hecho a mano: el atributo ya no cambia
+     * mientras dura el hover. Hermana de las dos reglas `.drop[open]` de
+     * arriba -- ver la nota ahi si se toca el color o la flecha.
+     *
+     * ponytail: si el teclado cierra el `<details>` (Enter sobre el rotulo)
+     * con el raton todavia encima, esto lo sigue pintando abierto hasta que
+     * el raton se va -- `pointer-events: none` no bloquea el teclado, pero
+     * `:hover` tampoco sabe que el atributo cambio. Combinacion rara (teclado
+     * y raton a la vez sobre el mismo control); resolverlo bien pide JS, que
+     * es justo lo que este componente evita. */
     .drop:hover > .drop__bt { color: var(--tinta); border-bottom-color: var(--tinta); }
     .drop:hover > .drop__bt::after { content: '▴'; }
   }

@@ -5,7 +5,7 @@ import {
   productoPorSlug, cambio, precio, modoVenta,
 } from '@/lib/catalogo'
 import ProductoCTA from '@/app/components/ProductoCTA'
-import { consulta, seleccion } from '@/lib/facetas'
+import { consulta, seleccion, uno } from '@/lib/facetas'
 
 // Igual que /catalogo: se regenera cada diez minutos, no en cada visita.
 export const revalidate = 600
@@ -39,8 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function Ficha({ params, searchParams }: Props) {
-  const { slug } = await params
-  const sp = await searchParams
+  const [{ slug }, sp] = await Promise.all([params, searchParams])
   const [producto, arsPorUsd] = await Promise.all([productoPorSlug(slug), cambio()])
   if (!producto) notFound()
 
@@ -50,23 +49,23 @@ export default async function Ficha({ params, searchParams }: Props) {
   /* Se rearma con `consulta()` en vez de reenviar la cadena tal cual: asi solo
    * vuelven los parametros que el catalogo entiende, no lo que traiga pegado
    * un enlace de fuera. Sin ninguno -- entrada directa, enlace compartido --
-   * queda el destino de siempre, la familia del producto. */
-  const uno = (k: string) => (Array.isArray(sp[k]) ? sp[k][0] : sp[k])
-  const familiaParam = uno('familia')
-  const busqueda = uno('q')?.trim() || ''
+   * queda el destino de siempre, la familia del producto (tambien por
+   * `consulta()`, no a mano: es el mismo slug, sin motivo para tener dos
+   * formas de escribir la misma URL). */
+  const familiaParam = uno(sp, 'familia')
+  const busqueda = uno(sp, 'q')?.trim() || ''
   const estado = consulta({
-    familia: familiaParam, sub: uno('sub'), q: busqueda, sel: seleccion(sp),
+    familia: familiaParam, sub: uno(sp, 'sub'), q: busqueda, sel: seleccion(sp),
   })
-  const volver = estado ? `/catalogo?${estado}` : `/catalogo?familia=${producto.familia}`
+  const volver = `/catalogo?${estado || consulta({ familia: producto.familia })}`
   /* Con una busqueda detras el rotulo no puede ser la familia del producto: se
    * vuelve a los resultados, no a Rifles. Y si `familia` viene de un
    * antepasado -- Municion es raiz, Balas cuelga de ella (0010) --, tampoco:
    * "Balas" prometeria una vista que el volver no entrega, la de Municion
    * entera. Solo cuando coincide exactamente sabemos que el nombre especifico
    * es donde en verdad se vuelve. */
-  const rotulo = busqueda || (familiaParam && familiaParam !== producto.familia)
-    ? 'Catálogo'
-    : producto.familiaNombre
+  const vuelveAResultados = !!busqueda || (!!familiaParam && familiaParam !== producto.familia)
+  const rotulo = vuelveAResultados ? 'Catálogo' : producto.familiaNombre
 
   return (
     <main id="contenido" className="section" style={{ paddingTop: 'calc(var(--nav-h-ancha) + 1rem)' }}>

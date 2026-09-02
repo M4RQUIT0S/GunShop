@@ -139,3 +139,14 @@ test('consulta() sin nada puesto no deja cadena: el «volver» cae en la familia
   assert.equal(consulta({}), '')
   assert.equal(consulta({ sel: seleccion({}) }), '')
 })
+
+test('consulta() suelta las facetas sin familia ni busqueda que las acote', () => {
+  // Un enlace externo del tipo /producto/<slug>?calibre=X (sin familia ni q)
+  // no puede armar un «volver» que prometa ese calibre: en el catalogo, sin
+  // acotar, la faceta no se lee (ver `acotado` en app/catalogo/page.tsx).
+  const sel = { marca: [], calibre: ['.308 Win'], canon: [], aumentos: [] }
+  assert.equal(consulta({ sel }), '')
+  // Con familia o busqueda puestas, la faceta si viaja.
+  assert.equal(consulta({ familia: 'rifles', sel }), 'familia=rifles&calibre=.308+Win')
+  assert.equal(consulta({ q: 'tikka', sel }), 'q=tikka&calibre=.308+Win')
+})

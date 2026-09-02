@@ -99,16 +99,40 @@ export function consulta(e: Estado): string {
   if (e.familia) qs.set('familia', e.familia)
   if (e.sub) qs.set('sub', e.sub)
   if (e.q) qs.set('q', e.q)
-  FACETAS.forEach((f) => (e.sel?.[f.clave] ?? []).forEach((v) => qs.append(f.clave, v)))
+  /* Las facetas solo significan algo con familia o busqueda puestas -- es la
+   * misma condicion que `acotado` en app/catalogo/page.tsx, y vive aqui para
+   * que la ficha no tenga que repetirla. Sin esto, un enlace externo del tipo
+   * `/producto/<slug>?calibre=X` (sin familia ni q) arma un `volver` que
+   * promete ese calibre y entrega «Todo» sin filtrar -- el mismo enlace que
+   * miente de 462f170, con otra forma de URL. */
+  if (e.familia || e.q) {
+    FACETAS.forEach((f) => (e.sel?.[f.clave] ?? []).forEach((v) => qs.append(f.clave, v)))
+  }
   return qs.toString()
 }
 
-// Lo que llega en la URL, normalizado a lista: Next da `string` con un valor
-// y `string[]` con varios.
+// Un parametro de un solo valor (familia, sub, q): Next da `string` cuando
+// llega una vez y `string[]` si se repite en la URL -- ahi se usa el primero,
+// que una `familia` repetida no tiene sentido. Vivia copiado en catalogo y en
+// la ficha; se centraliza aca por lo mismo que `seleccion()`: dos copias del
+// mismo criterio son dos sitios donde diverge un dia.
+export function uno(
+  sp: Record<string, string | string[] | undefined>, clave: string,
+): string | undefined {
+  const v = sp[clave]
+  return Array.isArray(v) ? v[0] : v
+}
+
+/* Lo que llega en la URL, normalizado a lista: Next da `string` con un valor
+ * y `string[]` con varios. `?calibre=` (valor vacio) se descarta -- ninguna
+ * opcion real es un string vacio, asi que dejarlo pasar no filtraria nada:
+ * dejaria una seleccion que no calza con ningun producto y vaciaria la
+ * rejilla entera. */
 export function seleccion(sp: Record<string, string | string[] | undefined>): Seleccion {
   return Object.fromEntries(FACETAS.map((f) => {
     const v = sp[f.clave]
-    return [f.clave, v === undefined ? [] : (Array.isArray(v) ? v : [v])]
+    const lista = v === undefined ? [] : (Array.isArray(v) ? v : [v])
+    return [f.clave, lista.filter(Boolean)]
   }))
 }
 

@@ -5,7 +5,7 @@ import {
   raices, rama, filtrarPorFamilia, cuentaPorRama, filtrarPorSub,
 } from '@/lib/catalogo'
 import {
-  FACETAS, opciones, aplicarFacetas, seleccion, alternar, consulta, type Estado,
+  FACETAS, opciones, aplicarFacetas, seleccion, alternar, consulta, uno, type Estado,
 } from '@/lib/facetas'
 import Desplegable from '@/app/components/Desplegable'
 import { buscar } from '@/lib/buscar'
@@ -34,13 +34,12 @@ function href(e: Estado): string {
 
 export default async function Catalogo({ searchParams }: Props) {
   const sp = await searchParams
-  const uno = (k: string) => (Array.isArray(sp[k]) ? sp[k][0] : sp[k])
-  const familia = uno('familia')
-  const sub = uno('sub')
+  const familia = uno(sp, 'familia')
+  const sub = uno(sp, 'sub')
   // La busqueda vive por encima de los filtros: entra en "Todo" y solo se
   // cruza con las facetas, igual que fuente()/setQuery() en js/main.js. El
   // chip .chip--busqueda (ya en css/shop.css) es como se deshace.
-  const busqueda = uno('q')?.trim() || ''
+  const busqueda = uno(sp, 'q')?.trim() || ''
   /* En «Todo» no hay desplegables: la marca serian las 40 del catalogo y el
    * calibre mezclaria el 12/70 de escopeta con el .308 de rifle, que no se
    * cruzan con nada. La seleccion tampoco se lee ahi -- si se aplicara sin
