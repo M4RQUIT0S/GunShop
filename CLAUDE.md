@@ -300,6 +300,12 @@ Reglas que sostienen el conjunto, y que hay que respetar al añadir una quinta:
   segundo.
 - Un desplegable con menos de dos opciones no se pinta, y cambiar de familia
   limpia la selección — un calibre de rifle en Óptica no deja nada que ver.
+- **En «Todo» no hay fila de desplegables**: la marca serían las 40 del
+  catálogo y el calibre mezclaría el 12/70 de escopeta con el .308 de rifle.
+  Hace falta acotar antes, por familia o por búsqueda (`acotado` en
+  `app/catalogo/page.tsx`). Ahí tampoco se lee la selección de la URL: si se
+  aplicara sin fila que la muestre, sería un filtro puesto que no se puede
+  quitar.
 - **`?sub=` se sigue honrando** aunque ya no tenga fila propia: el tercer nivel
   del menú de la cabecera enlaza ahí (`lib/familia.ts#arbolMenu()`). Llega como
   chip con su ✕, no como filtro invisible.

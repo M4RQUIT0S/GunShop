@@ -50,7 +50,12 @@ export default async function Catalogo({ searchParams }: Props) {
   // cruza con las facetas, igual que fuente()/setQuery() en js/main.js. El
   // chip .chip--busqueda (ya en css/shop.css) es como se deshace.
   const busqueda = uno('q')?.trim() || ''
-  const sel = seleccion(sp)
+  /* En «Todo» no hay desplegables: la marca serian las 40 del catalogo y el
+   * calibre mezclaria el 12/70 de escopeta con el .308 de rifle, que no se
+   * cruzan con nada. La seleccion tampoco se lee ahi -- si se aplicara sin
+   * fila que la muestre, seria un filtro puesto que no se puede quitar. */
+  const acotado = !!familia || !!busqueda
+  const sel = seleccion(acotado ? sp : {})
 
   // Un solo viaje a Supabase: el resto de los filtros son funciones puras
   // sobre el mismo array, igual que hacia js/catalog.js con `items`. Asi los
@@ -76,9 +81,11 @@ export default async function Catalogo({ searchParams }: Props) {
   // Cada desplegable cuenta sobre lo que dejan las *otras* facetas, no sobre
   // el resultado final; si no, marcar un calibre pondria el resto a cero y no
   // se podria anadir un segundo.
-  const desplegables = FACETAS
-    .map((f) => ({ f, opts: opciones(aplicarFacetas(base, sel, f.clave), f) }))
-    .filter(({ opts }) => opts.length >= 2)
+  const desplegables = acotado
+    ? FACETAS
+      .map((f) => ({ f, opts: opciones(aplicarFacetas(base, sel, f.clave), f) }))
+      .filter(({ opts }) => opts.length >= 2)
+    : []
 
   const productos = aplicarFacetas(base, sel)
   const countsPorFamilia = cuentaPorRama(todos, fams)
