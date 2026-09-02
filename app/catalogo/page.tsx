@@ -5,7 +5,7 @@ import {
   raices, rama, filtrarPorFamilia, cuentaPorRama, filtrarPorSub,
 } from '@/lib/catalogo'
 import {
-  FACETAS, opciones, aplicarFacetas, seleccion, alternar, type Seleccion,
+  FACETAS, opciones, aplicarFacetas, seleccion, alternar, consulta, type Estado,
 } from '@/lib/facetas'
 import Desplegable from '@/app/components/Desplegable'
 import { buscar } from '@/lib/buscar'
@@ -25,19 +25,10 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
-/* Arma la URL del catalogo con los filtros que puede llevar. `undefined` quita
- * el parametro en vez de dejarlo vacio en la barra de direcciones. Los valores
- * de faceta van repetidos (`?calibre=A&calibre=B`), no separados por comas:
- * «6,5 Creedmoor» lleva una coma dentro. */
-function href(p: {
-  familia?: string; sub?: string; q?: string; sel?: Seleccion
-}): string {
-  const qs = new URLSearchParams()
-  if (p.familia) qs.set('familia', p.familia)
-  if (p.sub) qs.set('sub', p.sub)
-  if (p.q) qs.set('q', p.q)
-  FACETAS.forEach((f) => (p.sel?.[f.clave] ?? []).forEach((v) => qs.append(f.clave, v)))
-  const s = qs.toString()
+// La URL del catalogo con los filtros que lleve puestos. El estado lo serializa
+// `consulta()` (lib/facetas.ts), que es de donde lo lee tambien la ficha.
+function href(e: Estado): string {
+  const s = consulta(e)
   return s ? `/catalogo?${s}` : '/catalogo'
 }
 
@@ -88,6 +79,10 @@ export default async function Catalogo({ searchParams }: Props) {
     : []
 
   const productos = aplicarFacetas(base, sel)
+  /* Los filtros viajan con el enlace a la ficha para que el «volver» de alli
+   * los devuelva. Sin esto, entrar a un producto y salir dejaba al cliente
+   * poniendolos otra vez: el enlace de la ficha iba a `?familia=` y nada mas. */
+  const estado = consulta({ familia, sub: subActivo, q: busqueda, sel })
   const countsPorFamilia = cuentaPorRama(todos, fams)
   const hayFiltro = FACETAS.some((f) => (sel[f.clave] ?? []).length > 0)
 
@@ -180,7 +175,7 @@ export default async function Catalogo({ searchParams }: Props) {
             return (
               <Link
                 key={p.id}
-                href={`/producto/${slugDe(p)}`}
+                href={`/producto/${slugDe(p)}${estado ? `?${estado}` : ''}`}
                 className="card"
                 style={{ '--i': Math.min(i, 7) } as React.CSSProperties}
               >

@@ -4,7 +4,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  FACETAS, opciones, filtrarPorFaceta, aplicarFacetas, seleccion, alternar,
+  FACETAS, opciones, filtrarPorFaceta, aplicarFacetas, seleccion, alternar, consulta,
 } from '../lib/facetas.ts'
 import type { Producto } from '../lib/catalogo.ts'
 
@@ -120,4 +120,22 @@ test('la URL admite un valor o varios, y alternar no toca el resto', () => {
   assert.deepEqual(alternar(sel, 'calibre', '.22 LR').calibre, ['.308 Win', '.22 LR'])
   assert.deepEqual(alternar(sel, 'calibre', '.308 Win').calibre, [])
   assert.deepEqual(alternar(sel, 'calibre', '.22 LR').marca, ['Sako'])
+})
+
+test('consulta() y seleccion() son ida y vuelta: los filtros vuelven de la ficha', () => {
+  const sel = { marca: ['Sako'], calibre: ['.308 Win', '6,5 Creedmoor'], canon: [], aumentos: [] }
+  const qs = consulta({ familia: 'rifles', sub: 'Rifle de cerrojo', q: '', sel })
+  const vuelta = new URLSearchParams(qs)
+
+  assert.equal(vuelta.get('familia'), 'rifles')
+  assert.equal(vuelta.get('sub'), 'Rifle de cerrojo')
+  assert.equal(vuelta.has('q'), false)
+  assert.deepEqual(seleccion(Object.fromEntries(
+    [...vuelta.keys()].map((k) => [k, vuelta.getAll(k)]),
+  )), sel)
+})
+
+test('consulta() sin nada puesto no deja cadena: el «volver» cae en la familia', () => {
+  assert.equal(consulta({}), '')
+  assert.equal(consulta({ sel: seleccion({}) }), '')
 })

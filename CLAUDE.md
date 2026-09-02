@@ -51,7 +51,7 @@ Tres páginas, todas Server Components:
 |---|---|---|
 | `/` | `app/page.tsx` | Portada: rieles de láminas, cifras del catálogo, baldosas de familias, marquesina de marcas |
 | `/catalogo` | `app/catalogo/page.tsx` | Chips de familia + desplegables de faceta (marca, calibre, cañón, aumentos), todo por `?familia=&marca=&calibre=&canon=&aumentos=&q=` en la URL |
-| `/producto/[slug]` | `app/producto/[slug]/page.tsx` | Ficha con CTA por régimen, `generateMetadata()` con Open Graph |
+| `/producto/[slug]` | `app/producto/[slug]/page.tsx` | Ficha con CTA por régimen, `generateMetadata()` con Open Graph, y «volver» que restaura los filtros con los que se llegó |
 | `/privacidad` | `app/privacidad/page.tsx` | Política de privacidad. La única página sin un solo dato de Supabase, así que se prerenderiza entera |
 
 `app/layout.tsx` es el único punto que monta el "chrome" compartido: `<Nav/>`
@@ -309,6 +309,16 @@ Reglas que sostienen el conjunto, y que hay que respetar al añadir una quinta:
 - **`?sub=` se sigue honrando** aunque ya no tenga fila propia: el tercer nivel
   del menú de la cabecera enlaza ahí (`lib/familia.ts#arbolMenu()`). Llega como
   chip con su ✕, no como filtro invisible.
+- **Los filtros viajan con el enlace a la ficha y vuelven con ella.** La
+  tarjeta enlaza a `/producto/<slug>?<los mismos parámetros>` y el «volver» de
+  la ficha los devuelve; sin ninguno (entrada directa, enlace compartido) cae
+  en `?familia=` de la familia del producto, que es lo que hacía siempre.
+  Ambos lados serializan con `consulta()` (`lib/facetas.ts`) — una sola lista
+  de parámetros, para que la faceta que se añada mañana no se pierda por el
+  camino de vuelta. La ficha **rearma** la cadena en vez de reenviarla, así
+  sólo vuelve lo que el catálogo entiende. Y como el producto es el mismo se
+  llegue como se llegue, `generateMetadata()` fija el `canonical` sin
+  parámetros: si no, cada combinación de facetas sería una página que indexar.
 - El desplegable es un `<details>` nativo (`app/components/Desplegable.tsx`),
   sin `'use client'`: el teclado y el abrir/cerrar vienen del elemento, y cada
   opción es un enlace que alterna su valor en la URL. El panel sobrevive a la

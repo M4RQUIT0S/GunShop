@@ -5,11 +5,17 @@ import {
   productoPorSlug, cambio, precio, modoVenta,
 } from '@/lib/catalogo'
 import ProductoCTA from '@/app/components/ProductoCTA'
+import { consulta, seleccion } from '@/lib/facetas'
 
 // Igual que /catalogo: se regenera cada diez minutos, no en cada visita.
 export const revalidate = 600
 
-type Props = { params: Promise<{ slug: string }> }
+/* La ficha lee `searchParams` porque el catalogo le pasa los filtros puestos
+ * en el enlace: son los que restaura el «volver». No filtran nada aqui. */
+type Props = {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
@@ -21,6 +27,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: titulo,
     description: descripcion,
+    // El producto es el mismo se llegue con los filtros que se llegue: sin
+    // esto, cada combinacion de facetas seria una pagina distinta que indexar.
+    alternates: { canonical: `/producto/${slug}` },
     openGraph: {
       title: titulo,
       description: descripcion,
@@ -29,13 +38,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function Ficha({ params }: Props) {
+export default async function Ficha({ params, searchParams }: Props) {
   const { slug } = await params
+  const sp = await searchParams
   const [producto, arsPorUsd] = await Promise.all([productoPorSlug(slug), cambio()])
   if (!producto) notFound()
 
   const modo = modoVenta(producto.regimen)
   const exige = modo !== 'direct_checkout'
+
+  /* Se rearma con `consulta()` en vez de reenviar la cadena tal cual: asi solo
+   * vuelven los parametros que el catalogo entiende, no lo que traiga pegado
+   * un enlace de fuera. Sin ninguno -- entrada directa, enlace compartido --
+   * queda el destino de siempre, la familia del producto. */
+  const uno = (k: string) => (Array.isArray(sp[k]) ? sp[k][0] : sp[k])
+  const busqueda = uno('q')?.trim() || ''
+  const estado = consulta({
+    familia: uno('familia'), sub: uno('sub'), q: busqueda, sel: seleccion(sp),
+  })
+  const volver = estado ? `/catalogo?${estado}` : `/catalogo?familia=${producto.familia}`
+  // Con una busqueda detras, el rotulo no puede ser la familia del producto:
+  // se vuelve a los resultados, no a Rifles.
+  const rotulo = busqueda ? 'Catálogo' : producto.familiaNombre
 
   return (
     <main id="contenido" className="section" style={{ paddingTop: 'calc(var(--nav-h-ancha) + 1rem)' }}>
@@ -67,8 +91,8 @@ export default async function Ficha({ params }: Props) {
         </div>
 
         <div className="ficha__info">
-          <Link href={`/catalogo?familia=${producto.familia}`} className="chip">
-            ← {producto.familiaNombre}
+          <Link href={volver} className="chip">
+            ← {rotulo}
           </Link>
 
           <div style={{ display: 'grid', gap: '0.5rem' }}>

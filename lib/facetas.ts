@@ -87,6 +87,22 @@ export function aplicarFacetas(
   )
 }
 
+/* El estado del catalogo que cabe en una URL. La ficha del producto tambien
+ * lo arma -- su enlace de vuelta tiene que devolver a los filtros con los que
+ * se llego --, asi que la lista de parametros vive aqui y no en las dos
+ * paginas: con una copia por fichero, la faceta que se anada manana se pierde
+ * por el camino de vuelta. */
+export type Estado = { familia?: string; sub?: string; q?: string; sel?: Seleccion }
+
+export function consulta(e: Estado): string {
+  const qs = new URLSearchParams()
+  if (e.familia) qs.set('familia', e.familia)
+  if (e.sub) qs.set('sub', e.sub)
+  if (e.q) qs.set('q', e.q)
+  FACETAS.forEach((f) => (e.sel?.[f.clave] ?? []).forEach((v) => qs.append(f.clave, v)))
+  return qs.toString()
+}
+
 // Lo que llega en la URL, normalizado a lista: Next da `string` con un valor
 // y `string[]` con varios.
 export function seleccion(sp: Record<string, string | string[] | undefined>): Seleccion {
