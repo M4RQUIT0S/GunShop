@@ -1,11 +1,12 @@
-import { familias, listaProductos, raices, cuentaPorRama } from '@/lib/catalogo'
+import { familias, listaProductos, raices, cuentaPorRama, recientes, slugDe } from '@/lib/catalogo'
 import RielLaminas from './components/RielLaminas'
 import Scrollicono from './components/Scrollicono'
 import Reveal from './components/Reveal'
 import Marquee from './components/Marquee'
 
 // Igual que /catalogo: la portada cambia poco y se regenera cada diez
-// minutos en vez de consultar Supabase en cada visita.
+// minutos en vez de consultar Supabase en cada visita. Es tambien la ventana
+// con la que una referencia recien cargada tarda en salir en las laminas.
 export const revalidate = 600
 
 const numero = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 })
@@ -33,6 +34,31 @@ export default async function Home() {
   // slug aunque compartiesen nombre de vitrina.
   const marcas = [...new Map(productos.map((p) => [p.marcaSlug, p.marca])).values()]
 
+  /* Las dos láminas de debajo de la portada ya no son fotos de archivo: salen
+   * del catálogo. La primera enseña la última referencia que entró; la
+   * segunda, un mosaico con las cuatro siguientes.
+   *
+   * Se corta DESPUÉS de filtrar, y por foto única. Dos cosas distintas:
+   *
+   * - Sin `foto` no entra. `aProducto()` ya cae a la genérica de la familia,
+   *   así que quedarse sin ninguna significa que no hay ni eso, y una lámina
+   *   de pantalla entera con el hueco vacío no es una novedad, es un fallo.
+   * - Sin foto REPETIDA tampoco. Dos referencias de la misma familia sin foto
+   *   propia caen en la misma genérica -- los dados y la balanza comparten
+   *   `gauge.webp` -- y un mosaico con la misma imagen dos veces se lee como
+   *   un fallo, no como cuatro novedades.
+   *
+   * Si el catálogo entero se quedara sin fotos, las láminas simplemente no se
+   * pintan y la portada sigue en pie. */
+  const vistas = new Set<string>()
+  const [ultimo, ...mosaico] = recientes(productos)
+    .filter((p) => {
+      if (!p.foto || vistas.has(p.foto)) return false
+      vistas.add(p.foto)
+      return true
+    })
+    .slice(0, 5)
+
   return (
     <>
       <RielLaminas />
@@ -41,7 +67,7 @@ export default async function Home() {
 
       <main id="contenido">
 
-        {/* portada: tres pantallas apiladas */}
+        {/* portada: la lámina de marca y, debajo, lo que acaba de entrar */}
         <section className="laminas" id="laminas" aria-label="Portada">
 
           <section className="lamina" aria-labelledby="lam1">
@@ -64,44 +90,49 @@ export default async function Home() {
             </div>
           </section>
 
-          <section className="lamina" aria-labelledby="lam2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              className="lamina__bg"
-              src="/img/model/rifle.webp"
-              alt=""
-              aria-hidden="true"
-              width={1200}
-              height={750}
-              loading="lazy"
-            />
-            <div className="lamina__copy">
-              <p className="eyebrow">Cada pieza con su CUIM</p>
-              <h2 className="h-display" id="lam2">Nada sale sin papeles</h2>
-              <p className="lede">Ninguna venta se cierra sin Credencial de Legítimo Usuario
-                vigente. La munición exige además Tarjeta de Consumo ligada a un arma
-                registrada a su nombre.</p>
-            </div>
-          </section>
+          {ultimo && (
+            <section className="lamina" aria-labelledby="lam2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className="lamina__bg"
+                src={ultimo.foto!}
+                alt=""
+                aria-hidden="true"
+                width={1200}
+                height={750}
+                loading="lazy"
+              />
+              <div className="lamina__copy">
+                <p className="eyebrow">Recién ingresado</p>
+                {/* `h-section` y no `h-display`: el nombre de un producto no es
+                    «Alcántara». «Federal 210M Gold Medal Match (caja de 1.000)» a
+                    70 px se come la lámina entera; a 44 px sigue siendo el titular
+                    de la pantalla y cabe en dos líneas. */}
+                <h2 className="h-section" id="lam2">{ultimo.marca} {ultimo.ref}</h2>
+                <p className="lede">{[ultimo.kind, ...ultimo.spec.slice(0, 3)].join(' · ')}</p>
+                <a className="btn" href={`/producto/${slugDe(ultimo)}`}>Ver la ficha</a>
+              </div>
+            </section>
+          )}
 
-          <section className="lamina" aria-labelledby="lam3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              className="lamina__bg"
-              src="/img/model/shotgun.webp"
-              alt=""
-              aria-hidden="true"
-              width={1200}
-              height={750}
-              loading="lazy"
-            />
-            <div className="lamina__copy">
-              <p className="eyebrow">Taller propio en la misma planta</p>
-              <h2 className="h-display" id="lam3">Ajustada a su mano</h2>
-              <p className="lede">Disparador, monturas, puesta a cero y culata a medida. El
-                arma no sale del local para ajustarse.</p>
-            </div>
-          </section>
+          {mosaico.length > 0 && (
+            <section className="lamina" aria-labelledby="lam3">
+              <div className="lamina__mosaico" aria-hidden="true">
+                {mosaico.map((p) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={p.id} src={p.foto!} alt="" width={1200} height={750} loading="lazy" />
+                ))}
+              </div>
+              <div className="lamina__copy">
+                <p className="eyebrow">Novedades</p>
+                <h2 className="h-display" id="lam3">Lo último en vitrina</h2>
+                <p className="lede">Las {mosaico.length + 1} referencias que acaban de subir
+                  al catálogo. Lo que no está en vitrina se encarga y llega con la
+                  documentación hecha.</p>
+                <a className="btn btn--ghost" href="/catalogo">Recorrer el catálogo</a>
+              </div>
+            </section>
+          )}
 
         </section>
 

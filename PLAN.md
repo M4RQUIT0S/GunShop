@@ -583,3 +583,39 @@ Lo que NO se toco, y por que:
 
 Pendiente en el panel de Supabase, no en el repo: alta del proveedor Google y
 las Redirect URLs con `/**`. Tabla en CLAUDE.md.
+
+## Portada: las laminas de debajo salen del catalogo (2026-09-06)
+
+Las laminas 2 y 3 eran dos fotos genericas (`rifle.webp`, `shotgun.webp`) con
+copy fijo — una legal ("Nada sale sin papeles") y otra del taller ("Ajustada a
+su mano"). Ahora las arma `app/page.tsx` con lo ultimo que entro: la 2 es la
+ultima referencia con su foto y enlace a la ficha, la 3 un mosaico
+(`.lamina__mosaico`) con las cuatro siguientes.
+
+Hecho:
+
+- `lib/catalogo.ts`: `recientes(productos, n?)`, pura, ordena por `id` desc.
+  **No por `created_at`**: `now()` es la hora de la TRANSACCION y la semilla
+  entera entro en una sola, asi que los 79 comparten sello al milisegundo.
+- `app/page.tsx`: filtra por foto y por foto UNICA antes de cortar. Dos
+  referencias de la misma familia sin foto propia caen en la misma generica
+  (dados y balanza comparten `gauge.webp`) y el mosaico salia con la imagen
+  repetida.
+- El titular del producto va en `h-section` (44 px), no `h-display` (70 px):
+  "Federal 210M Gold Medal Match (caja de 1.000)" a 70 px se come la lamina.
+- `RielLaminas.tsx`: los puntos salen de `laminas.length`, no de la lista de
+  tres etiquetas. Sin novedades hay menos de tres laminas y los puntos de
+  sobra no llevaban a ningun sitio.
+- `css/base.css`: `.lamina__mosaico` (2 columnas en movil, 4 desde 48rem) y el
+  movimiento atado al scroll (`animation-timeline: view()`), bajo `@supports` +
+  `prefers-reduced-motion: no-preference`.
+
+Lo que NO se hizo, y por que:
+
+- **Promociones.** `product` no tiene columna de descuento ni de oferta. Una
+  seccion de promociones sin una sola promocion es una caja vacia; el dia que
+  haya el dato, la lamina 3 es donde va.
+- **Sin test nuevo.** `recientes()` es un `sort` + `slice` sin ramas. El
+  filtrado por foto unica vive en la portada, no en `lib/`.
+- **Se perdio el copy legal y el del taller** de las laminas viejas. Reponerlos
+  como banda de texto esta sin decidir.

@@ -149,6 +149,20 @@ export function cuentaPorRama(
   )
 }
 
+/* Las ultimas referencias que entraron, para las laminas de novedades de la
+ * portada. Ordena por `id` -- que es `identity`, o sea el orden de insercion
+ * -- y NO por `created_at`: `now()` en Postgres es la hora de la TRANSACCION
+ * y la semilla entera entro en una sola, asi que los 79 productos comparten
+ * sello al milisegundo y ordenar por ahi no desempata nada. El dia que la
+ * armeria cargue producto a producto, el id sigue creciendo igual.
+ *
+ * Pura y sin consulta propia a proposito: la portada ya pide
+ * `listaProductos()` para contar, y una segunda vuelta a Supabase por cinco
+ * filas que ya estan en memoria no compra nada. */
+export function recientes(productos: Producto[], n = Infinity): Producto[] {
+  return [...productos].sort((a, b) => b.id - a.id).slice(0, n)
+}
+
 // Misma clave que arma los enlaces del listado (slugDe), asi que un producto
 // nuevo o renombrado nunca puede desincronizar listado y ficha entre si: los
 // dos leen del mismo listaProductos() y aplican la misma funcion.

@@ -655,6 +655,61 @@ a { color: inherit; text-decoration: none; }
   padding: var(--nav-h-ancha) var(--pad-x) 4rem;
 }
 .lamina__copy .lede { max-width: 46ch; }
+/* El mosaico de la lamina de novedades: en vez de una foto de archivo, las
+   cuatro referencias que acaban de entrar, cada una con la suya. De dos en
+   dos en movil y en fila en pantalla ancha -- cuatro tiras verticales se leen
+   como un muestrario, cuatro cuadros apretados no se leen. Es decoracion: el
+   contenedor va `aria-hidden`, y lo que se pincha es la llamada del copy. */
+.lamina__mosaico {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 1fr;
+}
+.lamina__mosaico img { width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 48rem) {
+  .lamina__mosaico { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* --- las laminas se mueven con el scroll -------------------------------
+   `animation-timeline: view()` ata el fotograma a lo que el elemento lleva
+   recorrido de la pantalla, no a un reloj propio: el movimiento va pegado al
+   dedo y se para cuando el lector para. Es la diferencia entre una entrada
+   que se dispara y una portada que fluye, y no cuesta una linea de JS.
+
+   Va bajo `no-preference` y NO dentro del bloque de movimiento reducido del
+   final: alli el `*` pone `animation-duration: 0.01ms`, y en una animacion de
+   linea de tiempo la duracion no es lo que manda el progreso. Mas vale no
+   darsela y que no entre nada.
+
+   Sin `view()` (Safari viejo, Firefox sin la bandera) tampoco entra nada y las
+   laminas se quedan como estaban: quietas y legibles. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .lamina__bg,
+    .lamina__mosaico {
+      animation: lamina-deriva linear both;
+      animation-timeline: view();
+    }
+    .lamina__copy {
+      animation: lamina-copia linear both;
+      animation-timeline: view();
+    }
+  }
+}
+/* La escala nunca baja de 1,06, que son 3% de sobra por lado: el 2,5% que
+   desplaza no llega a destapar el borde de la foto. */
+@keyframes lamina-deriva {
+  from { transform: scale(1.16) translateY(-2.5%); }
+  to { transform: scale(1.06) translateY(2.5%); }
+}
+/* Solo desplaza. Si tocara la opacidad, una lamina a medio pasar seria texto
+   a medio leer -- y la del titular es la primera pantalla del sitio. */
+@keyframes lamina-copia {
+  from { transform: translateY(2.5rem); }
+  to { transform: translateY(-2.5rem); }
+}
 
 /* --- riel de puntos ----------------------------------------------------
    Fijo a la izquierda, dice en que lamina estas. Es el unico adorno de la

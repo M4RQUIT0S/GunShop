@@ -14,8 +14,14 @@ import { useEffect, useState } from 'react'
 
 const ETIQUETAS = ['primera', 'segunda', 'tercera']
 
+/* Cuantas laminas hay lo dice el DOM, no esta lista: desde que la segunda y
+ * la tercera salen del catalogo, una portada sin novedades trae menos de
+ * tres y los puntos de sobra no llevaban a ningun sitio. */
+const rotulo = (i: number) =>
+  ETIQUETAS[i] ? `Ir a la ${ETIQUETAS[i]} lámina` : `Ir a la lámina ${i + 1}`
+
 export default function RielLaminas() {
-  const [visible, setVisible] = useState(false)
+  const [cuantas, setCuantas] = useState(0)
   const [activo, setActivo] = useState(0)
   const [enPantalla, setEnPantalla] = useState(false)
 
@@ -26,7 +32,7 @@ export default function RielLaminas() {
     const laminas = Array.from(zona.querySelectorAll<HTMLElement>('.lamina'))
     if (!laminas.length) return
 
-    setVisible(true)
+    setCuantas(laminas.length)
 
     const ojoActivo = new IntersectionObserver((entradas) => {
       entradas.forEach((e) => {
@@ -56,15 +62,16 @@ export default function RielLaminas() {
   }
 
   return (
-    <div className={`riel${enPantalla ? ' is-on' : ''}`} id="riel" hidden={!visible}>
-      {ETIQUETAS.map((etiqueta, i) => (
+    <div className={`riel${enPantalla ? ' is-on' : ''}`} id="riel" hidden={!cuantas}>
+      {Array.from({ length: cuantas }, (_, i) => (
         <button
-          key={etiqueta}
+          // eslint-disable-next-line react/no-array-index-key
+          key={i}
           className="riel__punto"
           type="button"
           data-lamina={i}
           aria-current={activo === i}
-          aria-label={`Ir a la ${etiqueta} lámina`}
+          aria-label={rotulo(i)}
           onClick={() => irA(i)}
         />
       ))}

@@ -49,10 +49,41 @@ Tres páginas, todas Server Components:
 
 | Ruta | Fichero | Qué hace |
 |---|---|---|
-| `/` | `app/page.tsx` | Portada: rieles de láminas, cifras del catálogo, baldosas de familias, marquesina de marcas |
+| `/` | `app/page.tsx` | Portada: tres láminas (la de marca y dos de novedades sacadas del catálogo), cifras, baldosas de familias, marquesina de marcas |
 | `/catalogo` | `app/catalogo/page.tsx` | Chips de familia + desplegables de faceta (marca, calibre, cañón, aumentos), todo por `?familia=&marca=&calibre=&canon=&aumentos=&q=` en la URL |
 | `/producto/[slug]` | `app/producto/[slug]/page.tsx` | Ficha con CTA por régimen, `generateMetadata()` con Open Graph, y «volver» que restaura los filtros con los que se llegó |
 | `/privacidad` | `app/privacidad/page.tsx` | Política de privacidad. La única página sin un solo dato de Supabase, así que se prerenderiza entera |
+
+### Las dos láminas de novedades
+
+Las láminas 2 y 3 de la portada ya no son fotos de archivo con copy fijo: las
+arma `app/page.tsx` con lo último que entró al catálogo
+(`recientes()` — ver `lib/catalogo.ts`). La 2 es la última referencia, con su
+foto a sangre y enlace a la ficha; la 3, un mosaico de las cuatro siguientes
+(`.lamina__mosaico`) que lleva al catálogo.
+
+Tres cosas que sostienen eso y no se tocan por separado:
+
+- **Lo reciente sale del `id`, no de `created_at`.** `now()` en Postgres es la
+  hora de la TRANSACCIÓN y la semilla entera entró en una sola: los 79
+  productos comparten sello al milisegundo y ordenar por ahí no desempata
+  nada. `product.id` es `identity`, o sea el orden de inserción.
+- **Una foto por lámina, y única.** Sin `foto` no entra (la cascada de
+  `aProducto()` ya cayó a la genérica de la familia: quedarse sin ninguna
+  significa que no hay ni eso), y sin foto *repetida* tampoco — dos
+  referencias de la misma familia sin foto propia caen en la misma genérica
+  (los dados y la balanza comparten `gauge.webp`) y un mosaico con la misma
+  imagen dos veces se lee como un fallo.
+- **El riel cuenta las láminas del DOM.** Si el catálogo se quedara sin fotos,
+  las láminas no se pintan y `RielLaminas.tsx` pinta los puntos que haya, no
+  tres fijos.
+
+Con `revalidate = 600`, una referencia recién cargada tarda hasta diez minutos
+en salir en la portada.
+
+**No hay promociones.** `product` no tiene columna de descuento ni de oferta,
+así que la portada no las inventa. El día que las haya, la lámina 3 es donde
+van.
 
 `app/layout.tsx` es el único punto que monta el "chrome" compartido: `<Nav/>`
 (cabecera + menú), `<Footer/>`, `<Pie/>` (mide el pie fijo y le da hueco al
@@ -87,7 +118,7 @@ de `js/reveal.js` del sitio viejo).
 |---|---|
 | `lib/supabase.ts` | Cliente con la clave publicable. Revienta el **build** (no el arranque) si faltan las env vars — más vale un despliegue rojo que uno verde sirviendo una tienda vacía |
 | `lib/regimen.ts` | **Fuente única del régimen legal ANMaC.** Sin imports a propósito: se prueba sola, sin base ni env vars |
-| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorFamilia()`/`cuentaPorRama()`. Reexporta `lib/familia.ts` entero |
+| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorFamilia()`/`cuentaPorRama()`/`recientes()`. Reexporta `lib/familia.ts` entero |
 | `lib/familia.ts` | **El árbol de familias, sin tocar la base.** `raices()`, `hijas()`, `rama()`, `arbolMenu()`. Aparte de `catalogo.ts` por lo mismo que `regimen.ts`: aquel importa el cliente de Supabase al cargarse y nada de dentro se puede probar sin `.env.local` |
 | `lib/cesta.ts` | Lógica de la reserva sin DOM: `faltas()` (qué impide reservar) y `reserva()` (pedido + `mailto:`) |
 | `lib/cuenta.ts` | Sólo el tipo `Perfil` (`{nombre, email}`) — vive aparte para que `cesta.ts` no dependa de un componente de React |
@@ -404,6 +435,14 @@ es de ese sistema descartado, no de éste.
   un titular grande.
 - Canto vivo en todo; la única curva es la píldora de los botones
   (`--r-pildora: 30px`). `--r: 0` en el resto.
+- Las láminas de la portada se mueven **con el scroll**, no con un reloj
+  propio: `animation-timeline: view()` sobre el fondo y sobre el texto, bajo
+  `@supports` + `prefers-reduced-motion: no-preference` (ver `css/base.css`,
+  `lamina-deriva`/`lamina-copia`). El bloque va aparte del de movimiento
+  reducido del final a propósito: allí el `*` pone
+  `animation-duration: 0.01ms`, y en una animación de línea de tiempo la
+  duración no es lo que manda el progreso. Sin soporte no entra nada y las
+  láminas se quedan quietas, que es el estado legible.
 - Una sola curva de movimiento (`cubic-bezier` fuerte a la salida, sin
   rebote), tres tiempos fijos, igual que documentaba el sitio estático.
   Respetar `prefers-reduced-motion` en cualquier animación nueva.
@@ -445,18 +484,8 @@ pone la etiqueta por defecto; el producto la pisa con su propio
 `licence_regime_id` sólo si es una excepción — el mismo patrón que llevaba
 `licence:` en `js/catalog.js` del sitio estático.
 
-## Herramientas conservadas (`tools/`)
-
-Ninguna corre en build ni en CI; son insumo manual de fases anteriores de la
-migración y del respaldo 3D aparcado.
-
-| Fichero | Para qué | Se corre cuando |
-|---|---|---|
-| `tools/seed-supabase.js` | Generó `db/supabase/seed-productos.sql` (idempotente) leyendo `js/catalog.js`. **Hoy no corre**: al fusionar el port en `main` se borró el sitio estático y con él su catálogo, que era la última copia. El SQL que produjo está commiteado y aplicado; para volver a generarlo hay que sacar `js/catalog.js` del historial (rama `main-antes-del-merge`) o apuntar el script a Supabase | no se corre hoy |
-| `tools/seed.js` | Genera el `db/seed.sql` del esquema Postgres viejo (`db/schema.sql`) desde un `js/catalog.js` local — ese fichero ya no existe en esta rama (se borró en la fase de limpieza junto con el resto del sitio estático), así que hoy **no corre** sin apuntarlo a otra fuente. Se conserva como referencia de cómo se generó `db/seed.sql` | no se corre hoy; ver nota más abajo |
-| `tools/models.py` | Modela las 8 piezas del respaldo 3D en Blender y hornea `js/meshes.js` | si el respaldo 3D vuelve a activarse |
-| `tools/fotos.py` | Baja las fotos genéricas de `public/img/model/` desde Wikimedia Commons, sólo licencias redistribuibles | si hace falta una foto genérica nueva |
-| `tools/marca.py` | Hornea el monograma en PNG (`--tam`). Existe porque Google pide el logo del consent screen en mapa de bits y no acepta SVG | si hace falta el monograma en otro tamaño |
+Qué hace cada script conservado en `tools/` (ninguno corre en build ni en CI):
+ver `tools/CLAUDE.md`.
 
 ## Lo que queda pendiente
 
