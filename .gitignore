@@ -24,6 +24,11 @@ next-env.d.ts
 # .md) si se puede commitear, si alguna vez se quiere.
 .obsidian/
 
+# graphify: grafo de conocimiento generado (graph.json/.html, vault de
+# Obsidian, cache de extraccion). Se reconstruye con /graphify; no aporta
+# nada al historial y el vault solo son 894 notas derivadas del codigo.
+graphify-out/
+
 # Config de agentes: apunta a proyectos reales y es de cada maquina.
 .codex/*
 !.codex/config.example.toml
