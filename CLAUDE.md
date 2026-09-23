@@ -105,7 +105,9 @@ todo lo que sólo lee Supabase y renderiza queda de servidor.
 cuatro paneles que los consumen (`CartPanel`, `AccountPanel`, `SearchPanel`,
 `ConsultaPanel`), `NavMenu.tsx` (menú en cascada: pinta una columna por nivel abierto del
 árbol que le pasa `Nav.tsx`, sin saber cuántos hay. Más `inert` sobre el
-resto de la página), `HeaderActions.tsx` (los tres botones de la barra — separado
+resto de la página. Con ratón se abre al pasar por encima del botón, tras
+150 ms, y sólo abre: el panel tapa la pantalla y «cerrar al salir» lo cerraría
+al entrar en él), `HeaderActions.tsx` (los tres botones de la barra — separado
 de `Nav.tsx` porque éste es Server y no puede llevar `onClick`), `CartCount.tsx`,
 `ProductoCTA.tsx` (botón de la ficha, pregunta a `CartContext` cuántas
 unidades hay — no guarda estado propio), `RielLaminas.tsx`, `Marquee.tsx`,

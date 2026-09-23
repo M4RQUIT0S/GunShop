@@ -31,6 +31,12 @@ const CHEVRON = (
   </svg>
 )
 
+// `focusVisible` ya lo entienden Chrome, Firefox y Safari, pero el lib.dom de
+// TypeScript todavia no lo trae.
+declare global {
+  interface FocusOptions { focusVisible?: boolean }
+}
+
 const FOTO_DEFECTO = '/img/model/rifle.webp'
 const FOTO_CATALOGO = '/img/model/pistol.webp'
 
@@ -59,6 +65,8 @@ export default function NavMenu({
   const toggleRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const cerrado = useRef<number[] | null>(null)
+  const espera = useRef<number | undefined>(undefined)
+  const porHover = useRef(false)
 
   // Las columnas: la primera es el arbol entero, cada siguiente son los hijos
   // del nodo elegido en la anterior.
@@ -101,9 +109,18 @@ export default function NavMenu({
 
   useEffect(() => {
     if (open) {
-      menuRef.current?.querySelector<HTMLElement>('.nav__links a, .nav__links button')?.focus()
+      // Abierto con el raton por encima, el foco se muda igual (Tab sigue
+      // dentro del menu) pero sin anillo: nadie ha tocado el teclado. Con clic
+      // el navegador ya lo decide solo; sin clic previo lo pintaba.
+      menuRef.current
+        ?.querySelector<HTMLElement>('.nav__links a, .nav__links button')
+        ?.focus(porHover.current ? { focusVisible: false } : undefined)
     } else {
       setCamino([])
+      // Cerrado por Escape o por un enlace con el puntero aun encima del
+      // boton: el clic que habia que tragarse ya no va a llegar, y el
+      // siguiente tiene que abrir.
+      porHover.current = false
     }
   }, [open])
 
@@ -193,7 +210,29 @@ export default function NavMenu({
             type="button"
             aria-expanded={open}
             aria-controls="navMenu"
-            onClick={() => setOpen((o) => !o)}
+            /* Con raton se abre al pasar por encima, sin clic. Solo abre: el
+               panel tapa la pantalla entera, asi que «cerrar al salir» lo
+               cerraria en cuanto el puntero entra en el. Los 150 ms son para
+               que cruzar hacia las pestanas del navegador no lo despliegue.
+               `porHover` se traga el clic que llega justo despues -- quien
+               iba a hacer clic de todas formas lo cerraria en el acto. Tactil
+               y teclado siguen yendo solo por el clic. */
+            onPointerEnter={(e) => {
+              if (e.pointerType !== 'mouse' || open) return
+              espera.current = window.setTimeout(() => {
+                porHover.current = true
+                setOpen(true)
+              }, 150)
+            }}
+            onPointerLeave={() => {
+              clearTimeout(espera.current)
+              porHover.current = false
+            }}
+            onClick={() => {
+              clearTimeout(espera.current)
+              if (porHover.current) porHover.current = false
+              else setOpen((o) => !o)
+            }}
           >
             <span className="nav__bars" aria-hidden="true"><i /><i /><i /></span>
             <span className="nav__palabra" aria-hidden="true">
