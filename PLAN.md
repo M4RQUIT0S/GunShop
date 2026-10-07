@@ -619,3 +619,39 @@ Lo que NO se hizo, y por que:
   filtrado por foto unica vive en la portada, no en `lib/`.
 - **Se perdio el copy legal y el del taller** de las laminas viejas. Reponerlos
   como banda de texto esta sin decidir.
+
+## Auditoría UX completa (2026-10-07)
+
+- Revisión solicitada con `laws-of-ux-review`: portada, catálogo, ficha y paneles.
+- Informe en `UX-AUDIT.md`, sobre `11426ea` de `main`: 40/56 puntos aplicables,
+  normalizados a 43/60 (B); tres hallazgos críticos, ocho advertencias y dos
+  sugerencias. Dos leyes no aplican. Auditoría estática, sin prueba visual.
+- Reproducción local con datos sintéticos: filtros válidos cruzados pueden
+  ocultar todos los desplegables y «Limpiar», manteniendo la selección aplicada.
+- Prioridad: mensajes de reserva sin confirmación real, carga/error confundidos
+  con estados vacíos y conservación del resumen/contexto. Ver plan del informe.
+- Esta fase entrega documentación; las correcciones de interfaz quedan propuestas.
+- Verificación: compilación y TypeScript correctos; build detenido en prerender
+  y pruebas de slug fallidas por HTTP 521 del endpoint de Supabase. Commit y push
+  pendientes hasta cumplir la regla de build/suite en verde.
+- Las 29 pruebas locales de árbol, búsqueda, facetas y modos de venta pasan.
+
+### Prueba en producción (2026-10-07, Codex + Claude Code)
+
+- Codex probó el despliegue y se cortó antes de escribir el informe; Claude Code
+  retomó desde su transcripción, completó lo que faltaba y lo volcó en la
+  sección «Verificación en producción» de `UX-AUDIT.md`. Capturas en
+  `docs/ux-evidence/`.
+- Producción sirve `11426ea`: lo auditado es lo desplegado. Supabase volvió a
+  `ACTIVE_HEALTHY`; el 521 no se repitió.
+- Confirmados con datos reales: la falsa reserva «Guardada 72 h» con cesta
+  vacía y la marca seleccionada que desaparece del filtro.
+- Nuevos: Google desactivado en Auth (el botón lleva a un JSON de error), «89
+  en stock» con 17 en existencias, cambio congelado desde el 24/08, moneda
+  distinta entre cesta y cuenta, 404 por defecto en inglés, errores 500 del
+  04/10 sin `error.tsx`, consulta que no reutiliza el perfil, usted/tú
+  mezclados, datos sin tilde. Backend: registro por correo abierto en la API
+  (B1), funciones `SECURITY DEFINER` concedidas a propósito (B2), sin cabeceras
+  de seguridad (B3), diez productos de Recarga sin variante (B5).
+- Nota tras producción: 41/60 (B). Nada cambiado en la base ni en los paneles.
+- Build y suite (31/31) en verde con Supabase arriba; documentación subida.
