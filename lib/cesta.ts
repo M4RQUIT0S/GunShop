@@ -42,8 +42,9 @@ export type Pedido = {
 }
 
 // Sin servidor no hay pedido de verdad: se apunta en el propio navegador
-// (CartPanel lo persiste en localStorage['gunshop:pedidos']) y se abre un
-// correo con el detalle, que es lo unico que llega a la armeria de verdad. El
+// (CartPanel lo persiste en localStorage['gunshop:pedidos']). El mailto: con el
+// detalle se sigue armando, pero CartPanel no lo ofrece mientras el destinatario
+// sea taller@alcantara.example: vuelve el dia que haya una direccion real. El
 // dia que exista sesion con perfil en la base, esto lo sustituye un INSERT via
 // crear_pedido().
 export function reserva(

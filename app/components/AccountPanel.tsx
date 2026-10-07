@@ -44,7 +44,7 @@ function Estado({ perfil, google }: { perfil: Perfil | null; google: string | nu
     return (
       <p>
         Sin datos cargados. Entra con Google o deja tu nombre y correo: es lo único
-        que la reserva necesita para llegar al taller.
+        que acompaña al resumen de la cesta.
       </p>
     )
   }
@@ -71,7 +71,7 @@ function Pedidos() {
 
   return (
     <>
-      <h3 className="panel__sub">Tus reservas</h3>
+      <h3 className="panel__sub">Resúmenes en este navegador</h3>
       {lista.slice().reverse().map((p) => (
         <p className="pedido" key={p.codigo}>
           <span className="pedido__cod">{p.codigo}</span>

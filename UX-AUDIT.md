@@ -263,7 +263,7 @@ Bajan dos leyes: **Tesler's Law** 2 → 1 (P7) y **Cognitive Bias** 1 → 0 (P2,
 
 ## Action Plan (do in this order)
 
-1. **Corregir la falsa confirmación y conservar el resumen** — textos de demo, edición reversible y eliminación de promesas sin respaldo → `app/components/CartPanel.tsx:48`, `AccountPanel.tsx:74`.
+1. ✅ **Corregir la falsa confirmación y conservar el resumen** — textos de demo, edición reversible y eliminación de promesas sin respaldo → `app/components/CartPanel.tsx:48`, `AccountPanel.tsx:74`. *Hecho:* el panel se llama «Simulación de reserva», el botón «Preparar el resumen»; el resumen dice que no se envió ni reservó nada, no vacía la cesta (líneas fijas a la vista, «Volver a editar» y «Vaciar la cesta», con el foco en la vista nueva), y el `mailto:` a `.example` ya no se ofrece. «Tus reservas» pasó a «Resúmenes en este navegador» y `/privacidad` describe el flujo nuevo. Captura: `docs/ux-evidence/2026-10-07-cesta-resumen-corregido.jpg`.
 2. **Google y registro** — ocultar «Continuar con Google» hasta que el proveedor esté dado de alta (P1) y, en el panel de Supabase, cerrar el registro por correo si no se va a usar (B1) → `AccountPanel.tsx:154`.
 3. **Distinguir carga, error y ausencia de resultados** — feedback y reintento; CTA coherente con estado de datos; `app/error.tsx` para las caídas de Supabase (P6) → `SearchPanel.tsx:40`, `CartContext.tsx:88`, `ProductoCTA.tsx:22`.
 4. **Mantener filtros visibles y removibles** — conservar selecciones y mostrar siempre limpieza cuando se aplican filtros; confirmado con datos reales → `app/catalogo/page.tsx:74`.

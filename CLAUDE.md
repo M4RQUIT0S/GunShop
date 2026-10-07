@@ -259,8 +259,11 @@ necesitan ver el mismo estado.
 cuanto entras con Google), pero `crear_pedido()` además necesita una fila en
 `customer` ligada a esa sesión, y eso no está: la cuenta de Google sólo
 identifica. `CartPanel` sigue armando la reserva 100% en cliente
-(`localStorage['gunshop:pedidos']` + `mailto:`), igual que hacía `js/cart.js`
-en el sitio estático.
+(`localStorage['gunshop:pedidos']`), y por eso la llama **resumen** y dice que
+es una simulación: sin plazos ni «guardada 72 h». El resumen no vacía la cesta
+—deja las líneas fijas a la vista, con «Volver a editar» y «Vaciar la cesta»—,
+y el `mailto:` que arma `reserva()` no se ofrece mientras el destinatario sea
+`taller@alcantara.example`. Ver `UX-AUDIT.md`, paso 1 del plan.
 
 ### Cuenta: Google, y ninguna credencial
 
@@ -268,10 +271,10 @@ en el sitio estático.
 juntas y no se tocan por separado:
 
 1. **No se pide el número de CLU en ningún formulario**, ni el vencimiento ni
-   la TCCM. `Perfil` es `{nombre, email}` y nada más: es lo que el `mailto:`
-   de la reserva necesita para llegar al taller. El perfil viejo con
-   `clu`/`vence`/`tccm` que quedara en `localStorage` se lee y se descarta
-   solo (`leer()` en `AccountContext.tsx`).
+   la TCCM. `Perfil` es `{nombre, email}` y nada más: es lo que acompaña al
+   resumen de la cesta (y al `mailto:` el día que haya una dirección real).
+   El perfil viejo con `clu`/`vence`/`tccm` que quedara en `localStorage` se
+   lee y se descarta solo (`leer()` en `AccountContext.tsx`).
 2. **Nada que exija credencial ANMaC puede reservarse.** `faltas()` corta la
    cesta entera con `comprableDirecto()` — la misma función que ya decide el
    botón de la ficha (`ProductoCTA.tsx`), para que no haya dos criterios que
@@ -496,8 +499,8 @@ ver `tools/CLAUDE.md`.
   paso lo activa por primera vez en producción.
 - **Perfil de cliente en la base**: el acceso con Google ya da `auth.uid()`,
   pero falta la fila `customer` (y su política de RLS) para poder cablear
-  `crear_pedido()`. Hasta entonces la reserva es un aviso por `mailto:`, no
-  una venta real.
+  `crear_pedido()`. Hasta entonces la reserva es un resumen simulado en el
+  navegador, no una venta real.
 
 Deuda menor, rescatada de `PLAN.md` antes de que ese cuaderno se borre:
 

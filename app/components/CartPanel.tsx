@@ -9,8 +9,14 @@
  * un perfil de cliente en la base, y la sesion de Google (AccountContext) solo
  * identifica: no crea `customer` ni pasa por la RLS de pedidos. Igual que hoy en
  * D:\GunShop (main), la reserva es enteramente del lado del cliente: se
- * apunta en localStorage['gunshop:pedidos'] y se ofrece un mailto: con el
- * detalle, no un pedido real contra la base. */
+ * apunta en localStorage['gunshop:pedidos'], no es un pedido real contra la
+ * base. Por eso el panel la llama «resumen» y dice que es una simulacion: no
+ * promete plazos ni que llegue a nadie. El mailto: que arma lib/cesta.ts no se
+ * ofrece mientras el destinatario sea una direccion .example que no existe.
+ *
+ * El resumen no vacia la cesta: deja las lineas a la vista, fijas, y solo se
+ * vacia con «Vaciar la cesta». Vaciarla al cerrar enseñaba a la vez «la cesta
+ * esta vacia», un total de $ 0 y el resguardo (UX-AUDIT.md, Peak-End). */
 
 import { useEffect, useRef, useState } from 'react'
 import { precio } from '@/lib/catalogo'
@@ -28,7 +34,18 @@ export default function CartPanel() {
 
   const ref = useRef<HTMLDialogElement>(null)
   const scrollPrevio = useRef('')
-  const [hecho, setHecho] = useState<{ codigo: string; mailto: string } | null>(null)
+  const [hecho, setHecho] = useState<string | null>(null)
+  const foco = useRef<HTMLButtonElement>(null)
+
+  // Al pasar de la edicion al resumen (o al reves) el boton pulsado se
+  // desmonta y el foco caeria en el <body>: va al boton de la vista nueva, o a
+  // cerrar si ese esta deshabilitado (cesta vacia). No con autoFocus: el SSR lo
+  // deja como atributo y showModal() enfocaria ese boton al abrir el panel.
+  useEffect(() => {
+    if (!ref.current?.open) return
+    const destino = foco.current?.disabled ? null : foco.current
+    ;(destino ?? ref.current.querySelector<HTMLButtonElement>('.panel__x'))?.focus()
+  }, [hecho])
 
   useEffect(() => {
     if (abrirTick === 0 || !ref.current || ref.current.open) return
@@ -47,16 +64,15 @@ export default function CartPanel() {
 
   function reservar() {
     if (bloquea) return
-    const { pedido, mailto } = armarReserva(lineas, perfil, arsPorUsd)
+    const { pedido } = armarReserva(lineas, perfil, arsPorUsd)
     try {
       const previos = JSON.parse(window.localStorage.getItem(PEDIDOS) ?? '[]') as Pedido[]
       previos.push(pedido)
       window.localStorage.setItem(PEDIDOS, JSON.stringify(previos.slice(-20)))
     } catch {
-      // El resguardo en pantalla (mas abajo) vale igual sin persistirlo.
+      // El resumen en pantalla (mas abajo) vale igual sin persistirlo.
     }
-    vaciar()
-    setHecho({ codigo: pedido.codigo, mailto })
+    setHecho(pedido.codigo)
   }
 
   return (
@@ -71,7 +87,7 @@ export default function CartPanel() {
       <div className="panel__box">
         <header className="panel__head">
           <div>
-            <p className="eyebrow">Reserva en armería</p>
+            <p className="eyebrow">Simulación de reserva</p>
             <h2 className="panel__title">Cesta</h2>
             <p className="panel__resumen" id="cartResumen">
               {piezas > 0 ? `${piezas} ${piezas === 1 ? 'artículo' : 'artículos'}` : ''}
@@ -106,7 +122,8 @@ export default function CartPanel() {
                   <p className="linea__spec">
                     {l.producto.regimenEtiqueta} · {precio(l.producto.usdCents, arsPorUsd)} c/u
                   </p>
-                  <div className="linea__mandos">
+                  {/* En el resumen las lineas son lo que se resumio: fijas. */}
+                  {!hecho && <div className="linea__mandos">
                     <button
                       className="linea__paso"
                       type="button"
@@ -132,7 +149,7 @@ export default function CartPanel() {
                     >
                       Quitar
                     </button>
-                  </div>
+                  </div>}
                 </div>
                 <p className="linea__total">{precio(l.producto.usdCents * l.n, arsPorUsd)}</p>
               </div>
@@ -146,18 +163,24 @@ export default function CartPanel() {
 
         <footer className="panel__pie">
           <p className="panel__total"><span>Total</span><span id="cartTotal">{precio(totalUsdCents, arsPorUsd)}</span></p>
-          <button className="btn" type="button" id="cartReserva" disabled={bloquea} onClick={reservar}>
-            Reservar en la armería
-          </button>
-          {hecho && (
-            <div className="hecho" id="cartHecho">
-              <p className="hecho__cod">Reserva {hecho.codigo}</p>
+          {hecho ? (
+            <div className="hecho" id="cartHecho" role="status">
+              <p className="hecho__cod">Resumen {hecho}</p>
               <p>
-                Guardada 72 h. Te esperamos con el DNI; el resto se hace en el
-                mostrador.
+                Es una simulación: no se envió ninguna solicitud ni se reservó
+                nada. El resumen queda en este navegador, en «Mi cuenta».
               </p>
-              <a className="btn btn--ghost" href={hecho.mailto}>Enviarla al taller</a>
+              <button className="btn btn--ghost" type="button" ref={foco} onClick={() => setHecho(null)}>
+                Volver a editar
+              </button>
+              <button className="btn btn--ghost" type="button" onClick={() => { vaciar(); setHecho(null) }}>
+                Vaciar la cesta
+              </button>
             </div>
+          ) : (
+            <button className="btn" type="button" id="cartReserva" ref={foco} disabled={bloquea} onClick={reservar}>
+              Preparar el resumen
+            </button>
           )}
         </footer>
       </div>

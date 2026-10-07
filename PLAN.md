@@ -655,3 +655,20 @@ Lo que NO se hizo, y por que:
   de seguridad (B3), diez productos de Recarga sin variante (B5).
 - Nota tras producción: 41/60 (B). Nada cambiado en la base ni en los paneles.
 - Build y suite (31/31) en verde con Supabase arriba; documentación subida.
+
+### Paso 1 del plan UX: la cesta ya no finge una reserva (2026-10-07)
+
+- `CartPanel.tsx`: «Simulación de reserva» / «Preparar el resumen». El resumen
+  avisa que no se envió ni reservó nada, deja las líneas fijas a la vista y
+  ofrece «Volver a editar» y «Vaciar la cesta»; ya no vacía la cesta solo. Sin
+  `mailto:` mientras el destinatario sea `.example` (`lib/cesta.ts` lo sigue
+  armando para cuando haya dirección real).
+- Foco: va al botón de la vista nueva con un efecto sobre `hecho`, no con
+  `autoFocus` — el SSR deja `autofocus` en el HTML y `showModal()` enfocaba
+  «Preparar» al abrir en vez de «Cerrar».
+- `AccountPanel.tsx`: «Resúmenes en este navegador»; `/privacidad` y
+  `CLAUDE.md` describen el flujo nuevo.
+- Verificado en `next dev` a escritorio y 390 px: abrir → preparar → volver →
+  vaciar, foco correcto en cada paso, la cesta sobrevive al resumen.
+- Visto de paso, no tocado: aviso de hidratación en `<html className>` del
+  layout en dev (las clases de las fuentes, ajeno a la cesta).

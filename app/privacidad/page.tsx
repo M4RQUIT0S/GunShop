@@ -66,21 +66,20 @@ export default function Privacidad() {
 
               <dt>Lo que pones en la cesta</dt>
               <dd>
-                Sólo qué artículo y cuántas unidades, en tu navegador. No sale de ahí
-                mientras no reserves.
+                Sólo qué artículo y cuántas unidades, en tu navegador. No sale de ahí.
               </dd>
 
-              <dt>Tus reservas</dt>
+              <dt>Los resúmenes de la cesta</dt>
               <dd>
-                Las veinte últimas, en tu navegador. Al reservar no mandamos nada a
-                ningún servidor: se abre tu programa de correo con el detalle ya
-                escrito, y eres tú quien decide enviarlo. Si lo envías, ese correo
-                llega a nuestra casilla y vive ahí como cualquier otro mensaje.
+                Los veinte últimos, en tu navegador. Prepararlos no manda nada a
+                ningún servidor ni a nuestra casilla: es una simulación y no deja
+                ninguna reserva hecha.
               </dd>
 
               <dt>Lo que escribes en una consulta</dt>
               <dd>
-                Mismo camino que la reserva: abre tu correo, no se guarda en la página.
+                Se abre tu programa de correo con el texto ya escrito, y eres tú quien
+                decide enviarlo. No se guarda en la página.
               </dd>
 
               <dt>Dirección IP y datos técnicos de la visita</dt>
