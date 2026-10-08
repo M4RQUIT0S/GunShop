@@ -20,7 +20,9 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const producto = await productoPorSlug(slug)
-  if (!producto) return {}
+  // Lo mismo que pone app/not-found.tsx: si esto devuelve {}, su metadata llega
+  // despues de la del 404 y deja la pestaña con el titulo de la portada.
+  if (!producto) return { title: 'Página no encontrada' }
 
   const titulo = `${producto.marca} ${producto.ref}`
   const descripcion = `${producto.kind} · ${producto.regimenEtiqueta}.`
