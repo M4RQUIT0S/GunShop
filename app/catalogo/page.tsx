@@ -222,7 +222,12 @@ export default async function Catalogo({ searchParams }: Props) {
                         «Añadir a la cesta» que no añadia rompia lo que se espera de
                         una tienda (UX-AUDIT.md, segunda pasada, W4). La diferencia
                         entre venta libre y consulta se conserva. */}
-                    <span className="card__add">{exige ? 'Ver y consultar' : 'Ver y añadir'}</span>
+                    {/* Tarjeta -> ficha es la navegacion mas usada y tardaba ~650 ms
+                        sin señal (UX-AUDIT.md, tercera pasada, W1). */}
+                    <span className="card__add">
+                      {exige ? 'Ver y consultar' : 'Ver y añadir'}
+                      <Pendiente />
+                    </span>
                   </div>
                 </div>
               </Link>

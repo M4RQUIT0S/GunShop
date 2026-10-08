@@ -5,6 +5,7 @@ import {
   productoPorSlug, cambio, precio, modoVenta,
 } from '@/lib/catalogo'
 import ProductoCTA from '@/app/components/ProductoCTA'
+import Pendiente from '@/app/components/Pendiente'
 import { consulta, seleccion, uno } from '@/lib/facetas'
 
 // Igual que /catalogo: se regenera cada diez minutos, no en cada visita.
@@ -108,8 +109,10 @@ export default async function Ficha({ params, searchParams }: Props) {
         </div>
 
         <div className="ficha__info">
+          {/* El «volver» tardaba 952 ms sin señal (UX-AUDIT.md, tercera pasada, W1). */}
           <Link href={volver} className="chip">
             ← {rotulo}
+            <Pendiente />
           </Link>
 
           <div style={{ display: 'grid', gap: '0.5rem' }}>
