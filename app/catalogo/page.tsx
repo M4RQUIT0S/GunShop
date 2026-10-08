@@ -5,7 +5,7 @@ import {
   raices, rama, filtrarPorFamilia, cuentaPorRama, filtrarPorSub,
 } from '@/lib/catalogo'
 import {
-  FACETAS, opciones, aplicarFacetas, seleccion, alternar, consulta, uno, type Estado,
+  FACETAS, desplegables, aplicarFacetas, seleccion, alternar, consulta, uno, type Estado,
 } from '@/lib/facetas'
 import Desplegable from '@/app/components/Desplegable'
 import { buscar } from '@/lib/buscar'
@@ -68,14 +68,9 @@ export default async function Catalogo({ searchParams }: Props) {
   const subActivo = sub && enFamilia.some((p) => p.kind === sub) ? sub : undefined
   const base = subActivo ? filtrarPorSub(enFamilia, subActivo) : enFamilia
 
-  // Cada desplegable cuenta sobre lo que dejan las *otras* facetas, no sobre
-  // el resultado final; si no, marcar un calibre pondria el resto a cero y no
-  // se podria anadir un segundo.
-  const desplegables = acotado
-    ? FACETAS
-      .map((f) => ({ f, opts: opciones(aplicarFacetas(base, sel, f.clave), f) }))
-      .filter(({ opts }) => opts.length >= 2)
-    : []
+  // Cada desplegable cuenta sobre lo que dejan las *otras* facetas, y uno con
+  // algo marcado no se esconde nunca: es donde se quita (lib/facetas.ts).
+  const filas = acotado ? desplegables(base, sel) : []
 
   const productos = aplicarFacetas(base, sel)
   /* Los filtros viajan con el enlace a la ficha para que el «volver» de alli
@@ -142,9 +137,9 @@ export default async function Catalogo({ searchParams }: Props) {
           ))}
         </div>
 
-        {desplegables.length > 0 && (
+        {filas.length > 0 && (
           <div className="filtros" aria-label="Filtrar por marca, calibre y medidas">
-            {desplegables.map(({ f, opts }) => (
+            {filas.map(({ f, opts }) => (
               <Desplegable
                 key={f.clave}
                 faceta={f}

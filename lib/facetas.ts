@@ -87,6 +87,27 @@ export function aplicarFacetas(
   )
 }
 
+/* Los desplegables que se pintan, cada uno con sus opciones contadas sobre lo
+ * que dejan las demas facetas. Uno con menos de dos opciones no sirve para
+ * elegir y no sale -- salvo que tenga algo marcado: entonces es el unico sitio
+ * donde se ve y se quita ese filtro, y esconderlo dejaba la seleccion aplicada
+ * y sin salida (Swarovski + 2-16x en optica, UX-AUDIT.md). Por lo mismo, un
+ * valor marcado que ya no deja nada sigue en su lista, a cero. */
+export function desplegables(
+  base: Producto[], sel: Seleccion,
+): { f: Faceta; opts: Opcion[] }[] {
+  return FACETAS.map((f) => {
+    const marcados = sel[f.clave] ?? []
+    const opts = opciones(aplicarFacetas(base, sel, f.clave), f)
+    const huerfanos = marcados
+      .filter((v) => !opts.some((o) => o.valor === v))
+      .map((valor) => ({ valor, n: 0 }))
+    return { f, opts: [...opts, ...huerfanos], marcados }
+  })
+    .filter(({ opts, marcados }) => opts.length >= 2 || marcados.length > 0)
+    .map(({ f, opts }) => ({ f, opts }))
+}
+
 /* El estado del catalogo que cabe en una URL. La ficha del producto tambien
  * lo arma -- su enlace de vuelta tiene que devolver a los filtros con los que
  * se llego --, asi que la lista de parametros vive aqui y no en las dos

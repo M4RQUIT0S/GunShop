@@ -4,7 +4,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  FACETAS, opciones, filtrarPorFaceta, aplicarFacetas, seleccion, alternar, consulta,
+  FACETAS, opciones, filtrarPorFaceta, aplicarFacetas, seleccion, alternar, consulta, desplegables,
 } from '../lib/facetas.ts'
 import type { Producto } from '../lib/catalogo.ts'
 
@@ -149,4 +149,33 @@ test('consulta() suelta las facetas sin familia ni busqueda que las acote', () =
   // Con familia o busqueda puestas, la faceta si viaja.
   assert.equal(consulta({ familia: 'rifles', sel }), 'familia=rifles&calibre=.308+Win')
   assert.equal(consulta({ q: 'tikka', sel }), 'q=tikka&calibre=.308+Win')
+})
+
+// El caso que se vio en produccion (UX-AUDIT.md, Working Memory): optica,
+// Swarovski + 2-16x. Cada faceta cuenta sobre lo que dejan las otras, a cada
+// una le quedaba una sola opcion y las dos desaparecian -- con la seleccion
+// aplicada y sin forma de quitarla.
+const VISOR_A = producto({ id: 20, marca: 'Swarovski', ref: 'Z8i 2-16x50 P', familia: 'optica' })
+const VISOR_B = producto({ id: 21, marca: 'Zeiss', ref: 'Conquest V4 3-12x56', familia: 'optica' })
+
+test('desplegables(): una faceta con algo marcado se ve aunque le quede una sola opcion', () => {
+  const sel = seleccion({ marca: 'Swarovski', aumentos: '2-16x' })
+  const d = desplegables([VISOR_A, VISOR_B], sel)
+  assert.deepEqual(d.map((x) => x.f.clave), ['marca', 'aumentos'])
+  assert.deepEqual(d.find((x) => x.f.clave === 'marca')!.opts, [{ valor: 'Swarovski', n: 1 }])
+})
+
+test('desplegables(): un valor marcado que ya no deja nada sigue en la lista, a cero', () => {
+  // Una URL vieja o compartida con una marca que salio del catalogo: si no
+  // aparece en el desplegable, no hay donde desmarcarla.
+  const sel = seleccion({ marca: 'Leica' })
+  const marca = desplegables([VISOR_A, VISOR_B], sel).find((x) => x.f.clave === 'marca')!
+  assert.deepEqual(marca.opts.map((o) => [o.valor, o.n]), [['Swarovski', 1], ['Zeiss', 1], ['Leica', 0]])
+})
+
+test('desplegables(): sin nada marcado, menos de dos opciones sigue sin pintarse', () => {
+  const d = desplegables([VISOR_A, VISOR_B], seleccion({}))
+  // Dos marcas y dos aumentos: salen. Calibre y cañon no tienen ninguna.
+  assert.deepEqual(d.map((x) => x.f.clave), ['marca', 'aumentos'])
+  assert.deepEqual(desplegables([VISOR_A], seleccion({})), [])
 })
