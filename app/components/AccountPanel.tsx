@@ -14,9 +14,8 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { Pedido } from '@/lib/cesta'
+import { PEDIDOS } from '@/lib/cuenta'
 import { useAccount, type Perfil } from './AccountContext'
-
-const PEDIDOS = 'gunshop:pedidos'
 
 function fecha(iso: string): string {
   const t = String(iso || '').split('-')
@@ -56,17 +55,15 @@ function Estado({ perfil, google, conGoogle }: { perfil: Perfil | null; google: 
   )
 }
 
-function Pedidos() {
-  const [lista, setLista] = useState<Pedido[]>([])
+function leerResumenes(): Pedido[] {
+  try {
+    return JSON.parse(window.localStorage.getItem(PEDIDOS) ?? '[]') as Pedido[]
+  } catch {
+    return []
+  }
+}
 
-  useEffect(() => {
-    try {
-      setLista(JSON.parse(window.localStorage.getItem(PEDIDOS) ?? '[]') as Pedido[])
-    } catch {
-      setLista([])
-    }
-  }, [])
-
+function Pedidos({ lista }: { lista: Pedido[] }) {
   if (!lista.length) return null
 
   return (
@@ -107,9 +104,12 @@ export default function AccountPanel({ conGoogle }: { conGoogle: boolean }) {
 
   const ref = useRef<HTMLDialogElement>(null)
   const scrollPrevio = useRef('')
+  const [resumenes, setResumenes] = useState<Pedido[]>([])
 
   useEffect(() => {
     if (abrirTick === 0 || !ref.current || ref.current.open) return
+    // Se relee en cada apertura: un resumen armado en CartPanel no avisa aqui.
+    setResumenes(leerResumenes())
     scrollPrevio.current = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     ref.current.showModal()
@@ -187,7 +187,16 @@ export default function AccountPanel({ conGoogle }: { conGoogle: boolean }) {
             <button className="btn" type="submit" id="accGuarda">
               {perfil ? 'Actualizar datos' : 'Guardar en este navegador'}
             </button>
-            <button className="btn btn--ghost" type="button" id="accSalir" hidden={!perfil} onClick={borrar}>
+            {/* Tambien sin perfil, si hay resumenes: llevan el nombre y antes no
+                habia forma de borrarlos desde la tienda (UX-AUDIT.md, tercera
+                pasada, W2). Que borra lo decide borrarDatos(), lib/cuenta.ts. */}
+            <button
+              className="btn btn--ghost"
+              type="button"
+              id="accSalir"
+              hidden={!perfil && !resumenes.length}
+              onClick={() => { borrar(); setResumenes([]) }}
+            >
               Borrar mis datos
             </button>
           </div>
@@ -200,10 +209,7 @@ export default function AccountPanel({ conGoogle }: { conGoogle: boolean }) {
         </form>
 
         <div className="panel__pedidos" id="accPedidos">
-          {/* key: releer localStorage en cada apertura -- una reserva hecha
-              en CartPanel mientras este estaba desmontado (o simplemente
-              antes de abrirlo por primera vez) no dispara el efecto solo. */}
-          <Pedidos key={abrirTick} />
+          <Pedidos lista={resumenes} />
         </div>
       </div>
     </dialog>

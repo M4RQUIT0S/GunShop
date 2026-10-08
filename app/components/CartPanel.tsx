@@ -22,10 +22,9 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { precio } from '@/lib/catalogo'
 import { faltas, reserva as armarReserva, type Pedido } from '@/lib/cesta'
+import { PEDIDOS } from '@/lib/cuenta'
 import { useCart } from './CartContext'
 import { useAccount } from './AccountContext'
-
-const PEDIDOS = 'gunshop:pedidos'
 
 export default function CartPanel() {
   const {

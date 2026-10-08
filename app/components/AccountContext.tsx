@@ -23,11 +23,11 @@ import {
   createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode,
 } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Perfil } from '@/lib/cuenta'
+import { borrarDatos, CUENTA, type Perfil } from '@/lib/cuenta'
 
 export type { Perfil }
 
-const LLAVE = 'gunshop:cuenta'
+const LLAVE = CUENTA
 
 type AccountContextValue = {
   perfil: Perfil | null
@@ -74,7 +74,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const borrar = useCallback(() => {
     setPerfil(null)
     try {
-      window.localStorage.removeItem(LLAVE)
+      borrarDatos(window.localStorage)
     } catch {
       // Nada que borrar si no hay almacen.
     }

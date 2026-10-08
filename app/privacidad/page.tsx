@@ -159,9 +159,10 @@ export default function Privacidad() {
           <section>
             <h2>6 · Cuánto tiempo duran</h2>
             <p>
-              Lo que vive en tu navegador dura hasta que pulses «Borrar mis datos» en
-              «Mi cuenta», o hasta que limpies los datos del sitio desde el navegador.
-              Es inmediato y no hace falta pedírnoslo. Cerrar la sesión de Google no
+              Tu nombre, tu correo y los resúmenes de la cesta duran hasta que pulses
+              «Borrar mis datos» en «Mi cuenta»; la cesta, hasta que la vacíes. Todo,
+              también, hasta que limpies los datos del sitio desde el navegador. Es
+              inmediato y no hace falta pedírnoslo. Cerrar la sesión de Google no
               borra esos datos: son dos cosas distintas y el panel las separa a
               propósito.
             </p>
