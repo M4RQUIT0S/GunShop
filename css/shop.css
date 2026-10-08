@@ -295,6 +295,16 @@ div.panel__vacio { display: grid; gap: 1rem; justify-items: start; }
 .aviso--falta { color: var(--tinta); border-left-color: var(--alerta); }
 
 .hecho { display: grid; gap: 0.5rem; font-size: 0.9rem; color: var(--gris-claro); }
+/* La consulta preparada, tal cual llegaria: con sus saltos de linea. */
+.hecho__texto {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 1rem;
+  background: var(--pieza);
+  font-family: var(--texto);
+  font-size: 0.85rem;
+  color: var(--tinta);
+}
 .hecho__cod {
   font-family: var(--display);
   font-size: 1.1rem;
@@ -339,6 +349,9 @@ div.panel__vacio { display: grid; gap: 1rem; justify-items: start; }
 .form__o::before,
 .form__o::after { content: ""; flex: 1; height: 1px; background: var(--filete-tenue); }
 
+/* El `display` le gana al `[hidden]` del navegador (como en .btn, base.css):
+   ConsultaPanel oculta el formulario sin desmontarlo para no perder lo escrito. */
+.form[hidden] { display: none; }
 .form {
   display: grid;
   gap: 1rem;

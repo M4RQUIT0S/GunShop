@@ -220,6 +220,20 @@ export default async function Catalogo({ searchParams }: Props) {
           })}
         </div>
 
+        {/* Un «0 referencias» a secas dejaba deducir como salir (UX-AUDIT.md,
+            Paradox of the Active User): se ofrece el paso atras que sirve. */}
+        {productos.length === 0 && (
+          <div className="panel__vacio">
+            <p>No hay referencias con {hayFiltro ? 'estos filtros' : 'esta búsqueda'}.</p>
+            <Link
+              className="btn btn--ghost"
+              href={hayFiltro ? href({ familia, sub: subActivo, q: busqueda }) : '/catalogo'}
+            >
+              {hayFiltro ? 'Quitar los filtros' : 'Ver todo el catálogo'}
+            </Link>
+          </div>
+        )}
+
         <p className="grid__status" role="status">
           {productos.length} {productos.length === 1 ? 'referencia' : 'referencias'} en {etiqueta}
         </p>

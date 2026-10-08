@@ -14,10 +14,12 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 
 export type ConsultaDatos = { titulo: string; rotulo: string; mensaje: string }
 
+/* Sin `cerrar()`: `datos` se queda puesto al cerrar el panel a proposito. Es lo
+   que deja a ConsultaPanel conservar el borrador entre cerrar y reabrir; cada
+   abrir() trae un objeto nuevo, asi que reabrir sigue disparando el panel. */
 type ConsultaContextValue = {
   datos: ConsultaDatos | null
   abrir: (datos: ConsultaDatos) => void
-  cerrar: () => void
 }
 
 const ConsultaContext = createContext<ConsultaContextValue | null>(null)
@@ -29,7 +31,6 @@ export function ConsultaProvider({ children }: { children: ReactNode }) {
     () => ({
       datos,
       abrir: (d: ConsultaDatos) => setDatos(d),
-      cerrar: () => setDatos(null),
     }),
     [datos],
   )

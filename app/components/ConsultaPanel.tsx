@@ -1,45 +1,54 @@
 'use client'
 
 /* Puerto PARCIAL de js/consulta.js: abrir y prellenar desde donde sea que
- * llame a `abrir({titulo, rotulo, mensaje})` -- hoy solo la ficha de producto
- * (fase 5) -- con el mismo cierre en mailto: que el original (sin servidor,
- * no hay otro sitio honesto donde mandar esto). El PLAN.md de la fase 6
- * describe esto como "un formulario para las 4 consultas"; lo que falta para
- * serlo del todo -- las cuatro TEMAS (compra/taller/tramites/visita) y el
- * <select> de familia que solo "compra" usa -- vive detras del bloque "en
- * que podemos ayudarle" de la portada, que esta fase no toca (no esta en el
- * alcance que dio la fase 6, y ese bloque tampoco esta portado todavia).
- * `abrir()` ya acepta lo que esas cuatro necesitaran (ver
- * ConsultaContext.tsx): la proxima fase que porte ese bloque solo tiene que
- * llamarlo con su propio titulo/rotulo/mensaje. */
+ * llame a `abrir({titulo, rotulo, mensaje})` -- hoy solo la ficha de producto.
+ * Lo que falta para ser «un formulario para las 4 consultas» -- los cuatro
+ * TEMAS (compra/taller/tramites/visita) -- vive detras del bloque «en que
+ * podemos ayudarle» de la portada, que todavia no esta portado; `abrir()` ya
+ * acepta lo que esos cuatro necesitaran (ver ConsultaContext.tsx).
+ *
+ * Es una demostracion y lo dice: el original cerraba en un mailto: a
+ * taller@alcantara.example, un buzon que no existe, con un boton «Enviar». Ahora
+ * se prepara el texto, se ensena tal como llegaria y no sale de aqui
+ * (UX-AUDIT.md, Cognitive Load). Cuando haya una direccion real, el mailto:
+ * vuelve en el resumen.
+ *
+ * Lo escrito no se pierde (UX-AUDIT.md, Zeigarnik): el formulario se oculta al
+ * preparar el texto en vez de desmontarse, y `datos` ya no se vacia al cerrar,
+ * asi que cerrar y reabrir la misma consulta devuelve el borrador. Una consulta
+ * de otro producto trae otro mensaje y el campo se rellena con el nuevo. Nombre
+ * y correo salen de «Mi cuenta» si estan guardados (UX-AUDIT.md, P7). */
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useConsulta } from './ConsultaContext'
+import { useAccount } from './AccountContext'
 
-function correo(asunto: string, datos: {
-  nombre: string; apellido: string; email: string; tel: string; mensaje: string
-}): string {
-  const cuerpo = [
-    `${datos.nombre} ${datos.apellido}`,
-    datos.email + (datos.tel ? ` · ${datos.tel}` : ''),
+type Campos = { nombre: string; email: string; tel: string; mensaje: string }
+
+function texto(asunto: string, c: Campos): string {
+  return [
+    asunto,
     '',
-    datos.mensaje || '(sin mensaje)',
+    c.nombre,
+    c.email + (c.tel ? ` · ${c.tel}` : ''),
+    '',
+    c.mensaje || '(sin mensaje)',
   ].join('\n')
-  return 'mailto:taller@alcantara.example' +
-    `?subject=${encodeURIComponent(asunto)}` +
-    `&body=${encodeURIComponent(cuerpo)}`
 }
 
 export default function ConsultaPanel() {
-  const { datos, cerrar } = useConsulta()
+  const { datos } = useConsulta()
+  const { perfil } = useAccount()
   const ref = useRef<HTMLDialogElement>(null)
+  const volver = useRef<HTMLButtonElement>(null)
+  const mensaje = useRef<HTMLTextAreaElement>(null)
   const scrollPrevio = useRef('')
-  // href del mailto: tras enviar; null mientras se esta rellenando el form.
-  const [enviado, setEnviado] = useState<string | null>(null)
+  // El texto preparado; null mientras se esta rellenando el formulario.
+  const [preparado, setPreparado] = useState<string | null>(null)
 
   useEffect(() => {
     if (datos) {
-      setEnviado(null)
+      setPreparado(null)
       // Un <dialog> modal atrapa el foco pero no frena el scroll de detras.
       scrollPrevio.current = document.body.style.overflow
       document.body.style.overflow = 'hidden'
@@ -47,17 +56,20 @@ export default function ConsultaPanel() {
     }
   }, [datos])
 
-  function enviar(event: FormEvent<HTMLFormElement>) {
+  // La vista que se va se lleva el boton pulsado: el foco va a la que llega.
+  useEffect(() => {
+    if (!ref.current?.open) return
+    ;(preparado ? volver.current : mensaje.current)?.focus()
+  }, [preparado])
+
+  function preparar(event: FormEvent<HTMLFormElement>) {
     // El navegador ya comprobo obligatorios y formato de correo antes de
     // llegar aqui: repetirlo en JS seria tener dos reglas que un dia difieren.
     event.preventDefault()
-    const datosForm = new FormData(event.currentTarget)
-    setEnviado(correo(datos?.titulo ?? 'Consulta', {
-      nombre: String(datosForm.get('nombre') ?? '').trim(),
-      apellido: String(datosForm.get('apellido') ?? '').trim(),
-      email: String(datosForm.get('email') ?? '').trim(),
-      tel: String(datosForm.get('tel') ?? '').trim(),
-      mensaje: String(datosForm.get('mensaje') ?? '').trim(),
+    const f = new FormData(event.currentTarget)
+    const campo = (k: string) => String(f.get(k) ?? '').trim()
+    setPreparado(texto(datos?.titulo ?? 'Consulta', {
+      nombre: campo('nombre'), email: campo('email'), tel: campo('tel'), mensaje: campo('mensaje'),
     }))
   }
 
@@ -67,13 +79,13 @@ export default function ConsultaPanel() {
       className="panel panel--side"
       id="consultaPanel"
       aria-labelledby="consultaTitulo"
-      onClose={() => { document.body.style.overflow = scrollPrevio.current; cerrar() }}
+      onClose={() => { document.body.style.overflow = scrollPrevio.current }}
       onClick={(event) => { if (event.target === event.currentTarget) ref.current?.close() }}
     >
       <div className="panel__box">
         <header className="panel__head">
           <div>
-            <p className="eyebrow">Consulta</p>
+            <p className="eyebrow">Consulta de demostración</p>
             <h2 className="panel__title" id="consultaTitulo">{datos?.titulo ?? 'Consulta'}</h2>
           </div>
           <button
@@ -86,52 +98,54 @@ export default function ConsultaPanel() {
           </button>
         </header>
 
-        {!enviado ? (
-          <form className="form" onSubmit={enviar}>
-            <div className="campo__par">
-              <label className="campo">
-                <span>Nombre</span>
-                <input name="nombre" type="text" required autoComplete="given-name" maxLength={40} />
-              </label>
-              <label className="campo">
-                <span>Apellido</span>
-                <input name="apellido" type="text" required autoComplete="family-name" maxLength={40} />
-              </label>
-            </div>
-            <div className="campo__par">
-              <label className="campo">
-                <span>Correo</span>
-                <input name="email" type="email" required autoComplete="email" maxLength={80} />
-              </label>
-              <label className="campo">
-                <span>Teléfono</span>
-                <input name="tel" type="tel" autoComplete="tel" maxLength={24} />
-              </label>
-            </div>
-            <label className="campo">
-              <span>{datos?.rotulo ?? 'Cuéntenos'}</span>
-              {/* key remonta el campo al abrir con otro mensaje prellenado:
-                  defaultValue solo se lee en el primer render. */}
-              <textarea key={datos?.mensaje ?? ''} name="mensaje" rows={4} maxLength={600} defaultValue={datos?.mensaje ?? ''} />
+        <form className="form" onSubmit={preparar} hidden={!!preparado}>
+          {/* key: defaultValue solo se lee al montar, y el perfil llega de
+              localStorage despues; cuando llega (o cambia), el campo se
+              remonta con el. */}
+          <label className="campo" key={`n:${perfil?.nombre ?? ''}`}>
+            <span>Nombre y apellido</span>
+            <input name="nombre" type="text" required autoComplete="name" maxLength={60} defaultValue={perfil?.nombre ?? ''} />
+          </label>
+          <div className="campo__par">
+            <label className="campo" key={`e:${perfil?.email ?? ''}`}>
+              <span>Correo</span>
+              <input name="email" type="email" required autoComplete="email" maxLength={80} defaultValue={perfil?.email ?? ''} />
             </label>
-            <div className="form__pie">
-              <button className="btn" type="submit">Enviar la consulta</button>
-            </div>
-            <p className="form__nota">
-              Sin servidor: esto no se envía a ninguna parte. Al enviar se prepara un
-              correo con lo escrito para que salga desde su propio programa de correo,
-              que es la única forma honesta de que llegue sin servidor detrás.
-            </p>
-          </form>
-        ) : (
-          <div className="hecho">
-            <p className="hecho__cod">{datos?.titulo ?? 'Consulta'}</p>
-            <p>
-              Lo escrito no ha salido de este navegador. Abajo va preparado para
-              enviarlo desde su correo; si prefiere, llame al (011) 0000-0000 de
-              martes a sábado.
-            </p>
-            <a className="btn" href={enviado}>Abrir el correo</a>
+            <label className="campo">
+              <span>Teléfono</span>
+              <input name="tel" type="tel" autoComplete="tel" maxLength={24} />
+            </label>
+          </div>
+          <label className="campo">
+            <span>{datos?.rotulo ?? 'Contanos'}</span>
+            {/* key: otra consulta trae otro mensaje prellenado y el campo se
+                remonta con el; la misma consulta reabierta conserva lo escrito. */}
+            <textarea
+              ref={mensaje}
+              key={datos?.mensaje ?? ''}
+              name="mensaje"
+              rows={4}
+              maxLength={600}
+              defaultValue={datos?.mensaje ?? ''}
+            />
+          </label>
+          <div className="form__pie">
+            <button className="btn" type="submit">Preparar la consulta</button>
+          </div>
+          <p className="form__nota">
+            Sitio de demostración: la consulta no se envía. Vas a ver el texto tal
+            como le llegaría a la armería.
+          </p>
+        </form>
+
+        {preparado && (
+          <div className="hecho" role="status">
+            <p className="hecho__cod">Consulta preparada</p>
+            <p>Es una simulación: no se envió a nadie. Esto es lo que le llegaría a la armería:</p>
+            <pre className="hecho__texto">{preparado}</pre>
+            <button className="btn btn--ghost" type="button" ref={volver} onClick={() => setPreparado(null)}>
+              Volver a editar
+            </button>
           </div>
         )}
       </div>
