@@ -8,6 +8,7 @@ import {
   FACETAS, desplegables, aplicarFacetas, seleccion, alternar, consulta, uno, type Estado,
 } from '@/lib/facetas'
 import Desplegable from '@/app/components/Desplegable'
+import Pendiente from '@/app/components/Pendiente'
 import { buscar } from '@/lib/buscar'
 
 export const metadata: Metadata = {
@@ -108,6 +109,7 @@ export default async function Catalogo({ searchParams }: Props) {
             >
               «{busqueda}»
               <span className="chip__x" aria-hidden="true">✕</span>
+              <Pendiente />
             </Link>
           )}
           {subActivo && (
@@ -118,6 +120,7 @@ export default async function Catalogo({ searchParams }: Props) {
             >
               {subActivo}
               <span className="chip__x" aria-hidden="true">✕</span>
+              <Pendiente />
             </Link>
           )}
           {/* aria-current y no aria-pressed: son enlaces, y el activo es el
@@ -127,6 +130,7 @@ export default async function Catalogo({ searchParams }: Props) {
           <Link href="/catalogo" className="chip" aria-current={(!familia && !busqueda) || undefined}>
             Todo
             <span className="chip__n">{todos.length}</span>
+            <Pendiente />
           </Link>
           {raices(fams).map((f) => (
             <Link
@@ -137,6 +141,7 @@ export default async function Catalogo({ searchParams }: Props) {
             >
               {f.name}
               <span className="chip__n">{countsPorFamilia[f.slug] ?? 0}</span>
+              <Pendiente />
             </Link>
           ))}
         </div>
@@ -161,6 +166,7 @@ export default async function Catalogo({ searchParams }: Props) {
               >
                 Limpiar
                 <span className="chip__x" aria-hidden="true">✕</span>
+                <Pendiente />
               </Link>
             )}
           </div>

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Faceta, Opcion } from '@/lib/facetas'
+import Pendiente from './Pendiente'
 
 type Props = {
   faceta: Faceta
@@ -44,6 +45,7 @@ export default function Desplegable({ faceta, opciones, sel, href }: Props) {
               <span className="drop__tick" aria-hidden="true">{activo ? '✓' : ''}</span>
               <span className="drop__valor">{o.valor}</span>
               <span className="drop__c">{o.n}</span>
+              <Pendiente />
             </Link>
           )
         })}
