@@ -126,9 +126,11 @@ export default async function Home() {
               <div className="lamina__copy">
                 <p className="eyebrow">Novedades</p>
                 <h2 className="h-display" id="lam3">Lo último en vitrina</h2>
+                {/* «Se encarga y llega con la documentación hecha» era un servicio
+                    que esta página no presta (UX-AUDIT.md, segunda pasada, W5). */}
                 <p className="lede">Las {mosaico.length + 1} referencias que acaban de subir
-                  al catálogo. Lo que no está en vitrina se encarga y llega con la
-                  documentación hecha.</p>
+                  al catálogo. Lo que no está en vitrina se puede consultar desde su
+                  ficha.</p>
                 <a className="btn btn--ghost" href="/catalogo">Recorrer el catálogo</a>
               </div>
             </section>
@@ -158,7 +160,7 @@ export default async function Home() {
               <h2 className="h-section" id="familias-h" data-reveal style={d(1)}>Seis familias</h2>
               <p className="lede" data-reveal style={d(2)}>
                 Del rifle de cerrojo al cartucho suelto. Lo que no está en vitrina se
-                encarga y llega con la documentación hecha.
+                puede consultar desde su ficha.
               </p>
             </div>
             <div className="tiles" id="tiles">
@@ -184,8 +186,10 @@ export default async function Home() {
         <section className="section section--tight" id="marcas" aria-labelledby="marcas-h">
           <div className="wrap">
             <div className="section__head">
-              <p className="eyebrow" data-reveal>Representación</p>
-              <h2 className="h-section" id="marcas-h" data-reveal style={d(1)}>Las casas que trabajamos</h2>
+              {/* Son las marcas que salen del catálogo, no representaciones
+                  acreditadas: el titular no puede prometer más que eso. */}
+              <p className="eyebrow" data-reveal>Marcas</p>
+              <h2 className="h-section" id="marcas-h" data-reveal style={d(1)}>Las casas del catálogo</h2>
             </div>
           </div>
           <Marquee marcas={marcas} />
