@@ -742,3 +742,14 @@ Visto de paso, sin confirmar: en el panel del navegador de pruebas, oculto, el
 que `body` se quedaba con `overflow: hidden`. Casi seguro es el panel oculto y
 no la tienda; comprobarlo una vez con la pestaña visible: abrir y cerrar la
 cesta y desplazar la página.
+
+### Cierres verificados por Codex en producción (2026-10-08)
+
+- Checkpoint `1f557db`, implementación `26731a9`: C1 resuelto con dos líneas
+  (2 y 1 unidades); C2 resuelto con A → B → A → B y preparar/editar.
+- W1–W5 y S1 verificados en sus despliegues READY, con evidencia en
+  `UX-AUDIT.md`. S2 revisado en código, sin cronometrar el puntero de nuevo.
+- La pestaña visible restauró el scroll al cerrar Consulta; no se confirma
+  el posible fallo visto con el panel oculto.
+- Build y suite 36/36 correctos con la implementación estable. Sin fallos
+  nuevos confirmados ni cambios de código de Codex; solo informe y capturas.

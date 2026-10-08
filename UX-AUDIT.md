@@ -1,8 +1,31 @@
 # UX Audit: GunShop — Seguimiento Codex
 
-**Score: 50/60** | **Grade: A** — actualización incremental del 2026-10-08 sobre la segunda pasada de Claude (53/60, conservada debajo).
+**Score: 50/60** | **Grade: A** — puntuación histórica de la detección de C1/C2, anterior a sus arreglos. La verificación posterior de cierres se registra debajo; no equivale a una tercera auditoría de las 30 leyes.
 
-**Último commit revisado:** `dfdc0ce78d8aafcb3390740b98ca1edaaf8c6d8f`. Implementación: `747f24d` y los arreglos anteriores desde `11426ea`. Árbol de implementación limpio durante la revisión; las únicas incorporaciones de Codex son este seguimiento, el progreso y las capturas. Producción verificada con Vercel: `dpl_8kSD2xrVt4Jw1MzJDmo77o96MGmY`, READY, SHA `dfdc0ce`, alias `https://gun-shop-mu.vercel.app`.
+**Último commit revisado:** `1f557db4d2e0b8600881a59e074387e88055b633` (implementación `26731a9`). Producción verificada con Vercel: `dpl_3yRYSZ1Kt1sQQ2sdVS9AuNh3eN9E`, READY, SHA `1f557db`, alias `https://gun-shop-mu.vercel.app`. Checkpoint anterior: `dfdc0ce` / implementación `747f24d`, despliegue `dpl_8kSD2xrVt4Jw1MzJDmo77o96MGmY`.
+
+## Verificación posterior — cierres confirmados por Codex (2026-10-08)
+
+**C1 y C2 resueltos**, comprobados en producción tras `26731a9`. **Sin fallos nuevos confirmados** en los ocho commits de implementación desde `344b8a2`; el historial y las propuestas originales se conservan abajo.
+
+| ID | Estado comprobado | Evidencia y commit |
+|----|-------------------|-------------------|
+| C1 | Resuelto | Cesta con Swarovski ×2 y Pelican ×1: el resumen muestra «2 unidades» y «1 unidad», no hay mandos de edición y el foco llega a «Volver a editar». `26731a9`, `CartPanel.tsx:142`. [Captura](docs/ux-evidence/2026-10-08-c1-unidades-corregidas.png). |
+| C2 | Resuelto | Ridge A → HMR B → atrás a A → adelante a B conserva `BORRADOR A: medidas del Ridge.` y `BORRADOR B: medidas del HMR.`. Preparar la consulta de demostración y volver a editar conserva B; nombre/correo sintéticos, sin envío. `26731a9`, `ConsultaPanel.tsx:52` y `:134`. [Captura de A recuperado](docs/ux-evidence/2026-10-08-c2-borrador-conservado.png). |
+| W1 | Resuelto en el recorrido probado | Óptica → Rifles: `.pendiente.is-on` aparece en Rifles antes de cambiar la URL y desaparece al llegar; CSS con demora de 100 ms y alternativa sin animación para movimiento reducido. `3a94bd1`, `Pendiente.tsx:13`, `css/catalog.css:288`. Se comprobó el estado y la configuración de animación, no se cronometraron fotogramas. |
+| W2 | Resuelto en los controles probados | A 390 px, chips y «Limpiar» conservan caja de 30,65 px pero `::before` amplía 7 px arriba/abajo: `elementFromPoint` a ±5 px fuera de la caja sigue alcanzando el mismo enlace. Opción de Marca: 43,99 px. Sin desbordamiento horizontal (`scrollWidth` 375, viewport 390). `80631b4`, `css/catalog.css:261`. |
+| W3 | Resuelto | Buscar Pelican → sugerencia abre `/producto/pelican-vault-v730?q=Pelican`, cierra el diálogo y vuelve a `/catalogo?q=Pelican`; cabecera «Cesta, 2 artículos»; dos grupos de filtros con nombre en el DOM accesible; pausa cambia a «Reanudar el desfile» sin `aria-pressed` y activa `.is-quieta`. `89f5767`. No sustituye la prueba con lector de pantalla. |
+| W4 | Resuelto | Tarjeta libre «Ver y añadir» y controlada «Ver y consultar», ambas enlaces a la ficha. `e7d2171`, `app/catalogo/page.tsx:225`. |
+| W5 | Resuelto | Los dos textos de encargos ahora dicen «se puede consultar desde su ficha»; título de marcas «Las casas del catálogo». `658450f`, `app/page.tsx:131`, `:163`, `:193`. |
+| S1 | Resuelto | Resumen nuevo abierto con Enter en Mi cuenta: «2 × Swarovski Z8i 2-16x50 P» y total histórico en pesos. Tras quitar la referencia de prueba, cesta vacía → «Ver el catálogo» → `/catalogo`. `efb0998`, `AccountPanel.tsx:81`, `CartPanel.tsx:116`. [Captura](docs/ux-evidence/2026-10-08-resumen-detalle-verificado.png). |
+| S2 | Implementado; revisión independiente parcial | `8339679` cambia 150 → 300 ms en `NavMenu.tsx:228`, y el PLAN lo registra como decisión del dueño. Se revisó el diff; Codex no volvió a cronometrar la entrada del puntero. No se inventa una regresión ni se certifica ese tiempo con la prueba de otro recorrido. |
+
+- Los recorridos W1–W5 se probaron sobre el despliegue `658450f` (`dpl_7MGLZqjSj7SYK2bPcHLGVjBa1Tm3`), S1 sobre `8339679` (`dpl_4ffW19NsW36b4ubQCjVHBtBF8TKz`) y C1/C2 sobre `1f557db`, todos READY. Los archivos de cada arreglo no cambiaron entre las revisiones de sus diffs y las pruebas; las ediciones concurrentes de Claude en otros archivos se dejaron fuera de los cierres hasta desplegarse.
+- El posible bloqueo de scroll anotado por Claude no se reprodujo con la pestaña visible: cerrar Consulta y Cesta dejó `open: false` y `document.body.style.overflow === ''`; después de cerrar Cesta, el desplazamiento cambió `scrollY` de 254,84 a 678,11. No se registra como fallo confirmado. No se indujeron errores de producción ni se cambiaron Vercel/Supabase.
+- Build y suite completos repetidos una vez tras estabilizarse `1f557db`, porque el intento anterior coincidió con ediciones concurrentes de C1/C2. **36/36** pruebas correctas; sin modificaciones de implementación de Codex.
+- Permanecen fuera de estos cierres las decisiones de Google, registro por correo, cambio, marcas/foto y la prueba con lector de pantalla. Los resúmenes locales de esta tanda son simulaciones (`AZIYNL4` y el de la prueba de dos líneas); no son pedidos en Supabase.
+
+## Detección inicial de C1/C2 — historial
 
 Se revisaron los diffs de los arreglos y sus pruebas, y se contrastaron los estados de cesta y consulta en el navegador real. **Dos hallazgos adicionales confirmados**, sin duplicar W1–W5, S1–S2 ni las decisiones pendientes de Supabase. La nota actualiza solamente Working Memory y Zeigarnik (2 → 1 cada una); mantiene las otras valoraciones de la segunda pasada. Bruta: **47/56**; normalizada: `47 / 56 × 60 = 50,36` → **50/60**. Esta ampliación no convierte la nota en una certificación de accesibilidad.
 
@@ -20,7 +43,7 @@ No se confirmó un problema crítico nuevo en esta tanda.
 
 ## Warnings (7)
 
-Se mantienen las cinco advertencias W1–W5 de la segunda pasada. Se añaden las dos siguientes; ambas quedan **abiertas**, con prioridad **P2**.
+En la detección inicial se mantenían W1–W5 y se añadían C1/C2 con prioridad P2. **Los siete están cerrados en los recorridos comprobados arriba**; esta sección conserva el problema y el arreglo propuesto cuando estaban abiertos.
 
 ### C1 · Working Memory — Score: 1/2 — el resumen oculta las unidades por línea
 
