@@ -33,16 +33,24 @@ export default function ProductoCTA({ producto, modo }: Props) {
         </button>
       )
     }
+    // El boton dice lo que hace y el estado va aparte. Antes pasaba a «En la
+    // cesta (1)» y volver a pulsarlo sumaba otra unidad sin decirlo
+    // (UX-AUDIT.md, tercera pasada, W2). El estado se pinta siempre, vacio si
+    // no hay nada: una region role="status" que aparece de golpe no siempre se
+    // anuncia, y una que cambia si.
     return (
-      <button
-        type="button"
-        className={`card__add ficha__cta${cant ? ' is-added' : ''}`}
-        disabled={catalogo === 'cargando'}
-        aria-busy={catalogo === 'cargando'}
-        onClick={() => add(producto.id)}
-      >
-        {cant ? `En la cesta (${cant})` : 'Añadir a la cesta'}
-      </button>
+      <div className="ficha__accion">
+        <button
+          type="button"
+          className={`card__add ficha__cta${cant ? ' is-added' : ''}`}
+          disabled={catalogo === 'cargando'}
+          aria-busy={catalogo === 'cargando'}
+          onClick={() => add(producto.id)}
+        >
+          {cant ? 'Añadir otra unidad' : 'Añadir a la cesta'}
+        </button>
+        <p className="ficha__en-cesta" role="status">{cant ? `En la cesta: ${cant}` : ''}</p>
+      </div>
     )
   }
 
