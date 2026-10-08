@@ -423,14 +423,25 @@ div.panel__vacio { display: grid; gap: 1rem; justify-items: start; }
 .panel__pedidos:empty { padding: 0; }
 
 .pedido {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.6rem 0;
   border-top: 1px solid var(--filete-tenue);
   font-size: 0.8125rem;
   color: var(--gris);
 }
+/* El resumen se abre (AccountPanel): la fila es el rotulo del <details>, a
+   44 px de alto, con la misma flecha que los desplegables del catalogo. */
+.pedido__resumen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+.pedido__resumen::-webkit-details-marker { display: none; }
+.pedido__resumen::after { content: '▾'; color: var(--gris); }
+.pedido[open] .pedido__resumen::after { content: '▴'; }
+.pedido__lineas { padding: 0 0 0.75rem; display: grid; gap: 0.35rem; color: var(--gris-claro); }
 .pedido__cod {
   font-family: var(--display);
   letter-spacing: var(--tr);

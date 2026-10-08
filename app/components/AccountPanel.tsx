@@ -72,14 +72,25 @@ function Pedidos() {
   return (
     <>
       <h3 className="panel__sub">Resúmenes en este navegador</h3>
+      {/* <details>: cada resumen se abre y enseña que habia dentro, con los
+          nombres guardados al armarlo (lib/cesta.ts). Antes solo daba codigo,
+          fecha y total, y no habia forma de repasarlo (UX-AUDIT.md, segunda
+          pasada, S1). */}
       {lista.slice().reverse().map((p) => (
-        <p className="pedido" key={p.codigo}>
-          <span className="pedido__cod">{p.codigo}</span>
-          <span>
-            {fecha(String(p.fecha).slice(0, 10))} · {p.lineas.length}
-            {p.lineas.length === 1 ? ' línea' : ' líneas'} · {p.total ?? `US$ ${grupos.format(p.usdCents / 100)}`}
-          </span>
-        </p>
+        <details className="pedido" key={p.codigo}>
+          <summary className="pedido__resumen">
+            <span className="pedido__cod">{p.codigo}</span>
+            <span>
+              {fecha(String(p.fecha).slice(0, 10))} · {p.lineas.length}
+              {p.lineas.length === 1 ? ' línea' : ' líneas'} · {p.total ?? `US$ ${grupos.format(p.usdCents / 100)}`}
+            </span>
+          </summary>
+          <ul className="pedido__lineas">
+            {p.lineas.map((l) => (
+              <li key={l.id}>{l.n} × {l.nombre ?? `Referencia n.º ${l.id}`}</li>
+            ))}
+          </ul>
+        </details>
       ))}
     </>
   )

@@ -19,6 +19,7 @@
  * esta vacia», un total de $ 0 y el resguardo (UX-AUDIT.md, Peak-End). */
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { precio } from '@/lib/catalogo'
 import { faltas, reserva as armarReserva, type Pedido } from '@/lib/cesta'
 import { useCart } from './CartContext'
@@ -108,9 +109,12 @@ export default function CartPanel() {
               <button className="btn btn--ghost" type="button" onClick={recargarCatalogo}>Reintentar</button>
             </div>
           ) : lineas.length === 0 ? (
-            <p className="panel__vacio">
-              La cesta está vacía. Las fichas del catálogo tienen el botón de añadir.
-            </p>
+            // Con salida, como la busqueda y el catalogo vacios (UX-AUDIT.md,
+            // segunda pasada, S1).
+            <div className="panel__vacio">
+              <p>La cesta está vacía.</p>
+              <Link className="btn btn--ghost" href="/catalogo" onClick={cerrar}>Ver el catálogo</Link>
+            </div>
           ) : (
             lineas.map((l) => (
               <div className="linea" key={l.producto.id}>

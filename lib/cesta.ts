@@ -42,7 +42,10 @@ export type Pedido = {
   // lo enseña igual, en vez de dolares (UX-AUDIT.md, P4). Opcional: los
   // resumenes guardados antes no lo traen.
   total?: string
-  lineas: { id: number; n: number; usdCents: number }[]
+  // `nombre`, por lo mismo que `total`: Mi cuenta enseña que habia dentro sin
+  // depender del catalogo, y como se llamaba entonces (UX-AUDIT.md, segunda
+  // pasada, S1). Opcional por los resumenes viejos.
+  lineas: { id: number; n: number; usdCents: number; nombre?: string }[]
 }
 
 // Sin servidor no hay pedido de verdad: se apunta en el propio navegador
@@ -65,7 +68,10 @@ export function reserva(
     cliente: perfil?.nombre ?? null,
     usdCents: totalUsdCents,
     total: precio(totalUsdCents, arsPorUsd),
-    lineas: lineas.map((l) => ({ id: l.producto.id, n: l.n, usdCents: l.producto.usdCents })),
+    lineas: lineas.map((l) => ({
+      id: l.producto.id, n: l.n, usdCents: l.producto.usdCents,
+      nombre: `${l.producto.marca} ${l.producto.ref}`,
+    })),
   }
 
   const detalle = lineas
