@@ -121,9 +121,9 @@ Law of Uniform Connectedness y Goal-Gradient Effect: mismas razones de la segund
 
 ## Action Plan (do in this order)
 
-1. **Conservar borradores por referencia (C2)** → `ConsultaContext.tsx:15`, `ConsultaPanel.tsx:125`, `ProductoCTA.tsx:53`; verificar A → B → A.
-2. **Mantener unidades visibles en el resumen (C1)** → `CartPanel.tsx:136`; verificar varias líneas con cantidades diferentes.
-3. **Continuar W1–W5 y S1** con el plan de la segunda pasada; no marcar ningún pendiente resuelto sin probarlo. S2 requiere una decisión de producto.
+1. ✅ **Conservar borradores por referencia (C2)** → `ConsultaContext.tsx:15`, `ConsultaPanel.tsx:125`, `ProductoCTA.tsx:53`; verificar A → B → A. *Hecho por Claude (`26731a9`):* un borrador por consulta en el estado de `ConsultaPanel` (vive en el layout y sobrevive a la navegación), con el título como clave; no hizo falta tocar el contexto ni la ficha. Verificado en `next dev`: A → B → A → B con enlaces y atrás/adelante, los dos borradores intactos.
+2. ✅ **Mantener unidades visibles en el resumen (C1)** → `CartPanel.tsx:136`; verificar varias líneas con cantidades diferentes. *Hecho por Claude (`26731a9`):* «N unidades» fuera de los mandos. Verificado con dos líneas, 2 y 1 unidades.
+3. ✅ **Continuar W1–W5 y S1** con el plan de la segunda pasada; no marcar ningún pendiente resuelto sin probarlo. S2 requiere una decisión de producto. *Hecho:* los 7 pasos de ese plan, uno por commit, cada uno probado (ver allí). S2 lo decidió el dueño: aplicar el paso 7.
 
 ### Validación y seguimiento
 
@@ -363,13 +363,15 @@ Es una decisión de producto (`7ab2ee4`), no un fallo: no se cambia sin el dueñ
 
 ## Action Plan (do in this order)
 
-1. **Señal mientras navega un filtro** — `useLinkStatus` en chips, opciones y «Limpiar» → `app/catalogo/page.tsx:127`, `Desplegable.tsx:37`, `app/components/Pendiente.tsx` (nuevo).
-2. **Rótulo de la tarjeta que dice lo que hace** — «Ver y añadir» / «Ver y consultar» → `app/catalogo/page.tsx:215`.
-3. **Convenciones** — sugerencia que abre la ficha, contador de la cesta anunciado, `role="group"` en los filtros, pausa con un solo estado → `SearchPanel.tsx:116`, `HeaderActions.tsx:55`, `app/catalogo/page.tsx:99`, `Marquee.tsx:31`.
-4. **Filtros a 44 px** → `css/catalog.css:120`, `:152`, `:241`; `css/base.css:911`.
-5. **Promesas de la portada** → `app/page.tsx:129`, `:160`, `:187`.
-6. **Cesta vacía con salida y resúmenes que se abren** → `CartPanel.tsx:111`, `AccountPanel.tsx:76`.
-7. **Retraso del menú al pasar el ratón** — solo si el dueño lo decide → `NavMenu.tsx:222`.
+1. ✅ **Señal mientras navega un filtro** — `useLinkStatus` en chips, opciones y «Limpiar» → `app/catalogo/page.tsx:127`, `Desplegable.tsx:37`, `app/components/Pendiente.tsx` (nuevo). *Hecho (`3a94bd1`):* `pending` dura toda la navegación; el punto aparece a los 100 ms (comprobado moviendo el reloj de la animación).
+2. ✅ **Rótulo de la tarjeta que dice lo que hace** — «Ver y añadir» / «Ver y consultar» → `app/catalogo/page.tsx:215`. *Hecho (`e7d2171`).*
+3. ✅ **Convenciones** — sugerencia que abre la ficha, contador de la cesta anunciado, `role="group"` en los filtros, pausa con un solo estado → `SearchPanel.tsx:116`, `HeaderActions.tsx:55`, `app/catalogo/page.tsx:99`, `Marquee.tsx:31`. *Hecho (`89f5767`).* La pausa conserva el rótulo cambiante y suelta `aria-pressed` (al revés que el fragmento de W3): el rótulo es lo que ve quien no usa lector de pantalla.
+4. ✅ **Filtros a 44 px** → `css/catalog.css:120`, `:152`, `:241`; `css/base.css:911`. *Hecho (`80631b4`):* zona de toque de 45 px con un `::before`, sin mover el subrayado (medido con `elementFromPoint`); las opciones crecen a 44.
+5. ✅ **Promesas de la portada** → `app/page.tsx:129`, `:160`, `:187`. *Hecho (`658450f`).*
+6. ✅ **Cesta vacía con salida y resúmenes que se abren** → `CartPanel.tsx:111`, `AccountPanel.tsx:76`. *Hecho (`efb0998`):* el resumen guarda el nombre de cada línea al armarse (`test/cesta.test.ts`, 2 pruebas nuevas).
+7. ✅ **Retraso del menú al pasar el ratón** — solo si el dueño lo decide → `NavMenu.tsx:222`. *Hecho (`8339679`), por decisión del dueño:* 300 ms; con el puntero del navegador, cerrado a los 257 ms y abierto a los 359.
+
+Plan aplicado el 2026-10-08, junto con C1 y C2 del seguimiento de Codex (arriba). Sin nueva puntuación: falta una tercera pasada para medirlo.
 
 Los pasos 1 a 6 suben la nota a 55/56 en bruto (59/60); el 7, si se hace, a 56/56. Fuera de las 30 leyes siguen abiertos B1 (registro por correo en Auth), el alta de Google, `fx_rate` del 24/08, Pelican/Peli y la foto de la V730: todo eso es configuración o datos que decide el dueño.
 

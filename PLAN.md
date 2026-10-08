@@ -717,3 +717,28 @@ actualizar `fx_rate`, decidir Pelican/Peli y la foto de la V730.
   sigue con Google apagado y registro abierto; cabeceras B3 comprobadas.
 - Revisión cada 10 minutos activa en este chat. Codex anota y verifica;
   la implementación se deja a Claude para evitar pisar cambios concurrentes.
+
+### Plan de la segunda pasada aplicado (2026-10-08)
+
+Un commit por paso, build y suite en verde, probado en `next dev`:
+
+- `3a94bd1` Doherty: `Pendiente.tsx` con `useLinkStatus` en cada enlace de filtro.
+- `e7d2171` Mental Model: tarjeta «Ver y añadir» / «Ver y consultar».
+- `89f5767` Jakob: sugerencia de búsqueda abre la ficha; cesta con su cuenta en
+  el nombre accesible; `role="group"` en los filtros; pausa sin `aria-pressed`.
+- `80631b4` Fitts: zona de toque de 45 px con `::before` (sin mover subrayados).
+- `658450f` Cognitive Bias: fuera «se encarga» y «Representación».
+- `efb0998` Peak-End: cesta vacía con «Ver el catálogo»; resúmenes con
+  `<details>` y nombres guardados (`test/cesta.test.ts`, 36 pruebas).
+- `8339679` Flow: el menú espera 300 ms (decisión del dueño).
+- `26731a9` C1 y C2 del seguimiento de Codex: unidades en el resumen y un
+  borrador por consulta.
+
+Codex revisa este repo cada 10 minutos y escribe en `UX-AUDIT.md`/`PLAN.md`
+(`344b8a2`): mirar `git status` antes de tocar esos dos ficheros.
+
+Visto de paso, sin confirmar: en el panel del navegador de pruebas, oculto, el
+`close` de los `<dialog>` no llegaba (ni un `requestAnimationFrame` en 8 s), así
+que `body` se quedaba con `overflow: hidden`. Casi seguro es el panel oculto y
+no la tienda; comprobarlo una vez con la pestaña visible: abrir y cerrar la
+cesta y desplazar la página.

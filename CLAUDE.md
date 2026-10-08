@@ -21,7 +21,7 @@ la conversación.
 
 ```
 npx next build                                                          # compila y tipa
-node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 34 pruebas
+node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 36 pruebas
 node db/supabase/revisa.js                                              # lee las migraciones sin necesitar base
 ```
 
@@ -117,7 +117,9 @@ de `Nav.tsx` porque éste es Server y no puede llevar `onClick`), `CartCount.tsx
 `ProductoCTA.tsx` (botón de la ficha, pregunta a `CartContext` cuántas
 unidades hay — no guarda estado propio), `RielLaminas.tsx`, `Marquee.tsx`,
 `Scrollicono.tsx`, `Reveal.tsx` (dos clases + `IntersectionObserver`, puerto
-de `js/reveal.js` del sitio viejo).
+de `js/reveal.js` del sitio viejo), `Pendiente.tsx` (el punto que late dentro
+de cada enlace de filtro mientras navega: `useLinkStatus`, que solo funciona
+dentro de un `<Link>`; los Server Components lo montan dentro del suyo).
 
 ## `lib/` — dónde vive cada decisión
 
