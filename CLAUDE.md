@@ -21,7 +21,7 @@ la conversación.
 
 ```
 npx next build                                                          # compila y tipa
-node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 36 pruebas
+node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 38 pruebas
 node db/supabase/revisa.js                                              # lee las migraciones sin necesitar base
 ```
 
@@ -130,7 +130,7 @@ dentro de un `<Link>`; los Server Components lo montan dentro del suyo).
 | `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`/`cambioDelDia()`, `googleActivo()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorFamilia()`/`cuentaPorRama()`/`recientes()`. Reexporta `lib/familia.ts` entero |
 | `lib/familia.ts` | **El árbol de familias, sin tocar la base.** `raices()`, `hijas()`, `rama()`, `arbolMenu()`. Aparte de `catalogo.ts` por lo mismo que `regimen.ts`: aquel importa el cliente de Supabase al cargarse y nada de dentro se puede probar sin `.env.local` |
 | `lib/cesta.ts` | Lógica de la reserva sin DOM: `faltas()` (qué impide reservar) y `reserva()` (pedido + `mailto:`) |
-| `lib/cuenta.ts` | Sólo el tipo `Perfil` (`{nombre, email}`) — vive aparte para que `cesta.ts` no dependa de un componente de React |
+| `lib/cuenta.ts` | El tipo `Perfil` (`{nombre, email}`), las claves de `localStorage` con datos de la persona (`CUENTA`, `PEDIDOS`) y `borrarDatos()`, lo que borra «Borrar mis datos»: perfil y resúmenes, no la cesta. `/privacidad` promete exactamente eso; `test/cuenta.test.ts` lo fija. Sin imports, por lo mismo que `regimen.ts` |
 | `lib/buscar.ts` | `llano()`/`buscar()`: búsqueda sin acentos, AND entre palabras, sobre nombre + ficha técnica |
 | `lib/facetas.ts` | **Los desplegables del catálogo.** `FACETAS` (marca, calibre, cañón, aumentos), `opciones()`, `desplegables()`, `filtrarPorFaceta()`, `aplicarFacetas()`, `seleccion()`, `alternar()`, `consulta()`/`Estado`, y `uno()` (lee un parámetro de un solo valor de `searchParams`, usado en catálogo y ficha). Aparte de `catalogo.ts` por lo mismo que `familia.ts`: así se prueba sin `.env.local` |
 

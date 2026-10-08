@@ -146,9 +146,11 @@ Ninguna: S1 y S2 de la segunda pasada están cerrados.
 
 ## Action Plan (do in this order)
 
-1. **«Borrar mis datos» que borre los resúmenes, y la política que lo diga** — es el único hallazgo que toca datos personales → `AccountContext.tsx:74`, `AccountPanel.tsx:190`, `app/privacidad/page.tsx:162`.
-2. **El botón de la ficha dice la acción** — «Añadir otra unidad», con «En la cesta: N» aparte → `ProductoCTA.tsx:38`.
-3. **Indicio en tarjetas, «volver» y búsqueda** — `Pendiente` en esos enlaces; el diálogo se cierra al llegar → `app/catalogo/page.tsx:225`, `app/producto/[slug]/page.tsx:111`, `SearchPanel.tsx:128`.
+1. ✅ **«Borrar mis datos» que borre los resúmenes, y la política que lo diga** — es el único hallazgo que toca datos personales → `AccountContext.tsx:74`, `AccountPanel.tsx:190`, `app/privacidad/page.tsx:162`. *Hecho (`5ffc549`):* `borrarDatos()` en `lib/cuenta.ts` quita perfil y resúmenes y deja la cesta (`test/cuenta.test.ts`, 2 pruebas); el botón sale también si solo hay resúmenes; `/privacidad` dice exactamente qué borra. Verificado en `next dev`.
+2. ✅ **El botón de la ficha dice la acción** — «Añadir otra unidad», con «En la cesta: N» aparte → `ProductoCTA.tsx:38`. *Hecho (`7ddcb6e`):* el estado va en un `role="status"` siempre montado, para que el cambio se anuncie. Verificado 0 → 1 → 2 y a 390 px.
+3. ✅ **Indicio en tarjetas, «volver» y búsqueda** — `Pendiente` en esos enlaces; el diálogo se cierra al llegar → `app/catalogo/page.tsx:225`, `app/producto/[slug]/page.tsx:111`, `SearchPanel.tsx:128`. *Hecho (`72aef8a`):* en la búsqueda, `useTransition` + `router.push` (el patrón de la guía de Next 16) en vez de `usePathname`, porque «Ver las N» puede navegar dentro de `/catalogo` sin cambiar de ruta. Verificado: indicio en tarjeta y «volver»; el panel sigue abierto con el indicio y se cierra al llegar.
+
+Plan aplicado el 2026-10-08. Sin nota nueva: los tres cierres son los de W1 y W2, y la siguiente pasada tendría que confirmarlos.
 
 Con los tres, la nota llegaría a 56/56 en bruto (60/60). Fuera de las 30 leyes siguen abiertos B1 (registro por correo en Auth), el alta de Google, `fx_rate` del 24/08, Pelican/Peli y la foto de la V730: configuración o datos que decide el dueño.
 

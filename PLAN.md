@@ -764,3 +764,14 @@ cesta y desplazar la página.
   decirlo; «Borrar mis datos» deja los resúmenes, con el nombre del cliente,
   aunque `/privacidad` promete que lo borra todo.
 - Plan de 3 pasos propuesto, sin aplicar.
+
+### Plan de la tercera pasada aplicado (2026-10-08)
+
+- `5ffc549` «Borrar mis datos» borra también los resúmenes (`borrarDatos()`
+  en `lib/cuenta.ts`, 2 pruebas); el botón sale si solo hay resúmenes;
+  `/privacidad` dice exactamente qué borra.
+- `7ddcb6e` El botón de la ficha: «Añadir otra unidad» y «En la cesta: N»
+  aparte, en un `role="status"` siempre montado.
+- `72aef8a` Indicio en tarjetas y «volver»; la búsqueda navega en una
+  transición y cierra el panel al llegar.
+- 38 pruebas. Falta una cuarta pasada para confirmar la nota.
