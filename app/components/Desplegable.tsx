@@ -30,11 +30,16 @@ export default function Desplegable({ faceta, opciones, sel, href }: Props) {
         {opciones.map((o) => {
           const activo = sel.includes(o.valor)
           return (
+            // Sin aria-pressed: es estado de boton y esto es un enlace, que el
+            // lector de pantalla anunciaba como «enlace, presionado». El estado
+            // va en el nombre, que dice lo que hace el clic; `data-activo` es
+            // solo para el CSS (UX-AUDIT.md, Jakob).
             <Link
               key={o.valor}
               href={href(o.valor)}
               className="drop__op"
-              aria-pressed={activo}
+              data-activo={activo || undefined}
+              aria-label={`${activo ? 'Quitar' : 'Aplicar'} filtro ${faceta.rotulo}: ${o.valor} (${o.n})`}
             >
               <span className="drop__tick" aria-hidden="true">{activo ? '✓' : ''}</span>
               <span className="drop__valor">{o.valor}</span>

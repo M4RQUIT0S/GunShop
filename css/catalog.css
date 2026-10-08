@@ -250,7 +250,7 @@
   transition: background var(--t) var(--ease), color var(--t) var(--ease);
 }
 .drop__op:hover { background: #1e1e1e; color: var(--tinta); }
-.drop__op[aria-pressed="true"] { color: var(--tinta); }
+.drop__op[data-activo] { color: var(--tinta); }
 .drop__tick { color: var(--tinta); }
 .drop__c { color: var(--filete-medio); }
 
@@ -258,9 +258,9 @@
 .filtros__limpiar { align-self: center; }
 
 .chip:hover { color: var(--tinta); }
-.chip[aria-pressed="true"] { color: var(--tinta); border-bottom-color: var(--tinta); }
+.chip[aria-current="true"] { color: var(--tinta); border-bottom-color: var(--tinta); }
 .chip__n { margin-left: 0.5rem; color: var(--filete-medio); }
-.chip[aria-pressed="true"] .chip__n { color: var(--gris); }
+.chip[aria-current="true"] .chip__n { color: var(--gris); }
 
 /* --- rejilla ------------------------------------------------------------ */
 

@@ -120,7 +120,11 @@ export default async function Catalogo({ searchParams }: Props) {
               <span className="chip__x" aria-hidden="true">✕</span>
             </Link>
           )}
-          <Link href="/catalogo" className="chip" aria-pressed={!familia && !busqueda}>
+          {/* aria-current y no aria-pressed: son enlaces, y el activo es el
+              conjunto que se esta viendo. `|| undefined` porque React escribe
+              aria-current="false" si le llega false, y eso tambien casa con
+              el selector del CSS. */}
+          <Link href="/catalogo" className="chip" aria-current={(!familia && !busqueda) || undefined}>
             Todo
             <span className="chip__n">{todos.length}</span>
           </Link>
@@ -129,7 +133,7 @@ export default async function Catalogo({ searchParams }: Props) {
               key={f.slug}
               href={href({ familia: f.slug })}
               className="chip"
-              aria-pressed={!busqueda && !!familia && rama(fams, f.slug).includes(familia)}
+              aria-current={(!busqueda && !!familia && rama(fams, f.slug).includes(familia)) || undefined}
             >
               {f.name}
               <span className="chip__n">{countsPorFamilia[f.slug] ?? 0}</span>

@@ -114,8 +114,10 @@
 
 .panel__x {
   flex: none;
-  width: 2.25rem;
-  height: 2.25rem;
+  /* 44 px, como los botones de la cabecera: con 36 se quedaba corto para el
+     dedo (UX-AUDIT.md, Fitts). */
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: var(--r-pildora);
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--filete);
@@ -218,11 +220,13 @@ div.panel__vacio { display: grid; gap: 1rem; justify-items: start; }
 }
 .linea__spec { font-size: 0.8125rem; color: var(--gris); margin-top: 0.25rem; }
 
-.linea__mandos { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem; }
+/* `wrap`: con los pasos a 44 px, en un movil estrecho «Quitar» baja de linea
+   antes que desbordar la columna. */
+.linea__mandos { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.6rem; }
 
 .linea__paso {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: var(--r-pildora);
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--filete);
@@ -242,10 +246,11 @@ div.panel__vacio { display: grid; gap: 1rem; justify-items: start; }
 
 .linea__quita {
   margin-left: 0.4rem;
-  /* El area de toque, no la letra: 10 px de cuerpo dan 15 px de alto y el
-     minimo son 24. Cabe dentro de los 28 del boton de al lado, asi que la
-     linea no cambia de altura. */
-  padding-block: 0.35rem;
+  /* El area de toque, no la letra: 10 px de cuerpo dan 15 px de alto. Se
+     estira a los 44 de los pasos de al lado, asi que la linea no cambia de
+     altura por el. */
+  min-height: 2.75rem;
+  padding-inline: 0.5rem;
   background: none;
   font-family: var(--display);
   font-size: 0.625rem;
