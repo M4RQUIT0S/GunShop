@@ -86,8 +86,8 @@ select v.slug, v.name, v.model_key, r.id, v.position
     ('rifles',     'Rifles',     'rifle',     'uso-civil-condicional', 1::smallint),
     ('escopetas',  'Escopetas',  'shotgun',   'uso-civil',      2),
     ('pistolas',   'Pistolas',   'pistol',    'uso-civil-condicional', 3),
-    ('optica',     'Optica',     'optic',     'libre',    4),
-    ('municion',   'Municion',   'cartridge', 'requiere-tccm',  5),
+    ('optica',     'Óptica',     'optic',     'libre',    4),
+    ('municion',   'Munición',   'cartridge', 'requiere-tccm',  5),
     ('accesorios', 'Accesorios', 'gcase',     'libre',    6)
   ) as v(slug, name, model_key, regimen, position)
   join public.licence_regime r on r.code = v.regimen

@@ -43,7 +43,7 @@ function Estado({ perfil, google, conGoogle }: { perfil: Perfil | null; google: 
   if (!perfil && !google) {
     return (
       <p>
-        Sin datos cargados. {conGoogle ? 'Entra con Google o deja' : 'Deja'} tu
+        Sin datos cargados. {conGoogle ? 'Entrá con Google o dejá' : 'Dejá'} tu
         nombre y correo: es lo único que acompaña al resumen de la cesta.
       </p>
     )
@@ -162,7 +162,7 @@ export default function AccountPanel({ conGoogle }: { conGoogle: boolean }) {
           )}
           {fallo && <p className="aviso aviso--falta" role="status">{fallo}</p>}
 
-          {(google || conGoogle) && <p className="form__o"><span>o déjalos a mano</span></p>}
+          {(google || conGoogle) && <p className="form__o"><span>o dejalos a mano</span></p>}
 
           <label className="campo">
             <span>Nombre y apellido</span>

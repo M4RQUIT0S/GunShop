@@ -29,7 +29,7 @@ export function faltas(lineas: Linea[]): string[] {
   return [
     `${controladas.map((l) => `${l.producto.marca} ${l.producto.ref}`).join(', ')}: ` +
       'no se despacha por la web. Exige credencial ANMaC y se cierra en el mostrador; ' +
-      'quítalo de la cesta y consúltanos desde su ficha.',
+      'quitalo de la cesta y consultanos desde su ficha.',
   ]
 }
 

@@ -672,3 +672,25 @@ Lo que NO se hizo, y por que:
   vaciar, foco correcto en cada paso, la cesta sobrevive al resumen.
 - Visto de paso, no tocado: aviso de hidratación en `<html className>` del
   layout en dev (las clases de las fuentes, ajeno a la cesta).
+
+### Pasos 2–9 del plan UX (2026-10-08)
+
+Un commit por paso, cada uno con build y suite en verde y probado en `next dev`:
+
+- `a676c07` Google: sin proveedor en Auth no hay botón (`googleActivo()`).
+- `1919460` Carga/error/vacío: estado del catálogo en `CartContext`, que la
+  búsqueda reutiliza (ya no lo pide aparte); `error.tsx` y `global-error.tsx`
+  con `retry()` de Next 16; `suppressHydrationWarning` en `<html>` (la clase
+  `js`). Probado forzando un rechazo temporal de la carga.
+- `f425716` Filtros: `desplegables()` en `lib/facetas.ts`, TDD (3 pruebas).
+- `1cd905b` Textos: cifras de la portada, «Catálogo de demostración», fecha
+  del cambio, contactos `.example` sin enlace, resumen en pesos, aviso en la ficha.
+- `6c17de0` `aria-current`/nombre accesible en vez de `aria-pressed`; 44 px.
+- `9356ca8` Consulta con borrador, perfil y sin envío falso; 404 propio;
+  salida en el catálogo vacío.
+- `727883e` Miniaturas enlazadas; foco del menú revisado y dejado.
+- Paso 9: voseo, migración `0012_tildes` aplicada en producción, cabeceras.
+
+Pendiente del dueño: Google en el panel, cerrar el registro por correo (B1),
+actualizar `fx_rate`, decidir Pelican/Peli y la foto de la V730. Falta
+reauditar para la nota nueva.

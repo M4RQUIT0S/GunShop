@@ -21,7 +21,7 @@ la conversación.
 
 ```
 npx next build                                                          # compila y tipa
-node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 20 pruebas
+node --experimental-loader ./test/resuelve-ts.mjs --test "test/*.test.ts" # 34 pruebas
 node db/supabase/revisa.js                                              # lee las migraciones sin necesitar base
 ```
 
@@ -53,6 +53,11 @@ Tres páginas, todas Server Components:
 | `/catalogo` | `app/catalogo/page.tsx` | Chips de familia + desplegables de faceta (marca, calibre, cañón, aumentos), todo por `?familia=&marca=&calibre=&canon=&aumentos=&q=` en la URL |
 | `/producto/[slug]` | `app/producto/[slug]/page.tsx` | Ficha con CTA por régimen, `generateMetadata()` con Open Graph, y «volver» que restaura los filtros con los que se llegó |
 | `/privacidad` | `app/privacidad/page.tsx` | Política de privacidad. La única página sin un solo dato de Supabase, así que se prerenderiza entera |
+| (avisos) | `app/error.tsx`, `app/global-error.tsx`, `app/not-found.tsx` | Error y 404 en español, con salida («Reintentar» con `retry()` de Next 16, «Ver el catálogo»). `global-error` es el que salta cuando cae Supabase, porque el layout también lee la base (`Nav`). Marco común en `PaginaAviso.tsx` |
+
+`next.config.ts` solo pone tres cabeceras de seguridad (`frame-ancestors 'none'`,
+`nosniff`, `Referrer-Policy`). Una CSP completa con `script-src` choca con los
+scripts en línea de Next si no se monta con nonce: es otro trabajo.
 
 ### Las dos láminas de novedades
 
@@ -120,12 +125,12 @@ de `js/reveal.js` del sitio viejo).
 |---|---|
 | `lib/supabase.ts` | Cliente con la clave publicable. Revienta el **build** (no el arranque) si faltan las env vars — más vale un despliegue rojo que uno verde sirviendo una tienda vacía |
 | `lib/regimen.ts` | **Fuente única del régimen legal ANMaC.** Sin imports a propósito: se prueba sola, sin base ni env vars |
-| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorFamilia()`/`cuentaPorRama()`/`recientes()`. Reexporta `lib/familia.ts` entero |
+| `lib/catalogo.ts` | Todas las consultas a Supabase: `listaProductos()`, `productoPorSlug()`, `familias()`, `subsPorFamilia()`, `cambio()`/`cambioDelDia()`, `googleActivo()`, `precio()`, `slugDe()`, y los filtros puros `filtrarPorSub()`/`filtrarPorFamilia()`/`cuentaPorRama()`/`recientes()`. Reexporta `lib/familia.ts` entero |
 | `lib/familia.ts` | **El árbol de familias, sin tocar la base.** `raices()`, `hijas()`, `rama()`, `arbolMenu()`. Aparte de `catalogo.ts` por lo mismo que `regimen.ts`: aquel importa el cliente de Supabase al cargarse y nada de dentro se puede probar sin `.env.local` |
 | `lib/cesta.ts` | Lógica de la reserva sin DOM: `faltas()` (qué impide reservar) y `reserva()` (pedido + `mailto:`) |
 | `lib/cuenta.ts` | Sólo el tipo `Perfil` (`{nombre, email}`) — vive aparte para que `cesta.ts` no dependa de un componente de React |
 | `lib/buscar.ts` | `llano()`/`buscar()`: búsqueda sin acentos, AND entre palabras, sobre nombre + ficha técnica |
-| `lib/facetas.ts` | **Los desplegables del catálogo.** `FACETAS` (marca, calibre, cañón, aumentos), `opciones()`, `filtrarPorFaceta()`, `aplicarFacetas()`, `seleccion()`, `alternar()`, `consulta()`/`Estado`, y `uno()` (lee un parámetro de un solo valor de `searchParams`, usado en catálogo y ficha). Aparte de `catalogo.ts` por lo mismo que `familia.ts`: así se prueba sin `.env.local` |
+| `lib/facetas.ts` | **Los desplegables del catálogo.** `FACETAS` (marca, calibre, cañón, aumentos), `opciones()`, `desplegables()`, `filtrarPorFaceta()`, `aplicarFacetas()`, `seleccion()`, `alternar()`, `consulta()`/`Estado`, y `uno()` (lee un parámetro de un solo valor de `searchParams`, usado en catálogo y ficha). Aparte de `catalogo.ts` por lo mismo que `familia.ts`: así se prueba sin `.env.local` |
 
 ### `lib/regimen.ts` — régimen legal ANMaC
 
@@ -156,7 +161,7 @@ que sincronizar.
 
 ## Supabase
 
-`db/supabase/migrations/0001..0011` son el esquema real, aplicado contra el
+`db/supabase/migrations/0001..0012` son el esquema real, aplicado contra el
 proyecto de producción. `0006_rls.sql` revoca todo y concede `select` sólo
 sobre las tablas de catálogo (`brand`, `product`, `product_variant`,
 `product_photo`, `family`, `calibre`, `licence_regime`, `fx_rate`) — la clave
@@ -250,10 +255,10 @@ necesitan ver el mismo estado.
 
 | Contexto | Guarda en `localStorage` | Qué hace |
 |---|---|---|
-| `CartContext` | `gunshop:cesta` | `{id: unidades}`, no la ficha — el producto se resuelve contra `listaProductos()` fresco al montar, así un precio nuevo entra solo |
+| `CartContext` | `gunshop:cesta` | `{id: unidades}`, no la ficha — el producto se resuelve contra `listaProductos()` fresco al montar, así un precio nuevo entra solo. Ese catálogo, con su estado (`catalogo`: cargando/listo/error, y `recargarCatalogo()`), lo usan también la búsqueda y el botón de la ficha |
 | `AccountContext` | `gunshop:cuenta` | Identidad de contacto: **sólo nombre y correo**. La pone el acceso con Google (Supabase Auth) o se escribe a mano. Sin contraseña propia y **sin CLU ni TCCM** — ver «Cuenta: Google, y ninguna credencial» |
 | `SearchContext` | nada | Sólo el tick de "abrir panel"; el filtrado corre en `lib/buscar.ts` |
-| `ConsultaContext` | nada | `abrir({titulo, rotulo, mensaje})` — cualquier CTA puede abrir el panel de consulta prellenado |
+| `ConsultaContext` | nada | `abrir({titulo, rotulo, mensaje})` — cualquier CTA puede abrir el panel de consulta prellenado. `datos` no se vacía al cerrar: es lo que conserva el borrador. La consulta no se envía: prepara el texto y lo enseña |
 
 **No hay reserva real contra el backend.** Hay sesión (`auth.uid()` existe en
 cuanto entras con Google), pero `crear_pedido()` además necesita una fila en
@@ -288,7 +293,10 @@ Quitar la 2 sin la 1 sería lo caro: entregar sin pedir el papel. Por eso el
 corte vive en `lib/`, no en el panel.
 
 **El acceso con Google** es Supabase Auth con el proveedor `google`
-(`signInWithOAuth`). Sin ruta de callback a propósito: `redirectTo` es la misma
+(`signInWithOAuth`). El botón solo sale si el proveedor está dado de alta:
+`googleActivo()` pregunta a `/auth/v1/settings` (cacheado 10 min) y el layout se
+lo pasa al panel. Sin eso, `signInWithOAuth()` no da error: redirige a un JSON
+400 de Supabase y el cliente se queda fuera de la tienda. Sin ruta de callback a propósito: `redirectTo` es la misma
 URL en la que estabas y `supabase-js` canjea el `?code=` solo
 (`detectSessionInUrl`), que es por lo que `lib/supabase.ts` ya no lleva
 `persistSession: false`. En Node no hay `localStorage` y `auth-js` cae a
@@ -334,8 +342,9 @@ Reglas que sostienen el conjunto, y que hay que respetar al añadir una quinta:
   facetas** (`aplicarFacetas(base, sel, f.clave)`). Contadas sobre el resultado
   final, marcar un calibre pondría el resto a cero y no se podría añadir un
   segundo.
-- Un desplegable con menos de dos opciones no se pinta, y cambiar de familia
-  limpia la selección — un calibre de rifle en Óptica no deja nada que ver.
+- Un desplegable con menos de dos opciones no se pinta —salvo que tenga algo
+  marcado: es el único sitio donde se quita (`desplegables()`)—, y cambiar de
+  familia limpia la selección — un calibre de rifle en Óptica no deja nada que ver.
 - **En «Todo» no hay fila de desplegables**: la marca serían las 40 del
   catálogo y el calibre mezclaría el 12/70 de escopeta con el .308 de rifle.
   Hace falta acotar antes, por familia o por búsqueda (`acotado` en

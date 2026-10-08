@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     'pedir que se borren.',
 }
 
-const ACTUALIZADA = '28 de agosto de 2026'
+const ACTUALIZADA = '8 de octubre de 2026'
 
 export default function Privacidad() {
   return (
@@ -48,7 +48,7 @@ export default function Privacidad() {
             <h2>1 · Quién responde por tus datos</h2>
             <p>
               Armería Alcántara, Av. Rivadavia 0000, Balvanera, Ciudad Autónoma de
-              Buenos Aires. Para cualquier cosa de esta página escribe a{' '}
+              Buenos Aires. Para cualquier cosa de esta página escribí a{' '}
               <a href="mailto:taller@alcantara.example">taller@alcantara.example</a>.
             </p>
           </section>
@@ -58,13 +58,13 @@ export default function Privacidad() {
             <dl className="legal__lista">
               <dt>Nombre y correo</dt>
               <dd>
-                Cuando entras con Google, o cuando los escribes a mano en «Mi cuenta».
+                Cuando entrás con Google, o cuando los escribís a mano en «Mi cuenta».
                 Se guardan en tu propio navegador; si entraste con Google, además
                 quedan en nuestra base de datos junto al identificador de tu cuenta de
                 Google, que es lo que nos deja reconocerte la próxima vez.
               </dd>
 
-              <dt>Lo que pones en la cesta</dt>
+              <dt>Lo que ponés en la cesta</dt>
               <dd>
                 Sólo qué artículo y cuántas unidades, en tu navegador. No sale de ahí.
               </dd>
@@ -76,10 +76,10 @@ export default function Privacidad() {
                 ninguna reserva hecha.
               </dd>
 
-              <dt>Lo que escribes en una consulta</dt>
+              <dt>Lo que escribís en una consulta</dt>
               <dd>
-                Se abre tu programa de correo con el texto ya escrito, y eres tú quien
-                decide enviarlo. No se guarda en la página.
+                Se prepara y se muestra en pantalla, sin salir de tu navegador: es una
+                simulación y no se envía. No se guarda en ninguna parte.
               </dd>
 
               <dt>Dirección IP y datos técnicos de la visita</dt>
@@ -114,8 +114,8 @@ export default function Privacidad() {
           <section>
             <h2>4 · Para qué los usamos</h2>
             <p>
-              Para reconocerte cuando vuelves, para que la reserva llegue con tu nombre
-              y para contestarte. Nada más. No vendemos ni cedemos tus datos con fines
+              Para reconocerte cuando volvés y para que el resumen de la cesta lleve
+              tu nombre. Nada más. No vendemos ni cedemos tus datos con fines
               comerciales, ni los usamos para publicidad.
             </p>
           </section>
@@ -139,13 +139,13 @@ export default function Privacidad() {
               </dd>
               <dt>Google</dt>
               <dd>
-                Sólo si usas el acceso con Google. En ese caso Google sabe que iniciaste
+                Sólo si usás el acceso con Google. En ese caso Google sabe que iniciaste
                 sesión aquí, y nos entrega tu nombre, tu correo y el identificador de tu
                 cuenta —nada más, y nunca tu contraseña—. Lo que Google haga con eso lo
                 rige{' '}
                 <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer noopener">
                   su propia política de privacidad
-                </a>. Si prefieres no pasar por ahí, escribe tu nombre y tu correo a mano:
+                </a>. Si preferís no pasar por ahí, escribí tu nombre y tu correo a mano:
                 la tienda funciona igual.
               </dd>
             </dl>
@@ -167,14 +167,14 @@ export default function Privacidad() {
             </p>
             <p>
               Lo que vive en nuestra base —sólo si entraste con Google— dura mientras
-              exista tu cuenta. Para que la borremos, escríbenos.
+              exista tu cuenta. Para que la borremos, escribinos.
             </p>
           </section>
 
           <section>
             <h2>7 · Tus derechos</h2>
             <p>
-              Puedes pedir acceso a tus datos, que los rectifiquemos, que los
+              Podés pedir acceso a tus datos, que los rectifiquemos, que los
               actualicemos o que los suprimamos. Se pide por correo a{' '}
               <a href="mailto:taller@alcantara.example">taller@alcantara.example</a> y
               te contestamos dentro de los plazos que fija la ley.
@@ -197,7 +197,7 @@ export default function Privacidad() {
             <h2>8 · Menores</h2>
             <p>
               Esta tienda no está dirigida a menores de 18 años y no recogemos datos de
-              menores a sabiendas. Si crees que un menor nos dejó datos, escríbenos y
+              menores a sabiendas. Si creés que un menor nos dejó datos, escribinos y
               los borramos.
             </p>
           </section>

@@ -118,7 +118,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       provider: 'google',
       options: { redirectTo: window.location.href },
     })
-    if (error) setFallo('No se pudo abrir el acceso con Google. Inténtalo de nuevo.')
+    if (error) setFallo('No se pudo abrir el acceso con Google. Intentalo de nuevo.')
   }, [])
 
   const salir = useCallback(async () => {

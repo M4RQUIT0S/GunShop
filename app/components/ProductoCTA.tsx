@@ -52,7 +52,7 @@ export default function ProductoCTA({ producto, modo }: Props) {
       className="card__add ficha__cta"
       onClick={() => abrir({
         titulo: `Consultar: ${producto.marca} ${producto.ref}`,
-        rotulo: 'Cuéntenos qué necesita saber',
+        rotulo: 'Contanos qué necesitás saber',
         mensaje: `Quisiera más información sobre ${producto.marca} ${producto.ref}.`,
       })}
     >
