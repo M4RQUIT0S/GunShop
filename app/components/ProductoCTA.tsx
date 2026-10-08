@@ -19,15 +19,26 @@ type Props = {
 }
 
 export default function ProductoCTA({ producto, modo }: Props) {
-  const { unidades, add } = useCart()
+  const { unidades, add, catalogo, recargarCatalogo } = useCart()
   const { abrir } = useConsulta()
 
   if (modo === 'direct_checkout') {
     const cant = unidades[producto.id] ?? 0
+    // add() no hace nada sin el catalogo (lo necesita para el gate legal): el
+    // boton no se ofrece activo hasta tenerlo, y si fallo, reintenta.
+    if (catalogo === 'error') {
+      return (
+        <button type="button" className="card__add ficha__cta" onClick={recargarCatalogo}>
+          No se pudo cargar · Reintentar
+        </button>
+      )
+    }
     return (
       <button
         type="button"
         className={`card__add ficha__cta${cant ? ' is-added' : ''}`}
+        disabled={catalogo === 'cargando'}
+        aria-busy={catalogo === 'cargando'}
         onClick={() => add(producto.id)}
       >
         {cant ? `En la cesta (${cant})` : 'Añadir a la cesta'}

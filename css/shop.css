@@ -132,6 +132,8 @@
 }
 
 .panel__vacio { color: var(--gris); font-size: 0.95rem; padding: 1.5rem 0; }
+/* Estado con salida (reintentar, limpiar): el texto y su boton debajo. */
+div.panel__vacio { display: grid; gap: 1rem; justify-items: start; }
 
 .panel__pie {
   padding: 1.25rem 1.5rem;

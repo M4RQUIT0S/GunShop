@@ -1,8 +1,10 @@
 'use client'
 
-/* Puerto de js/search.js. No pide nada a ningun sitio propio: busca sobre
- * listaProductos(), pedido una sola vez (al abrirse la primera vez, no en
- * cada tecla), y filtra en cliente con lib/buscar.ts. "Ver en el catalogo"
+/* Puerto de js/search.js. No pide nada a ningun sitio propio: busca sobre el
+ * catalogo que CartContext ya carga una vez por pagina (antes lo pedia aparte
+ * al abrirse), y filtra en cliente con lib/buscar.ts. Mientras ese catalogo
+ * carga o si fallo, lo dice: un «nada con...» antes de tener datos mentia
+ * (UX-AUDIT.md, Doherty). "Ver en el catalogo"
  * cierra el panel y navega a /catalogo?q=... -- ahi vive la otra mitad de la
  * busqueda: `q` entra en "Todo" y cruza con el calibre, igual que
  * `shop.catalog.buscar()` + `fuente()` hacian en el sitio estatico
@@ -11,22 +13,21 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { listaProductos, type Producto } from '@/lib/catalogo'
 import { buscar } from '@/lib/buscar'
 import { useSearch } from './SearchContext'
+import { useCart } from './CartContext'
 
 const TOPE = 8
 
 export default function SearchPanel() {
   const { abrirTick } = useSearch()
+  const { productos, catalogo, recargarCatalogo } = useCart()
   const router = useRouter()
 
   const ref = useRef<HTMLDialogElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const scrollPrevio = useRef('')
 
-  const [productos, setProductos] = useState<Producto[]>([])
-  const [cargado, setCargado] = useState(false)
   const [q, setQ] = useState('')
 
   useEffect(() => {
@@ -37,15 +38,6 @@ export default function SearchPanel() {
     ref.current.showModal()
     inputRef.current?.focus()
     inputRef.current?.select()
-    if (!cargado) {
-      listaProductos().then((p) => {
-        setProductos(p)
-        setCargado(true)
-      })
-    }
-    // Solo depende de abrirTick: `cargado` se lee, no se observa, para que
-    // esto no vuelva a correr cuando la carga termina.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [abrirTick])
 
   function cerrar() {
@@ -54,6 +46,11 @@ export default function SearchPanel() {
 
   const texto = q.trim()
   const hallados = texto ? buscar(productos, texto) : []
+
+  function limpiar() {
+    setQ('')
+    inputRef.current?.focus()
+  }
 
   function manda(destino: string) {
     cerrar()
@@ -101,10 +98,20 @@ export default function SearchPanel() {
               Marca, modelo, calibre o familia: «Glock», «.308», «munición», «maleta».
             </p>
           )}
-          {texto && !hallados.length && (
-            <p className="panel__vacio">
-              Nada con «{texto}». Lo que no está en vitrina se encarga: pregunta en el taller.
-            </p>
+          {texto && catalogo === 'cargando' && (
+            <p className="panel__vacio" role="status">Cargando el catálogo…</p>
+          )}
+          {catalogo === 'error' && (
+            <div className="panel__vacio" role="alert">
+              <p>No se pudo cargar el catálogo.</p>
+              <button className="btn btn--ghost" type="button" onClick={recargarCatalogo}>Reintentar</button>
+            </div>
+          )}
+          {texto && catalogo === 'listo' && !hallados.length && (
+            <div className="panel__vacio" role="status">
+              <p>No hay resultados para «{texto}».</p>
+              <button className="btn btn--ghost" type="button" onClick={limpiar}>Limpiar la búsqueda</button>
+            </div>
           )}
           {hallados.slice(0, TOPE).map((p) => (
             <button

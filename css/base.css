@@ -1215,6 +1215,12 @@ a { color: inherit; text-decoration: none; }
 .legal strong { color: var(--tinta); font-weight: 500; }
 .legal a { color: var(--tinta); text-decoration: underline; text-underline-offset: 0.25em; }
 
+/* Paginas de aviso (error, 404, app/components/PaginaAviso.tsx): un .legal
+   corto con una fila de botones, que no llevan el subrayado de los enlaces. */
+.aviso-pagina { gap: 1.25rem; }
+.aviso-pagina__acciones { display: flex; flex-wrap: wrap; gap: 1rem; }
+.aviso-pagina .btn { text-decoration: none; }
+
 /* Termino y explicacion. `dt` hace de rotulo menudo, como los de las fichas. */
 /* Sin `gap`: separa mas los pares que el rotulo de su texto, que con un
    gap unico quedaban a la misma distancia y no se veia cual iba con cual. */

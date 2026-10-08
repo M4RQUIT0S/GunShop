@@ -29,6 +29,7 @@ const PEDIDOS = 'gunshop:pedidos'
 export default function CartPanel() {
   const {
     piezas, lineas, totalUsdCents, arsPorUsd, pon, vaciar, abrirTick,
+    catalogo, recargarCatalogo,
   } = useCart()
   const { perfil } = useAccount()
 
@@ -97,7 +98,16 @@ export default function CartPanel() {
         </header>
 
         <div className="panel__lista" id="cartLines">
-          {lineas.length === 0 ? (
+          {/* Hasta tener el catalogo no hay lineas que resolver: eso no es una
+              cesta vacia, y decirlo asustaba a quien si tenia algo dentro. */}
+          {catalogo === 'cargando' && piezas > 0 ? (
+            <p className="panel__vacio" role="status">Cargando la cesta…</p>
+          ) : catalogo === 'error' ? (
+            <div className="panel__vacio" role="alert">
+              <p>No se pudo cargar el catálogo, así que la cesta no se puede mostrar.</p>
+              <button className="btn btn--ghost" type="button" onClick={recargarCatalogo}>Reintentar</button>
+            </div>
+          ) : lineas.length === 0 ? (
             <p className="panel__vacio">
               La cesta está vacía. Las fichas del catálogo tienen el botón de añadir.
             </p>
@@ -162,7 +172,9 @@ export default function CartPanel() {
         </div>
 
         <footer className="panel__pie">
-          <p className="panel__total"><span>Total</span><span id="cartTotal">{precio(totalUsdCents, arsPorUsd)}</span></p>
+          {catalogo === 'listo' && (
+            <p className="panel__total"><span>Total</span><span id="cartTotal">{precio(totalUsdCents, arsPorUsd)}</span></p>
+          )}
           {hecho ? (
             <div className="hecho" id="cartHecho" role="status">
               <p className="hecho__cod">Resumen {hecho}</p>

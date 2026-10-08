@@ -70,7 +70,10 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const conGoogle = await googleActivo()
   return (
-    <html lang="es-AR" className={`${display.variable} ${texto.variable}`}>
+    // suppressHydrationWarning: el script `clase-js` de abajo añade ` js` a esta
+    // clase antes de hidratar, a proposito (Reveal.tsx), y React lo marcaba
+    // como desajuste en cada carga. Solo afecta a los atributos de <html>.
+    <html lang="es-AR" className={`${display.variable} ${texto.variable}`} suppressHydrationWarning>
       <body>
         <Script id="clase-js" strategy="beforeInteractive">
           {"document.documentElement.className += ' js';"}

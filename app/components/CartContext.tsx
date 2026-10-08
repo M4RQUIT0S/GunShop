@@ -27,7 +27,11 @@ type CartContextValue = {
   piezas: number
   productos: Producto[]
   arsPorUsd: number
+  /* Carga del catalogo: hasta 'listo' no hay lineas ni precios, y no es lo
+     mismo que una cesta vacia (UX-AUDIT.md, Doherty). */
+  catalogo: 'cargando' | 'listo' | 'error'
   catalogoListo: boolean
+  recargarCatalogo: () => void
   lineas: Linea[]
   totalUsdCents: number
   pon: (id: number, n: number) => void
@@ -61,7 +65,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [listo, setListo] = useState(false)
   const [productos, setProductos] = useState<Producto[]>([])
   const [arsPorUsd, setArsPorUsd] = useState(0)
-  const [catalogoListo, setCatalogoListo] = useState(false)
+  const [catalogo, setCatalogo] = useState<'cargando' | 'listo' | 'error'>('cargando')
+  const catalogoListo = catalogo === 'listo'
   const [abrirTick, setAbrirTick] = useState(0)
 
   useEffect(() => {
@@ -81,20 +86,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [unidades, listo])
 
-  // El catalogo fresco, pedido una sola vez: es contra esto que se resuelve
-  // el precio de cada linea, nunca contra lo guardado en localStorage.
-  useEffect(() => {
-    let cancelado = false
+  // El catalogo fresco, pedido una sola vez (y otra si falla y se reintenta):
+  // es contra esto que se resuelve el precio de cada linea, nunca contra lo
+  // guardado en localStorage. Lo usan tambien la busqueda y la ficha.
+  const recargarCatalogo = useCallback(() => {
+    setCatalogo('cargando')
     Promise.all([listaProductos(), cambio()]).then(([p, tc]) => {
-      if (cancelado) return
       setProductos(p)
       setArsPorUsd(tc)
-      setCatalogoListo(true)
-    })
-    return () => {
-      cancelado = true
-    }
+      setCatalogo('listo')
+    }, () => setCatalogo('error'))
   }, [])
+
+  useEffect(recargarCatalogo, [recargarCatalogo])
 
   const pon = useCallback((id: number, n: number) => {
     const cant = Math.max(0, Math.min(MAX_UNIDADES, Math.floor(n)))
@@ -151,7 +155,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       piezas,
       productos,
       arsPorUsd,
+      catalogo,
       catalogoListo,
+      recargarCatalogo,
       lineas,
       totalUsdCents,
       pon,
@@ -161,7 +167,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       abrir,
     }),
     [
-      unidades, piezas, productos, arsPorUsd, catalogoListo, lineas, totalUsdCents,
+      unidades, piezas, productos, arsPorUsd, catalogo, catalogoListo, recargarCatalogo, lineas, totalUsdCents,
       pon, add, vaciar, abrirTick, abrir,
     ],
   )
