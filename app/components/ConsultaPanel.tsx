@@ -14,10 +14,12 @@
  * vuelve en el resumen.
  *
  * Lo escrito no se pierde (UX-AUDIT.md, Zeigarnik): el formulario se oculta al
- * preparar el texto en vez de desmontarse, y `datos` ya no se vacia al cerrar,
- * asi que cerrar y reabrir la misma consulta devuelve el borrador. Una consulta
- * de otro producto trae otro mensaje y el campo se rellena con el nuevo. Nombre
- * y correo salen de «Mi cuenta» si estan guardados (UX-AUDIT.md, P7). */
+ * preparar el texto en vez de desmontarse, y el mensaje se guarda en un
+ * borrador por consulta. Antes habia uno solo -- el campo se remontaba con el
+ * mensaje de la consulta nueva --, y A -> B -> A perdia lo escrito en A
+ * (UX-AUDIT.md, C2). El panel vive en el layout, asi que los borradores
+ * sobreviven a la navegacion; no se guardan en disco. Nombre y correo salen de
+ * «Mi cuenta» si estan guardados (UX-AUDIT.md, P7). */
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useConsulta } from './ConsultaContext'
@@ -45,6 +47,10 @@ export default function ConsultaPanel() {
   const scrollPrevio = useRef('')
   // El texto preparado; null mientras se esta rellenando el formulario.
   const [preparado, setPreparado] = useState<string | null>(null)
+  // Un borrador por consulta. La clave es el titulo, que es uno por producto
+  // («Consultar: Bergara B-14 Ridge»); sin borrador se ve el mensaje inicial.
+  const [borradores, setBorradores] = useState<Record<string, string>>({})
+  const clave = datos?.titulo ?? ''
 
   useEffect(() => {
     if (datos) {
@@ -118,15 +124,16 @@ export default function ConsultaPanel() {
           </div>
           <label className="campo">
             <span>{datos?.rotulo ?? 'Contanos'}</span>
-            {/* key: otra consulta trae otro mensaje prellenado y el campo se
-                remonta con el; la misma consulta reabierta conserva lo escrito. */}
             <textarea
               ref={mensaje}
-              key={datos?.mensaje ?? ''}
               name="mensaje"
               rows={4}
               maxLength={600}
-              defaultValue={datos?.mensaje ?? ''}
+              value={borradores[clave] ?? datos?.mensaje ?? ''}
+              onChange={(event) => {
+                const valor = event.currentTarget.value
+                setBorradores((previos) => ({ ...previos, [clave]: valor }))
+              }}
             />
           </label>
           <div className="form__pie">

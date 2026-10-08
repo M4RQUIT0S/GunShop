@@ -136,7 +136,12 @@ export default function CartPanel() {
                   <p className="linea__spec">
                     {l.producto.regimenEtiqueta} · {precio(l.producto.usdCents, arsPorUsd)} c/u
                   </p>
-                  {/* En el resumen las lineas son lo que se resumio: fijas. */}
+                  {/* En el resumen las lineas son lo que se resumio: fijas. Los
+                      mandos se van, pero la cantidad no -- iba dentro de ellos
+                      y el resumen la perdia (UX-AUDIT.md, C1). */}
+                  {hecho && (
+                    <p className="linea__spec">{l.n} {l.n === 1 ? 'unidad' : 'unidades'}</p>
+                  )}
                   {!hecho && <div className="linea__mandos">
                     <button
                       className="linea__paso"
