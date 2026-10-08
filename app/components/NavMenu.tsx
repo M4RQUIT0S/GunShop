@@ -212,8 +212,11 @@ export default function NavMenu({
             aria-controls="navMenu"
             /* Con raton se abre al pasar por encima, sin clic. Solo abre: el
                panel tapa la pantalla entera, asi que «cerrar al salir» lo
-               cerraria en cuanto el puntero entra en el. Los 150 ms son para
-               que cruzar hacia las pestanas del navegador no lo despliegue.
+               cerraria en cuanto el puntero entra en el. Los 300 ms son para
+               que cruzar hacia las pestanas del navegador no lo despliegue:
+               eran 150, y un menu que tapa la pantalla y bloquea el scroll se
+               abria con solo pasar de largo (UX-AUDIT.md, segunda pasada, S2).
+               Quien se para encima para abrirlo no nota la diferencia.
                `porHover` se traga el clic que llega justo despues -- quien
                iba a hacer clic de todas formas lo cerraria en el acto. Tactil
                y teclado siguen yendo solo por el clic. */
@@ -222,7 +225,7 @@ export default function NavMenu({
               espera.current = window.setTimeout(() => {
                 porHover.current = true
                 setOpen(true)
-              }, 150)
+              }, 300)
             }}
             onPointerLeave={() => {
               clearTimeout(espera.current)
