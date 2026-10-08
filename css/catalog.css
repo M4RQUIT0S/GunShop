@@ -252,6 +252,21 @@
 .drop__op:hover { background: #1e1e1e; color: var(--tinta); }
 .drop__op[data-activo] { color: var(--tinta); }
 
+/* Zona de toque de 44 px para los filtros (UX-AUDIT.md, segunda pasada, W2):
+   median 31 de alto. No se agranda la caja -- el subrayado del chip y del
+   desplegable es su borde inferior y se alejaria del texto --, sino un
+   pseudo-elemento invisible por encima y por debajo. 7 + 7 px caben en el
+   row-gap de 0.9rem de las filas, asi que dos chips no se pisan. */
+.drop__bt { position: relative; }
+.chip::before, .drop__bt::before {
+  content: '';
+  position: absolute;
+  inset: -7px 0;
+}
+.ficha__seccion .chip::before { content: none; }
+/* La opcion no lleva subrayado: crece de verdad, centrada. */
+.drop__op { min-height: 2.75rem; align-content: center; }
+
 /* Navegacion en curso (app/components/Pendiente.tsx). Un punto en el hueco
    junto al rotulo, absoluto para no mover nada; aparece a los 100 ms, asi una
    navegacion rapida no parpadea. Con movimiento reducido no late: se queda. */
