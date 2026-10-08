@@ -38,6 +38,10 @@ export type Pedido = {
   fecha: string
   cliente: string | null
   usdCents: number
+  // El total en pesos tal como lo vio la cesta al armar el resumen. Mi cuenta
+  // lo enseña igual, en vez de dolares (UX-AUDIT.md, P4). Opcional: los
+  // resumenes guardados antes no lo traen.
+  total?: string
   lineas: { id: number; n: number; usdCents: number }[]
 }
 
@@ -60,6 +64,7 @@ export function reserva(
     fecha: new Date().toISOString(),
     cliente: perfil?.nombre ?? null,
     usdCents: totalUsdCents,
+    total: precio(totalUsdCents, arsPorUsd),
     lineas: lineas.map((l) => ({ id: l.producto.id, n: l.n, usdCents: l.producto.usdCents })),
   }
 

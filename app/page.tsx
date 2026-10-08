@@ -139,11 +139,13 @@ export default async function Home() {
         {/* cifras */}
         <section className="section section--tight" aria-label="La armería en cifras">
           <div className="wrap">
+            {/* Solo cifras que salen de la base. «En stock» contaba el catalogo
+                entero (89) cuando 17 tenian existencias, y las «48 h» de entrega
+                no tenian fuente ninguna (UX-AUDIT.md, P2 y Cognitive Bias). */}
             <dl className="stats">
-              <div><dt>Referencias en stock</dt><dd>{numero.format(total)}</dd></div>
-              <div><dt>Entrega en armería</dt><dd>48 <span>h</span></dd></div>
+              <div><dt>Referencias en catálogo</dt><dd>{numero.format(total)}</dd></div>
               <div><dt>Taller propio desde</dt><dd>1927</dd></div>
-              <div><dt>Marcas representadas</dt><dd>{numero.format(marcas.length)}</dd></div>
+              <div><dt>Marcas en catálogo</dt><dd>{numero.format(marcas.length)}</dd></div>
             </dl>
           </div>
         </section>

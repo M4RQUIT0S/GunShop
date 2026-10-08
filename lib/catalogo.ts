@@ -209,15 +209,21 @@ export async function googleActivo(): Promise<boolean> {
 }
 
 /* Cambio del dia. La base guarda dolares en centavos enteros y los pesos se
-   derivan, que es lo que permite que una factura vieja siga cuadrando. */
-export async function cambio(): Promise<number> {
+   derivan, que es lo que permite que una factura vieja siga cuadrando. `dia`
+   es el de la fila: el pie lo dice, porque «cambio aplicado» sin fecha hacia
+   pasar por de hoy uno de seis semanas atras (UX-AUDIT.md, P3). */
+export async function cambioDelDia(): Promise<{ arsPorUsd: number; dia: string | null }> {
   const { data } = await supabase
     .from('fx_rate')
-    .select('ars_per_usd')
+    .select('ars_per_usd, day')
     .order('day', { ascending: false })
     .limit(1)
     .maybeSingle()
-  return data ? Number(data.ars_per_usd) : 0
+  return data ? { arsPorUsd: Number(data.ars_per_usd), dia: data.day } : { arsPorUsd: 0, dia: null }
+}
+
+export async function cambio(): Promise<number> {
+  return (await cambioDelDia()).arsPorUsd
 }
 
 const pesos = new Intl.NumberFormat('es-AR', {

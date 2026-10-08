@@ -89,7 +89,7 @@ export default async function Catalogo({ searchParams }: Props) {
       <div className="wrap">
         <div className="catalog__head">
           <div>
-            <p className="eyebrow">Disponibilidad real</p>
+            <p className="eyebrow">Catálogo de demostración</p>
             <h1 className="h-section">Catálogo</h1>
           </div>
         </div>
@@ -206,7 +206,9 @@ export default async function Catalogo({ searchParams }: Props) {
                   <div className="card__rule" />
                   <div className="card__foot">
                     <p className="card__price">{precio(p.usdCents, arsPorUsd)}</p>
-                    <span className="card__add">{exige ? 'Consultar' : 'Compra directa'}</span>
+                    {/* El mismo rotulo que el boton de la ficha: aqui no hay compra
+                        directa, hay una cesta que arma un resumen. */}
+                    <span className="card__add">{exige ? 'Consultar' : 'Añadir a la cesta'}</span>
                   </div>
                 </div>
               </Link>

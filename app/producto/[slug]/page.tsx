@@ -135,6 +135,9 @@ export default async function Ficha({ params, searchParams }: Props) {
             producto={{ id: producto.id, marca: producto.marca, ref: producto.ref }}
             modo={modo}
           />
+          {/* Junto a la accion, que es donde se decide: el aviso del pie no lo
+              lee nadie antes de pulsar (UX-AUDIT.md, Von Restorff). */}
+          <p className="form__nota">Sitio de demostración: aquí no se compra, reserva ni envía nada.</p>
         </div>
       </div>
     </main>

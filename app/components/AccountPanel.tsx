@@ -77,7 +77,7 @@ function Pedidos() {
           <span className="pedido__cod">{p.codigo}</span>
           <span>
             {fecha(String(p.fecha).slice(0, 10))} · {p.lineas.length}
-            {p.lineas.length === 1 ? ' línea' : ' líneas'} · US$ {grupos.format(p.usdCents / 100)}
+            {p.lineas.length === 1 ? ' línea' : ' líneas'} · {p.total ?? `US$ ${grupos.format(p.usdCents / 100)}`}
           </span>
         </p>
       ))}
