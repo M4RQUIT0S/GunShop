@@ -1,6 +1,252 @@
-# UX Audit: GunShop — portada, catálogo, ficha y paneles
+# UX Audit: GunShop — segunda pasada
 
-**Score: 41/60** tras la prueba en producción (43/60 en la revisión estática) | **Grade: B**
+**Score: 53/60** | **Grade: A** (primera pasada: 43/60 estática, 41/60 tras probar producción)
+
+Fecha: 2026-10-08. Código auditado: `747f24d`, rama `main`, el mismo que sirve `gun-shop-mu.vercel.app`. Alcance: portada, catálogo, ficha, paneles de cesta, cuenta, búsqueda y consulta, 404 y páginas de error.
+
+Método: `laws-of-ux-review` sobre el código actual, leído entero de nuevo (no se puntúa de memoria lo arreglado), más medidas en producción: tamaños de los objetivos a 390 px y el tiempo de una navegación entre filtros. Las comprobaciones de comportamiento de cada arreglo están en los commits del plan (abajo, en la primera pasada). La nota es heurística: no sustituye una prueba con usuarios ni una auditoría de accesibilidad con lector de pantalla.
+
+| Grade | Range |
+|-------|-------|
+| A | 50–60 |
+| B | 40–49 |
+| C | 30–39 |
+| D | 20–29 |
+| F | 0–19 |
+
+Puntuación bruta: **49/56** en 28 leyes aplicables (las mismas dos N/A). 21 leyes con 2, siete con 1, ninguna con 0. Normalizada: `49 / 56 × 60 = 52,5`, redondeada a **53**. Ninguna ley queda en 0. Lo que queda es parcial, y casi todo se arregla en pocas líneas.
+
+### Qué cambió respecto a la primera pasada
+
+| Ley | 1.ª (tras producción) | 2.ª | Por qué |
+|-----|:---:|:---:|---------|
+| Doherty Threshold | 0 | 1 | Carga, error y vacío ya se distinguen en búsqueda, cesta y ficha (`1919460`). Queda la navegación entre filtros sin señal (W1). |
+| Mental Model | 0 | 1 | La cesta y la consulta dicen que son una simulación; el botón roto de Google ya no sale. Queda el «Añadir a la cesta» de las tarjetas (W4). |
+| Peak-End Rule | 0 | 1 | Fin honesto y reversible; 404 y error con salida. Quedan la cesta vacía sin acción y los resúmenes que no se pueden abrir (S1). |
+| Cognitive Bias | 0 | 1 | Sin «89 en stock» ni «48 h»; el cambio dice su fecha. Quedan dos promesas de servicio en la portada (W5). |
+| Working Memory | 1 | 2 | Un filtro marcado ya no se esconde: `desplegables()`, `lib/facetas.ts:96`, con tres pruebas. |
+| Law of Similarity | 1 | 2 | Miniaturas enlazadas; el mismo resumen ya no sale en dos monedas. |
+| Von Restorff Effect | 1 | 2 | El aviso de demostración está junto a cada acción: ficha, cesta, consulta y cabecera del catálogo. |
+| Cognitive Load | 1 | 2 | La consulta ya no explica servidores: «la consulta no se envía. Vas a ver el texto…». |
+| Zeigarnik Effect | 1 | 2 | La consulta conserva el borrador al cerrar y reabrir. |
+| Tesler's Law | 1 | 2 | La consulta toma nombre y correo de «Mi cuenta». |
+| Paradox of the Active User | 1 | 2 | Catálogo vacío, búsqueda sin resultados y 404 ofrecen el paso que sirve. |
+| Fitts's Law | 1 | 1 | Los paneles ya miden 44 px; los filtros del catálogo siguen en 31 (W2). |
+| Jakob's Law | 1 | 1 | `aria-pressed` corregido; aparecen otras convenciones rotas (W3). |
+| Flow | 1 | 1 | Sin cambios: el menú que se abre al pasar el ratón es una decisión de diseño (S2). |
+
+## Critical Issues (0)
+
+Ninguna ley en 0.
+
+## Warnings (5)
+
+### W1 · Doherty Threshold — Score: 1/2
+
+**Problem:** Cambiar de familia o de filtro es una navegación al servidor. En producción, de «Óptica» a «Rifles» pasaron **~650 ms** desde el clic hasta el contenido nuevo, y en ese tiempo la página no cambia nada: ni el chip pulsado, ni la rejilla, ni el recuento. Lo mismo con cada opción de los desplegables (`app/catalogo/page.tsx:127–165`, `app/components/Desplegable.tsx:37`). Las páginas dinámicas responden en 0,6–0,9 s; el feedback de carga, error y vacío de los paneles, en cambio, ya está resuelto.
+
+**Fix:** Next 16 trae `useLinkStatus` para esto. Un indicio dentro de cada enlace de filtro, que solo se ve si la navegación pasa de 100 ms:
+
+```tsx
+// app/components/Pendiente.tsx (nuevo, cliente)
+'use client'
+import { useLinkStatus } from 'next/link'
+export default function Pendiente() {
+  const { pending } = useLinkStatus()
+  return <span className={`pendiente${pending ? ' is-on' : ''}`} aria-hidden="true" />
+}
+```
+
+```tsx
+// app/catalogo/page.tsx:131 — dentro de cada chip (y en Desplegable.tsx:37, en cada opción)
+<Link key={f.slug} href={href({ familia: f.slug })} className="chip" aria-current={…}>
+  {f.name}
+  <span className="chip__n">{countsPorFamilia[f.slug] ?? 0}</span>
+  <Pendiente />
+</Link>
+```
+
+```css
+/* css/catalog.css — aparece a los 100 ms; con movimiento reducido, sin animación */
+.pendiente { width: 0.4rem; height: 0.4rem; border-radius: 50%; background: var(--tinta); opacity: 0; }
+.pendiente.is-on { animation: pendiente 0s 100ms forwards; }
+@keyframes pendiente { to { opacity: 1; } }
+```
+
+### W2 · Fitts's Law — Score: 1/2
+
+**Problem:** Los controles de los paneles ya miden 44 px (`css/shop.css`, paso 6), pero lo que más se toca en el catálogo no. Medido en producción a 390 px: chips de familia **74×31**, botón de desplegable **92×31**, «Limpiar» **92×31**, «← Catálogo» de la ficha **358×31**, opciones del desplegable **190×35**, «Pausar el desfile» **166×31**. Pasan el mínimo de 24 px de WCAG 2.5.8, pero quedan lejos de los 44 que el resto del sitio ya usa. `css/catalog.css:120` (`.chip`), `:152` (`.drop__bt`), `:241` (`.drop__op`), `css/base.css:911` (`.marquee__pausa`).
+
+**Fix:** Crecer la caja, no la letra. Los chips ya van en fila con 20 px de separación, así que el bloque gana alto sin desbordar:
+
+```css
+/* css/catalog.css:120 y :152 */
+.chip, .drop__bt { min-height: 2.75rem; display: inline-flex; align-items: center; }
+/* :241 */
+.drop__op { min-height: 2.75rem; }
+/* css/base.css:911 */
+.marquee__pausa { min-height: 2.75rem; }
+```
+
+Verificar después a 320 y 390 px que la fila de familias sigue sin desbordar.
+
+### W3 · Jakob's Law — Score: 1/2
+
+**Problem:** El `aria-pressed` en enlaces de la primera pasada está corregido (`Desplegable.tsx:42`, `aria-current` en los chips). Aparecen cuatro convenciones más, menores:
+
+1. **Una sugerencia de búsqueda no lleva al producto.** `SearchPanel.tsx:116–125`: pulsar «PELICAN VAULT V730» navega a `/catalogo?q=Pelican Vault V730`, una rejilla con una sola tarjeta, y hace falta otro clic. En cualquier tienda, la sugerencia abre la ficha.
+2. **El contador de la cesta no existe para el lector de pantalla.** `HeaderActions.tsx:55` se llama «Cesta» y la burbuja (`CartCount.tsx`) es `aria-hidden`.
+3. **`aria-label` en un `<div>` sin rol** (`app/catalogo/page.tsx:99` y `:145`): no se anuncia; el grupo de filtros queda sin nombre.
+4. **El botón de pausa cambia a la vez el texto y `aria-pressed`** (`Marquee.tsx:31–36`): «Reanudar el desfile, presionado» se lee como doble estado.
+
+**Fix:**
+
+```tsx
+// SearchPanel.tsx:116 — la sugerencia abre la ficha; el boton de abajo sigue llevando a todos los resultados
+<Link key={p.id} className="sug" href={`/producto/${slugDe(p)}?q=${encodeURIComponent(texto)}`} onClick={cerrar}>
+```
+
+```tsx
+// HeaderActions.tsx:55 — `piezas` ya esta en useCart()
+aria-label={piezas ? `Cesta, ${piezas} ${piezas === 1 ? 'artículo' : 'artículos'}` : 'Cesta'}
+```
+
+```tsx
+// app/catalogo/page.tsx:99 y :145
+<div className="filters" role="group" aria-label="Filtrar por familia">
+```
+
+```tsx
+// Marquee.tsx:31 — un estado, no dos: el rotulo fijo y aria-pressed dice si esta parado
+<button className="marquee__pausa" type="button" aria-pressed={quieta} onClick={…}>Pausar el desfile</button>
+```
+
+### W4 · Mental Model — Score: 1/2
+
+**Problem:** `app/catalogo/page.tsx:215` pone «Añadir a la cesta» en cada tarjeta de venta libre, con la misma clase (`.card__add`) y el mismo hover invertido que el botón real de la ficha (`css/catalog.css:386–400`). No es un botón: es parte del enlace de la tarjeta, y pulsarlo lleva a la ficha sin añadir nada. Lo introdujo el paso 5, que cambió «Compra directa» por el rótulo del botón de la ficha. En una rejilla de 89 tarjetas, es lo que más se ve.
+
+**Fix:** El rótulo dice adónde lleva, sin perder la diferencia entre venta libre y consulta que justifica la etiqueta:
+
+```tsx
+// Before — app/catalogo/page.tsx:215
+<span className="card__add">{exige ? 'Consultar' : 'Añadir a la cesta'}</span>
+
+// After
+<span className="card__add">{exige ? 'Ver y consultar' : 'Ver y añadir'}</span>
+```
+
+La alternativa (un botón de verdad que llame a `add()` sin salir del catálogo) obliga a separar el botón del enlace de la tarjeta y a convertirlo en componente de cliente. Solo vale la pena si se quiere comprar desde el listado.
+
+### W5 · Cognitive Bias — Score: 1/2
+
+**Problem:** Las cifras falsas se fueron, pero la portada mantiene dos promesas de servicio sin respaldo en un sitio de demostración. `app/page.tsx:129–131` y `:160–162` dicen dos veces «Lo que no está en vitrina se encarga y llega con la documentación hecha», y `:187–188` titula «Representación · Las casas que trabajamos» sobre las 56 marcas que salen del catálogo, que no son representaciones acreditadas. El cambio ya dice su fecha en el pie (`Footer.tsx:52`), pero sigue siendo del 24/08: el dato lo tiene que actualizar el dueño en `fx_rate`.
+
+**Fix:**
+
+```tsx
+// app/page.tsx:129–131 y :160–162
+<p className="lede">… Lo que no está en vitrina se puede consultar desde su ficha.</p>
+
+// app/page.tsx:187–188
+<p className="eyebrow" data-reveal>Marcas</p>
+<h2 className="h-section" id="marcas-h" data-reveal style={d(1)}>Las casas del catálogo</h2>
+```
+
+## Suggestions (2)
+
+### S1 · Peak-End Rule — Score: 1/2
+
+**Improve:** Los finales ya son honestos y tienen salida: el resumen de la cesta, la consulta preparada, el 404 y la página de error. Quedan dos huecos. La cesta vacía (`CartPanel.tsx:110–113`) es el único estado vacío sin acción: la búsqueda tiene «Limpiar la búsqueda» y el catálogo «Ver todo el catálogo». Y los resúmenes de «Mi cuenta» (`AccountPanel.tsx:74–83`) muestran código, fecha, número de líneas y total, pero no qué había dentro.
+
+**Code:**
+
+```tsx
+// CartPanel.tsx:111 — como los otros estados vacios
+<div className="panel__vacio">
+  <p>La cesta está vacía.</p>
+  <a className="btn btn--ghost" href="/catalogo" onClick={cerrar}>Ver el catálogo</a>
+</div>
+```
+
+```tsx
+// AccountPanel.tsx:76 — el resumen ya guarda {id, n}; los nombres salen del catalogo de CartContext
+const { productos } = useCart()
+const nombre = (id: number) => productos.find((x) => x.id === id)
+<details className="pedido">
+  <summary>{p.codigo} · {fecha(…)} · {p.total}</summary>
+  <ul>{p.lineas.map((l) => <li key={l.id}>{l.n} × {nombre(l.id)?.marca} {nombre(l.id)?.ref}</li>)}</ul>
+</details>
+```
+
+### S2 · Flow — Score: 1/2
+
+**Improve:** Sin cambios desde la primera pasada, y a propósito. El menú se abre a los 150 ms de pasar el ratón por el botón (`NavMenu.tsx:222`), tapa la pantalla y bloquea el scroll. El foco ya se muda sin anillo y no puede robarle lo escrito a nadie, porque los campos viven en diálogos modales. Lo que queda es la apertura accidental al cruzar la esquina superior izquierda.
+
+**Code:** Si en uso real se abre sin querer, el ajuste más barato es alargar la espera antes de tocar la interacción:
+
+```tsx
+// NavMenu.tsx:222
+espera.current = window.setTimeout(() => { porHover.current = true; setOpen(true) }, 300)
+```
+
+Es una decisión de producto (`7ab2ee4`), no un fallo: no se cambia sin el dueño.
+
+## Compliant (21)
+
+| Ley | Score | Evidencia |
+|-----|-------|-----------|
+| Aesthetic-Usability Effect | 2/2 | Lo nuevo (avisos, 404, error, resumen) reutiliza los tokens y clases del sistema: `PaginaAviso.tsx`, `.hecho`, `.panel__vacio`. |
+| Law of Prägnanz | 2/2 | Iconos de trazo simple en la cabecera, `HeaderActions.tsx:35–59`. |
+| Von Restorff Effect | 2/2 | Aviso de demostración junto a la acción: ficha `app/producto/[slug]/page.tsx:151`, cesta «Simulación de reserva» `CartPanel.tsx:91`, consulta `ConsultaPanel.tsx:136`, cabecera del catálogo `app/catalogo/page.tsx:92`. CTA primario diferenciado (`.btn` frente a `.btn--ghost`). |
+| Law of Similarity | 2/2 | Miniaturas que se abren como parecen, `app/producto/[slug]/page.tsx:94–106`; una sola moneda en cesta y cuenta, `AccountPanel.tsx:80`. |
+| Law of Proximity | 2/2 | Campos con su etiqueta, `css/shop.css` `.campo`; bloques de ficha agrupados. |
+| Law of Common Region | 2/2 | Diálogos con cabecera, cuerpo y pie delimitados; tarjetas con su caja. |
+| Cognitive Load | 2/2 | Notas cortas y en lenguaje de quien compra: `ConsultaPanel.tsx:136`, `CartPanel.tsx:182`. |
+| Hick's Law | 2/2 | Siete entradas en el menú (Catálogo + seis familias), árbol progresivo, `NavMenu.tsx`; facetas solo con catálogo acotado. |
+| Miller's Law | 2/2 | Familias y facetas agrupadas; la búsqueda enseña ocho sugerencias, `SearchPanel.tsx:20`. |
+| Chunking | 2/2 | Ficha en precio, calibre, especificaciones y acción, `app/producto/[slug]/page.tsx:120–151`. |
+| Choice Overload | 2/2 | Opciones dentro de desplegables, no expuestas, `Desplegable.tsx`. |
+| Serial Position Effect | 2/2 | «Catálogo» primero en el menú; la acción al final de cada formulario y de la ficha. |
+| Zeigarnik Effect | 2/2 | Borrador de la consulta conservado, `ConsultaPanel.tsx:101` + `ConsultaContext.tsx`; la cesta sobrevive al resumen y a la recarga. |
+| Working Memory | 2/2 | Filtros marcados siempre visibles, `lib/facetas.ts:96` (probado en `test/facetas.test.ts`); los filtros viajan a la ficha y vuelven. |
+| Postel's Law | 2/2 | Búsqueda sin acentos ni mayúsculas, `lib/buscar.ts`; un valor de filtro huérfano en la URL sigue en su lista para quitarlo. |
+| Tesler's Law | 2/2 | La consulta toma nombre y correo de la cuenta, `ConsultaPanel.tsx:107` y `:112`; un solo campo de nombre, como en la cuenta. |
+| Occam's Razor | 2/2 | Una acción principal por vista: la ficha, `ProductoCTA.tsx`, y el pie de la cesta. |
+| Pareto Principle | 2/2 | Catálogo y búsqueda accesibles desde la primera pantalla y desde la cabecera. |
+| Selective Attention | 2/2 | Jerarquía título → precio → acción; los diálogos aíslan la tarea; movimiento reducido respetado. |
+| Paradox of the Active User | 2/2 | Salidas donde hacía falta deducirlas: `app/catalogo/page.tsx:225`, `SearchPanel.tsx:110`, `app/not-found.tsx:20`, `app/error.tsx:17`. |
+| Parkinson's Law | 2/2 | Campos acotados (`maxLength`) en cuenta y consulta. |
+
+## N/A (2)
+
+- **Law of Uniform Connectedness:** sigue sin haber recorridos secuenciales ni relaciones que pidan conectores.
+- **Goal-Gradient Effect:** no hay un proceso de varios pasos con progreso medible; el resumen es una sola acción.
+
+## Action Plan (do in this order)
+
+1. **Señal mientras navega un filtro** — `useLinkStatus` en chips, opciones y «Limpiar» → `app/catalogo/page.tsx:127`, `Desplegable.tsx:37`, `app/components/Pendiente.tsx` (nuevo).
+2. **Rótulo de la tarjeta que dice lo que hace** — «Ver y añadir» / «Ver y consultar» → `app/catalogo/page.tsx:215`.
+3. **Convenciones** — sugerencia que abre la ficha, contador de la cesta anunciado, `role="group"` en los filtros, pausa con un solo estado → `SearchPanel.tsx:116`, `HeaderActions.tsx:55`, `app/catalogo/page.tsx:99`, `Marquee.tsx:31`.
+4. **Filtros a 44 px** → `css/catalog.css:120`, `:152`, `:241`; `css/base.css:911`.
+5. **Promesas de la portada** → `app/page.tsx:129`, `:160`, `:187`.
+6. **Cesta vacía con salida y resúmenes que se abren** → `CartPanel.tsx:111`, `AccountPanel.tsx:76`.
+7. **Retraso del menú al pasar el ratón** — solo si el dueño lo decide → `NavMenu.tsx:222`.
+
+Los pasos 1 a 6 suben la nota a 55/56 en bruto (59/60); el 7, si se hace, a 56/56. Fuera de las 30 leyes siguen abiertos B1 (registro por correo en Auth), el alta de Google, `fx_rate` del 24/08, Pelican/Peli y la foto de la V730: todo eso es configuración o datos que decide el dueño.
+
+## Verificación de esta pasada
+
+- Código releído entero en `747f24d`: los diez componentes de interfaz, las tres páginas, `error.tsx`, `global-error.tsx`, `not-found.tsx` y las reglas de CSS de los objetivos medidos.
+- Producción, a 390 px: tamaños medidos con `getBoundingClientRect()` (W2), sin desbordamiento horizontal (`scrollWidth` 390) en catálogo, ficha y portada.
+- Producción: navegación «Óptica» → «Rifles» cronometrada desde el clic, ~650 ms sin cambio visible (W1).
+- Build y suite (34/34) en verde sobre `747f24d`, con el último commit.
+- No verificado: lector de pantalla y recorrido completo con teclado; contraste (los tokens no cambiaron desde la primera pasada).
+
+---
+
+# Primera pasada (2026-10-07) — historial
+
+**Score: 41/60** tras la prueba en producción (43/60 en la revisión estática) | **Grade: B**. Se conserva entera porque el código cita sus hallazgos («UX-AUDIT.md, P2», «Peak-End»…). Todo lo que propone está aplicado: ver su plan de acción, con los commits.
 
 Fecha: 2026-10-07. Código auditado: `11426ea`, rama `main` — el mismo commit que sirve producción.
 Auditoría estática con `laws-of-ux-review`: JSX, CSS, contextos y funciones de búsqueda/filtros. Una reproducción local con datos sintéticos confirmó el caso de filtros ocultos. La sección [Verificación en producción](#verificación-en-producción-2026-10-07) añade la prueba sobre el despliegue de Vercel y la base de Supabase: confirma los hallazgos de abajo con datos reales y suma nueve nuevos (P1–P9) y cinco de backend (B1–B5). La nota es una evaluación heurística, no una certificación de accesibilidad ni una medición con usuarios.

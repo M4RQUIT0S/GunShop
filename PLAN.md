@@ -692,5 +692,14 @@ Un commit por paso, cada uno con build y suite en verde y probado en `next dev`:
 - Paso 9: voseo, migración `0012_tildes` aplicada en producción, cabeceras.
 
 Pendiente del dueño: Google en el panel, cerrar el registro por correo (B1),
-actualizar `fx_rate`, decidir Pelican/Peli y la foto de la V730. Falta
-reauditar para la nota nueva.
+actualizar `fx_rate`, decidir Pelican/Peli y la foto de la V730.
+
+### Segunda pasada de la auditoría UX (2026-10-08)
+
+- `laws-of-ux-review` sobre `747f24d`: **53/60 (A)**, 49/56 en bruto. Antes,
+  41/60. Ninguna ley en 0; cinco advertencias y dos sugerencias, en
+  `UX-AUDIT.md` (arriba; la primera pasada queda debajo como historial).
+- Lo más visible: el «Añadir a la cesta» de las tarjetas no añade, porque es
+  parte del enlace (lo trajo el paso 5); y cambiar de filtro tarda ~650 ms
+  sin señal (medido en producción).
+- Plan de 7 pasos propuesto, sin aplicar.
