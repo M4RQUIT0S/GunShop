@@ -1,3 +1,142 @@
+# UX Audit: GunShop — Seguimiento Codex
+
+**Score: 50/60** | **Grade: A** — actualización incremental del 2026-10-08 sobre la segunda pasada de Claude (53/60, conservada debajo).
+
+**Último commit revisado:** `dfdc0ce78d8aafcb3390740b98ca1edaaf8c6d8f`. Implementación: `747f24d` y los arreglos anteriores desde `11426ea`. Árbol de implementación limpio durante la revisión; las únicas incorporaciones de Codex son este seguimiento, el progreso y las capturas. Producción verificada con Vercel: `dpl_8kSD2xrVt4Jw1MzJDmo77o96MGmY`, READY, SHA `dfdc0ce`, alias `https://gun-shop-mu.vercel.app`.
+
+Se revisaron los diffs de los arreglos y sus pruebas, y se contrastaron los estados de cesta y consulta en el navegador real. **Dos hallazgos adicionales confirmados**, sin duplicar W1–W5, S1–S2 ni las decisiones pendientes de Supabase. La nota actualiza solamente Working Memory y Zeigarnik (2 → 1 cada una); mantiene las otras valoraciones de la segunda pasada. Bruta: **47/56**; normalizada: `47 / 56 × 60 = 50,36` → **50/60**. Esta ampliación no convierte la nota en una certificación de accesibilidad.
+
+| Grade | Range |
+|-------|-------|
+| A | 50–60 |
+| B | 40–49 |
+| C | 30–39 |
+| D | 20–29 |
+| F | 0–19 |
+
+## Critical Issues (0)
+
+No se confirmó un problema crítico nuevo en esta tanda.
+
+## Warnings (7)
+
+Se mantienen las cinco advertencias W1–W5 de la segunda pasada. Se añaden las dos siguientes; ambas quedan **abiertas**, con prioridad **P2**.
+
+### C1 · Working Memory — Score: 1/2 — el resumen oculta las unidades por línea
+
+**Problem:** `app/components/CartPanel.tsx:136–159` oculta todo `.linea__mandos` cuando existe `hecho`. Ahí también está el único texto de cantidad por producto (`:145`). El resumen conserva nombre, precio unitario y subtotal, pero obliga a recordar o calcular cuántas unidades contiene cada referencia. La cabecera muestra el total de artículos, que no explica su reparto cuando hay varias líneas. Es una regresión introducida en `babe3dc`: los controles deben desaparecer, la cantidad debe seguir visible.
+
+**Reproducción en producción:** abrir Swarovski Z8i 2-16x50 P → añadir dos veces → abrir Cesta → observar el «2» entre los controles → «Preparar el resumen». El «2» por línea desaparece; quedan $12.008.000 c/u y $24.016.000 de subtotal. El foco sí pasa correctamente a «Volver a editar». Captura: [resumen sin cantidad](docs/ux-evidence/2026-10-08-resumen-sin-cantidad.png).
+
+**Fix:** conservar una cantidad estática en la vista de resumen, fuera de la condición que oculta los mandos.
+
+```tsx
+// CartPanel.tsx:135 — añadir antes de los controles existentes
+{hecho && (
+  <p className="linea__spec">
+    {l.n} {l.n === 1 ? 'unidad' : 'unidades'}
+  </p>
+)}
+{!hecho && <div className="linea__mandos">{/* controles existentes */}</div>}
+```
+
+**Cierre esperado:** preparar una cesta de dos referencias con cantidades distintas y comprobar que cada cantidad sigue visible y accesible, sin botones de edición en el resumen.
+
+### C2 · Zeigarnik Effect — Score: 1/2 — otra consulta destruye el borrador anterior
+
+**Problem:** `app/components/ConsultaPanel.tsx:125` usa `key={datos?.mensaje ?? ''}` para remontar el textarea y `:129` lo rellena con el mensaje inicial. `ConsultaContext.tsx:33` conserva solamente la última consulta. Cerrar/reabrir inmediatamente la misma referencia funciona, pero abrir otra sustituye el mensaje editado y volver a la anterior ya no recupera nada. Es una corrección incompleta de `9356ca8`, no una regresión respecto del formulario anterior: la segunda pasada atribuye cumplimiento completo a una conservación que solo cubre la última referencia.
+
+**Reproducción en producción, sin recargar:** Bergara B-14 Ridge → «Consultar» → escribir `BORRADOR DE PRUEBA: consultar medidas del producto A.` → cerrar/reabrir (se conserva) → cerrar → volver al catálogo → Bergara B-14 HMR → «Consultar» → cerrar → volver atrás hasta Ridge → «Consultar». El texto vuelve a `Quisiera más información sobre Bergara B-14 Ridge.` y el borrador se pierde sin aviso. No se pulsó «Preparar la consulta» ni se envió nada. Captura final: [borrador reemplazado](docs/ux-evidence/2026-10-08-consulta-borrador-reemplazado.png).
+
+**Fix:** identificar la consulta por producto y conservar un borrador controlado por esa clave en el Provider, que sobrevive a la navegación de cliente. Actualizarlo al escribir; usar el mensaje inicial solo cuando aún no hay borrador. No hace falta guardar datos personales en almacenamiento persistente para corregir este caso.
+
+```tsx
+// ConsultaDatos, en ConsultaContext.tsx:15
+type ConsultaDatos = {
+  clave: string; titulo: string; rotulo: string; mensaje: string
+}
+// ProductoCTA.tsx:53 — dentro del objeto pasado a abrir()
+clave: `producto:${producto.id}`,
+// Provider: guardar el mensaje por clave; setter inmutable
+setBorradores(prev => ({ ...prev, [clave]: nuevoTexto }))
+// ConsultaPanel.tsx:123 — reemplazar key/defaultValue por estado controlado
+<textarea
+  ref={mensaje}
+  name="mensaje"
+  rows={4}
+  maxLength={600}
+  value={borradores[datos.clave] ?? datos.mensaje}
+  onChange={e => guardarBorrador(datos.clave, e.currentTarget.value)}
+/>
+```
+
+El fragmento muestra las piezas del arreglo; requiere exponer `borradores`/`guardarBorrador` desde el contexto y resolver `datos === null` antes de leer su clave. No es un parche aplicado.
+
+**Cierre esperado:** A → B → A conserva el texto editado de A; B conserva su propio mensaje; preparar/volver a editar no destruye ninguno. Nombre y correo siguen tomando los valores de la cuenta al iniciar una consulta.
+
+## Suggestions (2)
+
+Se conservan S1 (salida de cesta vacía y detalle de resúmenes) y S2 (apertura accidental del menú). S2 sigue siendo una decisión de producto, no un error confirmado de Claude.
+
+## Compliant (19)
+
+Se mantienen las 19 leyes con 2/2 de la matriz siguiente. Working Memory y Zeigarnik pasan al grupo de advertencias; el arreglo de filtros ocultos sigue funcionando.
+
+| Ley | Score | Evidencia / hallazgo |
+|-----|:-----:|---------------------|
+| Aesthetic-Usability Effect | 2 | Sin cambios respecto de la segunda pasada |
+| Law of Prägnanz | 2 | Sin cambios respecto de la segunda pasada |
+| Von Restorff Effect | 2 | Aviso de simulación visible en ambos paneles probados |
+| Law of Similarity | 2 | Moneda en pesos consistente en el resumen nuevo |
+| Law of Proximity | 2 | Campos y controles agrupados |
+| Law of Common Region | 2 | Diálogos delimitan la tarea |
+| Law of Uniform Connectedness | — | Sin recorrido que necesite conectores |
+| Cognitive Load | 2 | Explicación breve de la simulación |
+| Hick's Law | 2 | Sin cambios respecto de la segunda pasada |
+| Miller's Law | 2 | Sin cambios respecto de la segunda pasada |
+| Chunking | 2 | Sin cambios respecto de la segunda pasada |
+| Choice Overload | 2 | Facetas agrupadas en desplegables |
+| Cognitive Bias | 1 | W5, promesas de la portada |
+| Fitts's Law | 1 | W2, objetivos de filtros |
+| Doherty Threshold | 1 | W1, navegación de filtros sin señal |
+| Flow | 1 | S2, apertura del menú por hover |
+| Goal-Gradient Effect | — | Sin progreso real de varios pasos |
+| Serial Position Effect | 2 | Sin cambios respecto de la segunda pasada |
+| Peak-End Rule | 1 | S1, finales sin siguiente acción/detalle |
+| Zeigarnik Effect | 1 | C2, borrador perdido en A → B → A |
+| Working Memory | 1 | C1, cantidad omitida en el resumen |
+| Jakob's Law | 1 | W3, convenciones de búsqueda/accesibilidad |
+| Postel's Law | 2 | Filtro huérfano conservado por `desplegables()` |
+| Tesler's Law | 2 | Consulta reutiliza el perfil |
+| Occam's Razor | 2 | Acción principal por vista |
+| Pareto Principle | 2 | Sin cambios respecto de la segunda pasada |
+| Selective Attention | 2 | Diálogo modal aísla la tarea |
+| Mental Model | 1 | W4, etiqueta de tarjeta que no añade |
+| Paradox of the Active User | 2 | Sin cambios respecto de la segunda pasada |
+| Parkinson's Law | 2 | Campos acotados |
+
+## N/A (2)
+
+Law of Uniform Connectedness y Goal-Gradient Effect: mismas razones de la segunda pasada, sin forzar su aplicación.
+
+## Action Plan (do in this order)
+
+1. **Conservar borradores por referencia (C2)** → `ConsultaContext.tsx:15`, `ConsultaPanel.tsx:125`, `ProductoCTA.tsx:53`; verificar A → B → A.
+2. **Mantener unidades visibles en el resumen (C1)** → `CartPanel.tsx:136`; verificar varias líneas con cantidades diferentes.
+3. **Continuar W1–W5 y S1** con el plan de la segunda pasada; no marcar ningún pendiente resuelto sin probarlo. S2 requiere una decisión de producto.
+
+### Validación y seguimiento
+
+- `npx next build`: correcto. Suite completa: **34/34**, incluidas las lecturas de slug contra Supabase. `node db/supabase/revisa.js`: correcto (13 ficheros, 24 tablas, 28 políticas); es revisión estática del SQL, no ejecución de una venta.
+- Auth de Supabase responde 200, Google sigue desactivado y `disable_signup` sigue en `false`: B1 continúa abierto. No se creó ninguna cuenta ni pedido real ni se modificó configuración.
+- `/catalogo` responde 200 con las tres cabeceras del arreglo B3: `frame-ancestors 'none'`, `nosniff`, `strict-origin-when-cross-origin`.
+- La combinación Óptica + Swarovski + 2-16x mantiene visibles Marca y Aumentos, con «Limpiar». Cesta simulada: no se vacía al preparar, no finge una reserva y el foco pasa a «Volver a editar».
+- Evidencia de UI en una pestaña de pruebas: un resumen local `AZHX11M` y texto sintético. No se realizó una transacción de productos regulados.
+- No probado en esta tanda: OAuth completo, lector de pantalla, caída inducida del backend y detalle de logs de Vercel. No se atribuyen nuevos fallos a esos escenarios.
+- Revisión periódica activa en este chat cada **10 minutos**, automatización `revisar-cambios-de-claude-en-gunshop`. Revisar nuevos commits y cambios locales, mantener identificadores C1/C2 y futuros C3…, y actualizar el estado solo con evidencia. El checkpoint no incluye los commits de documentación de este seguimiento; si solo cambian informe/PLAN/capturas, no repetir la auditoría de la implementación.
+
+---
+
 # UX Audit: GunShop — segunda pasada
 
 **Score: 53/60** | **Grade: A** (primera pasada: 43/60 estática, 41/60 tras probar producción)

@@ -703,3 +703,17 @@ actualizar `fx_rate`, decidir Pelican/Peli y la foto de la V730.
   parte del enlace (lo trajo el paso 5); y cambiar de filtro tarda ~650 ms
   sin señal (medido en producción).
 - Plan de 7 pasos propuesto, sin aplicar.
+
+### Seguimiento de cambios de Claude por Codex (2026-10-08)
+
+- Revisados los arreglos hasta `dfdc0ce` (implementación `747f24d`) y el
+  despliegue READY del mismo SHA en Vercel. Dos pendientes nuevos en
+  `UX-AUDIT.md`: C1, cantidad por línea oculta en el resumen de cesta
+  (`babe3dc`); C2, borrador perdido al consultar A → B → A (`9356ca8`,
+  conservación incompleta). Ambos reproducidos en producción y con captura.
+- Actualización incremental de la nota: 47/56 → 50/60. Se conserva entera la
+  segunda pasada de Claude (53/60) y su plan, sin duplicar sus hallazgos.
+- Build correcto, suite 34/34 y revisión estática del SQL correctos. Auth
+  sigue con Google apagado y registro abierto; cabeceras B3 comprobadas.
+- Revisión cada 10 minutos activa en este chat. Codex anota y verifica;
+  la implementación se deja a Claude para evitar pisar cambios concurrentes.
