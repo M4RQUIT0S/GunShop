@@ -86,11 +86,20 @@ export default async function Ficha({ params, searchParams }: Props) {
               Sin fotografía
             </div>
           )}
+          {/* Parecian miniaturas pero no se podian abrir (UX-AUDIT.md, Law of
+              Similarity): cada una enlaza a su foto entera. Hoy ningun producto
+              tiene mas de una, asi que esto no se pinta todavia. */}
           {producto.fotos.length > 1 && (
             <div className="ficha__miniaturas">
-              {producto.fotos.slice(1).map((f) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={f} src={f} alt="" width={200} height={125} loading="lazy" />
+              {producto.fotos.slice(1).map((f, i) => (
+                <a
+                  key={f}
+                  href={f}
+                  aria-label={`Ver la fotografía ${i + 2} de ${producto.fotos.length} de ${producto.marca} ${producto.ref}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={f} alt="" width={200} height={125} loading="lazy" />
+                </a>
               ))}
             </div>
           )}
