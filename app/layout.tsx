@@ -12,6 +12,7 @@ import CartPanel from './components/CartPanel'
 import SearchPanel from './components/SearchPanel'
 import AccountPanel from './components/AccountPanel'
 import ConsultaPanel from './components/ConsultaPanel'
+import { googleActivo } from '@/lib/catalogo'
 import '../css/tokens.css'
 import '../css/base.css'
 import '../css/catalog.css'
@@ -66,7 +67,8 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const conGoogle = await googleActivo()
   return (
     <html lang="es-AR" className={`${display.variable} ${texto.variable}`}>
       <body>
@@ -98,7 +100,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
                 <SearchPanel />
                 <CartPanel />
-                <AccountPanel />
+                <AccountPanel conGoogle={conGoogle} />
                 <ConsultaPanel />
               </ConsultaProvider>
             </SearchProvider>

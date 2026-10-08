@@ -190,6 +190,24 @@ export async function familias(): Promise<Familia[]> {
   }))
 }
 
+/* Si el proveedor de Google esta dado de alta en Supabase Auth. Mientras no lo
+   este, /auth/v1/authorize responde un JSON 400 y el boton «Continuar con
+   Google» sacaba al visitante de la tienda para dejarlo ahi (UX-AUDIT.md, P1).
+   Se pregunta a Auth y no a una variable de entorno: el dia que se configure en
+   el panel, el boton aparece solo, en diez minutos como mucho. Si la consulta
+   falla, no hay boton -- es el lado que no deja a nadie en una pagina de error. */
+export async function googleActivo(): Promise<boolean> {
+  try {
+    const r = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
+      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '' },
+      next: { revalidate: 600 },
+    })
+    return r.ok && (await r.json()).external?.google === true
+  } catch {
+    return false
+  }
+}
+
 /* Cambio del dia. La base guarda dolares en centavos enteros y los pesos se
    derivan, que es lo que permite que una factura vieja siga cuadrando. */
 export async function cambio(): Promise<number> {

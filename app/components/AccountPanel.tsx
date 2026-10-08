@@ -39,12 +39,12 @@ function LogoGoogle() {
   )
 }
 
-function Estado({ perfil, google }: { perfil: Perfil | null; google: string | null }) {
+function Estado({ perfil, google, conGoogle }: { perfil: Perfil | null; google: string | null; conGoogle: boolean }) {
   if (!perfil && !google) {
     return (
       <p>
-        Sin datos cargados. Entra con Google o deja tu nombre y correo: es lo único
-        que acompaña al resumen de la cesta.
+        Sin datos cargados. {conGoogle ? 'Entra con Google o deja' : 'Deja'} tu
+        nombre y correo: es lo único que acompaña al resumen de la cesta.
       </p>
     )
   }
@@ -85,7 +85,11 @@ function Pedidos() {
   )
 }
 
-export default function AccountPanel() {
+/* `conGoogle`: si el proveedor esta dado de alta en Supabase Auth (lo mira el
+   layout, ver googleActivo() en lib/catalogo.ts). Sin el, el boton llevaba a un
+   JSON de error fuera de la tienda; mejor no ofrecerlo. Una sesion de Google ya
+   abierta se sigue pudiendo cerrar aunque el proveedor se apague despues. */
+export default function AccountPanel({ conGoogle }: { conGoogle: boolean }) {
   const {
     perfil, google, fallo, guardar, borrar, entrarConGoogle, salir, abrirTick,
   } = useAccount()
@@ -134,7 +138,7 @@ export default function AccountPanel() {
         </header>
 
         <div className="panel__estado" id="accEstado">
-          <Estado perfil={perfil} google={google} />
+          <Estado perfil={perfil} google={google} conGoogle={conGoogle} />
         </div>
 
         {/* El perfil puede cambiar sin que el panel se cierre (entrar con
@@ -150,7 +154,7 @@ export default function AccountPanel() {
               <LogoGoogle />
               Cerrar la sesión de Google
             </button>
-          ) : (
+          ) : conGoogle && (
             <button className="btn btn--ghost btn--google" type="button" onClick={entrarConGoogle}>
               <LogoGoogle />
               Continuar con Google
@@ -158,7 +162,7 @@ export default function AccountPanel() {
           )}
           {fallo && <p className="aviso aviso--falta" role="status">{fallo}</p>}
 
-          <p className="form__o"><span>o déjalos a mano</span></p>
+          {(google || conGoogle) && <p className="form__o"><span>o déjalos a mano</span></p>}
 
           <label className="campo">
             <span>Nombre y apellido</span>
@@ -179,8 +183,8 @@ export default function AccountPanel() {
           <p className="form__nota">
             Solo nombre y correo: la tienda no vende piezas que exijan credencial
             ANMaC, así que no te pedimos la CLU ni la Tarjeta de Consumo en ningún
-            momento. Lo que escribas aquí se queda en este navegador; la sesión de
-            Google solo sirve para identificarte.
+            momento. Lo que escribas aquí se queda en este navegador
+            {conGoogle ? '; la sesión de Google solo sirve para identificarte.' : '.'}
           </p>
         </form>
 
