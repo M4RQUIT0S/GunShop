@@ -1,3 +1,168 @@
+# UX Audit: GunShop — tercera pasada
+
+**Score: 58/60** | **Grade: A** (segunda pasada: 53/60; seguimiento de Codex: 50/60, antes de cerrar C1/C2)
+
+Fecha: 2026-10-08. Código auditado: `76ad356`, rama `main`; la implementación es `26731a9`, la misma que sirve `gun-shop-mu.vercel.app`. Alcance: portada, catálogo, ficha, paneles de cesta, cuenta, búsqueda y consulta, 404 y páginas de error.
+
+Método: `laws-of-ux-review` sobre el código actual, releído entero en lugar de dar por buenos los arreglos, más recorridos cronometrados en producción. La nota es heurística: no sustituye una prueba con usuarios ni una auditoría con lector de pantalla.
+
+| Grade | Range |
+|-------|-------|
+| A | 50–60 |
+| B | 40–49 |
+| C | 30–39 |
+| D | 20–29 |
+| F | 0–19 |
+
+Puntuación bruta: **54/56** en 28 leyes aplicables (las mismas dos N/A). 26 leyes con 2, dos con 1, ninguna con 0. Normalizada: `54 / 56 × 60 = 57,86`, redondeada a **58**. Lo que queda son tres hallazgos nuevos, que las pasadas anteriores no vieron, en dos leyes.
+
+### Qué cambió respecto a la segunda pasada y al seguimiento de Codex
+
+| Ley | 2.ª | Codex | 3.ª | Por qué |
+|-----|:---:|:---:|:---:|---------|
+| Fitts's Law | 1 | 1 | 2 | Zona de toque de 45 px en filtros, «volver» y pausa (`80631b4`). |
+| Jakob's Law | 1 | 1 | 2 | Sugerencia que abre la ficha, contador anunciado, grupos con nombre, pausa con un solo estado (`89f5767`). |
+| Cognitive Bias | 1 | 1 | 2 | Fuera las promesas de encargo y de representación (`658450f`). |
+| Peak-End Rule | 1 | 1 | 2 | Cesta vacía con salida y resúmenes que se abren (`efb0998`). |
+| Flow | 1 | 1 | 2 | El menú espera 300 ms (`8339679`). No probado con usuarios. |
+| Working Memory | 2 | 1 | 2 | C1 cerrado: el resumen muestra las unidades (`26731a9`). |
+| Zeigarnik Effect | 2 | 1 | 2 | C2 cerrado: un borrador por consulta (`26731a9`). |
+| Doherty Threshold | 1 | 1 | 1 | Los filtros ya avisan (`3a94bd1`), pero el resto de las navegaciones no (W1). |
+| Mental Model | 1 | 1 | 1 | Las tarjetas ya dicen adónde llevan (`e7d2171`), pero hay dos acciones que no hacen lo que dicen (W2). |
+
+## Critical Issues (0)
+
+Ninguna ley en 0.
+
+## Warnings (2)
+
+### W1 · Doherty Threshold — Score: 1/2
+
+**Problem:** El paso 1 de la segunda pasada puso el indicio solo en los filtros. Las demás navegaciones al servidor siguen sin señal, y son las que más se usan. Cronometrado en producción:
+
+- **Tarjeta → ficha:** ~650 ms (620 ms aún en el catálogo, ficha a los 678) sin nada que cambie. Es la navegación más frecuente de la tienda. `app/catalogo/page.tsx:184` (el `<Link>` de la tarjeta).
+- **«← Catálogo» de la ficha → catálogo:** **952 ms** sin señal. `app/producto/[slug]/page.tsx:111`.
+- **Sugerencia de búsqueda → ficha:** el diálogo se cierra en el acto (`SearchPanel.tsx:128`, `onClick={cerrar}`) y queda a la vista la página de antes mientras llega la nueva. Lo mismo con «Ver las N referencias» (`:57–59`, `cerrar()` y luego `router.push`).
+
+**Fix:** El mismo `Pendiente.tsx`, dentro de esos enlaces. En la búsqueda, el diálogo se cierra al llegar y no al pulsar:
+
+```tsx
+// app/catalogo/page.tsx:225 — el punto junto al rótulo de la tarjeta
+<span className="card__add">{exige ? 'Ver y consultar' : 'Ver y añadir'}<Pendiente /></span>
+
+// app/producto/[slug]/page.tsx:111
+<Link href={volver} className="chip">← {rotulo}<Pendiente /></Link>
+```
+
+```tsx
+// SearchPanel.tsx — cerrar cuando cambia la ruta, no al pulsar; la sugerencia lleva su punto
+const ruta = usePathname()
+useEffect(() => { ref.current?.close() }, [ruta])
+<Link className="sug" href={…}>{/* nombre, ficha */}<Pendiente /></Link>   // sin onClick={cerrar}
+```
+
+```css
+/* css/catalog.css — dentro de la píldora, no fuera de la tarjeta */
+.card__add { position: relative; }
+.card__add .pendiente { right: 0.5rem; }
+```
+
+### W2 · Mental Model — Score: 1/2
+
+**Problem:** Dos acciones no hacen lo que su nombre da a entender.
+
+1. **«En la cesta (1)» añade otra unidad.** `ProductoCTA.tsx:42–44`: tras el primer clic, el botón cambia su texto a un estado («En la cesta (1)») pero sigue llamando a `add()`. En producción: «Añadir a la cesta» → «En la cesta (1)» → «En la cesta (2)». Quien vuelve a pulsar para confirmar, o con lector de pantalla (el botón no tiene otro nombre), suma unidades sin saberlo.
+2. **«Borrar mis datos» no borra todos los datos.** `AccountContext.tsx:74–81` solo quita `gunshop:cuenta`. Los resúmenes (`gunshop:pedidos`) se quedan, y guardan el nombre del cliente (`lib/cesta.ts:68`) y ahora también qué compró. Además, el botón está oculto si no hay perfil (`AccountPanel.tsx:190`, `hidden={!perfil}`): con resúmenes y sin perfil no hay forma de borrarlos desde la tienda. Y `/privacidad` (`app/privacidad/page.tsx:162`) promete lo contrario: que lo guardado en el navegador dura «hasta que pulses Borrar mis datos».
+
+**Fix:**
+
+```tsx
+// ProductoCTA.tsx:38–45 — el botón dice la acción; el estado va aparte, anunciado
+<>
+  {cant > 0 && <p className="ficha__en-cesta" role="status">En la cesta: {cant}</p>}
+  <button type="button" className={`card__add ficha__cta${cant ? ' is-added' : ''}`} … onClick={() => add(producto.id)}>
+    {cant ? 'Añadir otra unidad' : 'Añadir a la cesta'}
+  </button>
+</>
+```
+
+```tsx
+// AccountContext.tsx:74 — «mis datos» son también los resúmenes
+const borrar = useCallback(() => {
+  setPerfil(null)
+  try {
+    window.localStorage.removeItem(LLAVE)
+    window.localStorage.removeItem('gunshop:pedidos')
+  } catch { /* nada que borrar */ }
+}, [])
+```
+
+```tsx
+// AccountPanel.tsx:190 — visible también si solo hay resúmenes; la lista se vuelve a leer al borrar
+hidden={!perfil && !hayResumenes}
+```
+
+`/privacidad:162` tiene que decir exactamente qué borra el botón (nombre, correo y resúmenes) y que la cesta se vacía desde la cesta.
+
+## Suggestions (0)
+
+Ninguna: S1 y S2 de la segunda pasada están cerrados.
+
+## Compliant (26)
+
+| Ley | Score | Evidencia |
+|-----|-------|-----------|
+| Aesthetic-Usability Effect | 2/2 | Los arreglos reutilizan el sistema: el indicio es un punto de `--tinta`, la zona de toque es invisible y no mueve el subrayado. |
+| Law of Prägnanz | 2/2 | Iconos de trazo simple, `HeaderActions.tsx`. |
+| Von Restorff Effect | 2/2 | Aviso de demostración junto a cada acción: ficha, cesta, consulta, cabecera del catálogo. |
+| Law of Similarity | 2/2 | Moneda única; tarjetas con rótulo de enlace («Ver y…») distinto del botón de la ficha. |
+| Law of Proximity | 2/2 | Campos con su etiqueta; la cantidad junto a su línea en el resumen. |
+| Law of Common Region | 2/2 | Diálogos con cabecera, cuerpo y pie; cada resumen de la cuenta en su `<details>`. |
+| Cognitive Load | 2/2 | Notas cortas, sin explicar la arquitectura. |
+| Hick's Law | 2/2 | Siete entradas de menú; facetas solo con catálogo acotado. |
+| Miller's Law | 2/2 | Ocho sugerencias de búsqueda como máximo, `SearchPanel.tsx:20`. |
+| Chunking | 2/2 | Ficha en precio, calibre, especificaciones y acción. |
+| Choice Overload | 2/2 | Opciones dentro de desplegables. |
+| Cognitive Bias | 2/2 | Cifras que salen de la base; sin promesas de servicio; el cambio dice su fecha. |
+| Fitts's Law | 2/2 | 44–45 px en cabecera, paneles, filtros, «volver», opciones y pausa (medido con `elementFromPoint`). |
+| Flow | 2/2 | Menú a 300 ms (cerrado a los 257 ms, abierto a los 359 con el puntero real); borradores que no se pierden. |
+| Serial Position Effect | 2/2 | «Catálogo» primero; la acción al final de cada formulario. |
+| Peak-End Rule | 2/2 | Todos los estados vacíos y de error tienen salida; el resumen se puede repasar. |
+| Zeigarnik Effect | 2/2 | Un borrador por consulta, `ConsultaPanel.tsx` (A → B → A verificado por Claude y por Codex). |
+| Working Memory | 2/2 | Filtros siempre visibles; unidades a la vista en el resumen. |
+| Jakob's Law | 2/2 | Sugerencias a la ficha, `aria-current` en chips, grupos con nombre, contador de la cesta anunciado. |
+| Postel's Law | 2/2 | Búsqueda sin acentos; filtro huérfano quitable. |
+| Tesler's Law | 2/2 | La consulta toma nombre y correo de la cuenta. |
+| Occam's Razor | 2/2 | Una acción principal por vista. |
+| Pareto Principle | 2/2 | Catálogo y búsqueda desde la primera pantalla. |
+| Selective Attention | 2/2 | Jerarquía título → precio → acción; diálogos que aíslan la tarea. |
+| Paradox of the Active User | 2/2 | Salidas en catálogo vacío, búsqueda sin resultados, cesta vacía, 404 y error. |
+| Parkinson's Law | 2/2 | Campos acotados (`maxLength`). |
+
+## N/A (2)
+
+- **Law of Uniform Connectedness:** sin recorridos secuenciales que pidan conectores.
+- **Goal-Gradient Effect:** sin procesos de varios pasos con progreso medible.
+
+## Action Plan (do in this order)
+
+1. **«Borrar mis datos» que borre los resúmenes, y la política que lo diga** — es el único hallazgo que toca datos personales → `AccountContext.tsx:74`, `AccountPanel.tsx:190`, `app/privacidad/page.tsx:162`.
+2. **El botón de la ficha dice la acción** — «Añadir otra unidad», con «En la cesta: N» aparte → `ProductoCTA.tsx:38`.
+3. **Indicio en tarjetas, «volver» y búsqueda** — `Pendiente` en esos enlaces; el diálogo se cierra al llegar → `app/catalogo/page.tsx:225`, `app/producto/[slug]/page.tsx:111`, `SearchPanel.tsx:128`.
+
+Con los tres, la nota llegaría a 56/56 en bruto (60/60). Fuera de las 30 leyes siguen abiertos B1 (registro por correo en Auth), el alta de Google, `fx_rate` del 24/08, Pelican/Peli y la foto de la V730: configuración o datos que decide el dueño.
+
+## Verificación de esta pasada
+
+- Código releído en `76ad356` (implementación `26731a9`): los componentes de interfaz, las tres páginas, `error.tsx`, `global-error.tsx`, `not-found.tsx`, `AccountContext.tsx` y las reglas de CSS tocadas desde la segunda pasada.
+- Producción, cronometrado desde el clic: tarjeta de Accesorios → ficha de Pelican Vault V730, ~650 ms sin indicio; «← volver» de la ficha → catálogo, 952 ms sin indicio.
+- Producción: el botón de la ficha pasa de «Añadir a la cesta» a «En la cesta (1)» y a «En la cesta (2)», y la cesta guarda `{16: 2}`. Se dejó vacía al terminar.
+- «Borrar mis datos»: verificado en el código (`AccountContext.tsx:77` solo quita `gunshop:cuenta`) frente a la promesa de `/privacidad:162`.
+- Los cierres de la segunda pasada y de C1/C2 los verificó Codex por su cuenta en producción (sección siguiente). Esta pasada no los repitió, salvo releer el código.
+- No verificado: lector de pantalla y recorrido completo con teclado; contraste (los tokens no cambiaron).
+
+---
+
 # UX Audit: GunShop — Seguimiento Codex
 
 **Score: 50/60** | **Grade: A** — puntuación histórica de la detección de C1/C2, anterior a sus arreglos. La verificación posterior de cierres se registra debajo; no equivale a una tercera auditoría de las 30 leyes.

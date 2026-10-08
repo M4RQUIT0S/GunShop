@@ -753,3 +753,14 @@ cesta y desplazar la página.
   el posible fallo visto con el panel oculto.
 - Build y suite 36/36 correctos con la implementación estable. Sin fallos
   nuevos confirmados ni cambios de código de Codex; solo informe y capturas.
+
+### Tercera pasada de la auditoría UX (2026-10-08)
+
+- `laws-of-ux-review` sobre `76ad356` (implementación `26731a9`): **58/60
+  (A)**, 54/56 en bruto. Antes, 53/60 (segunda) y 50/60 (Codex, antes de
+  cerrar C1/C2). Ninguna ley en 0; Doherty y Mental Model en 1.
+- Tres hallazgos nuevos, medidos en producción: tarjeta → ficha (~650 ms) y
+  «volver» (952 ms) sin indicio; «En la cesta (1)» añade otra unidad sin
+  decirlo; «Borrar mis datos» deja los resúmenes, con el nombre del cliente,
+  aunque `/privacidad` promete que lo borra todo.
+- Plan de 3 pasos propuesto, sin aplicar.
