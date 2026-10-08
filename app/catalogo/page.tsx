@@ -216,9 +216,12 @@ export default async function Catalogo({ searchParams }: Props) {
                   <div className="card__rule" />
                   <div className="card__foot">
                     <p className="card__price">{precio(p.usdCents, arsPorUsd)}</p>
-                    {/* El mismo rotulo que el boton de la ficha: aqui no hay compra
-                        directa, hay una cesta que arma un resumen. */}
-                    <span className="card__add">{exige ? 'Consultar' : 'Añadir a la cesta'}</span>
+                    {/* Dice adonde lleva, no lo que hace el boton de la ficha: esto
+                        es parte del enlace de la tarjeta, no un boton, y un
+                        «Añadir a la cesta» que no añadia rompia lo que se espera de
+                        una tienda (UX-AUDIT.md, segunda pasada, W4). La diferencia
+                        entre venta libre y consulta se conserva. */}
+                    <span className="card__add">{exige ? 'Ver y consultar' : 'Ver y añadir'}</span>
                   </div>
                 </div>
               </Link>
