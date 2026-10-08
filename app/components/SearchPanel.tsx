@@ -12,8 +12,10 @@
  * `?q=` es el unico canal que conecta el panel con el catalogo. */
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { buscar } from '@/lib/buscar'
+import { slugDe } from '@/lib/catalogo'
 import { useSearch } from './SearchContext'
 import { useCart } from './CartContext'
 
@@ -113,16 +115,21 @@ export default function SearchPanel() {
               <button className="btn btn--ghost" type="button" onClick={limpiar}>Limpiar la búsqueda</button>
             </div>
           )}
+          {/* Una sugerencia abre su ficha, como en cualquier tienda; antes
+              llevaba a un catalogo con esa sola tarjeta y hacia falta otro
+              clic (UX-AUDIT.md, segunda pasada, W3). `?q=` hace que el
+              «volver» de la ficha regrese a estos resultados. El boton de
+              abajo sigue llevando a todos. */}
           {hallados.slice(0, TOPE).map((p) => (
-            <button
+            <Link
               key={p.id}
-              type="button"
               className="sug"
-              onClick={() => manda(`${p.marca} ${p.ref}`)}
+              href={`/producto/${slugDe(p)}?q=${encodeURIComponent(texto)}`}
+              onClick={cerrar}
             >
               <span className="sug__name">{p.marca} {p.ref}</span>
               <span className="sug__spec">{p.kind} · {p.regimenEtiqueta}</span>
-            </button>
+            </Link>
           ))}
         </div>
 

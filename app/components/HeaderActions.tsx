@@ -19,7 +19,7 @@ function iniciales(nombre: string): string {
 }
 
 export default function HeaderActions() {
-  const { abrir: abrirCesta } = useCart()
+  const { abrir: abrirCesta, piezas } = useCart()
   const { abrir: abrirCuenta, perfil } = useAccount()
   const { abrir: abrirBusqueda } = useSearch()
 
@@ -52,7 +52,15 @@ export default function HeaderActions() {
           {perfil ? iniciales(perfil.nombre) : ''}
         </span>
       </button>
-      <button className="icon-btn cart" id="btnCart" type="button" aria-label="Cesta" onClick={abrirCesta}>
+      {/* El numero de la burbuja (CartCount) es aria-hidden: lo dice el nombre
+          del boton, o el lector de pantalla no sabe que hay algo dentro. */}
+      <button
+        className="icon-btn cart"
+        id="btnCart"
+        type="button"
+        aria-label={piezas ? `Cesta, ${piezas} ${piezas === 1 ? 'artículo' : 'artículos'}` : 'Cesta'}
+        onClick={abrirCesta}
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
           <path d="M4 7h16l-1.4 12.2a2 2 0 0 1-2 1.8H7.4a2 2 0 0 1-2-1.8Z" />
           <path d="M8.5 7V5.5a3.5 3.5 0 0 1 7 0V7" />

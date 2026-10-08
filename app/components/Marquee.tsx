@@ -28,10 +28,12 @@ export default function Marquee({ marcas }: { marcas: string[] }) {
         </div>
       </div>
       <div className="wrap">
+        {/* Un solo estado: el rotulo cambia («Pausar»/«Reanudar») y por eso no
+            lleva aria-pressed, que con el rotulo cambiado se leia como doble
+            estado («Reanudar el desfile, presionado»). */}
         <button
           className="marquee__pausa"
           type="button"
-          aria-pressed={quieta}
           onClick={() => setQuieta((q) => !q)}
         >
           {quieta ? 'Reanudar el desfile' : 'Pausar el desfile'}

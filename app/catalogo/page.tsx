@@ -97,7 +97,8 @@ export default async function Catalogo({ searchParams }: Props) {
 
         {/* Cambiar de familia limpia las facetas: un calibre de rifle en
             Óptica no deja nada que ver. */}
-        <div className="filters" aria-label="Filtrar por familia">
+        {/* role="group": un aria-label en un <div> sin rol no se anuncia. */}
+        <div className="filters" role="group" aria-label="Filtrar por familia">
           {busqueda && (
             <Link
               // Sin `sel`: quitar la busqueda deja «Todo» sin familia, y en
@@ -147,7 +148,7 @@ export default async function Catalogo({ searchParams }: Props) {
         </div>
 
         {filas.length > 0 && (
-          <div className="filtros" aria-label="Filtrar por marca, calibre y medidas">
+          <div className="filtros" role="group" aria-label="Filtrar por marca, calibre y medidas">
             {filas.map(({ f, opts }) => (
               <Desplegable
                 key={f.clave}
